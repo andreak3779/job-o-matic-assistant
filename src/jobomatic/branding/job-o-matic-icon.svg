@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="job-o-matic-assistant icon">
+<title>job-o-matic-assistant</title>
+<rect x="5" y="5" width="246" height="246" rx="54" fill="#19C3C9" stroke="#1B1F4B" stroke-width="10"/>
+<rect x="30" y="30" width="196" height="16" rx="8" fill="#8CEFF1"/>
+<circle cx="128" cy="134" r="86" fill="#FFF8E1" stroke="#1B1F4B" stroke-width="9"/>
+<g fill="none" stroke-width="22">
+<path d="M74.03,144.12 A 54 54 0 0 1 83.23,115.8" stroke="#FF4F3F"/>
+<path d="M85.45,112.75 A 54 54 0 0 1 109.53,95.26" stroke="#FF9F1C"/>
+<path d="M113.11,94.09 A 54 54 0 0 1 142.89,94.09" stroke="#FFD23F"/>
+<path d="M146.47,95.26 A 54 54 0 0 1 170.55,112.75" stroke="#C6E84A"/>
+<path d="M172.77,115.8 A 54 54 0 0 1 181.97,144.12" stroke="#2FBF4F"/>
+</g>
+<line x1="128" y1="146" x2="185.1" y2="127.5" stroke="#1B1F4B" stroke-width="11" stroke-linecap="round"/>
+<circle cx="128" cy="146" r="15" fill="#FF4F3F" stroke="#1B1F4B" stroke-width="6"/>
+<polygon points="128,176 132,186 143,186.5 134.5,193.5 137.5,204 128,198 118.5,204 121.5,193.5 113,186.5 124,186" fill="#E6399B" stroke="#1B1F4B" stroke-width="4" stroke-linejoin="round"/>
+</svg>

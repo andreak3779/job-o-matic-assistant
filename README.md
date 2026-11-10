@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/jobomatic/branding/job-o-matic-logo.svg" alt="Job-O-Matic Assistant logo: a retro appliance with a rating gauge pointing at green and a resume coming out of its top slot" width="240">
+</p>
+
 # job-o-matic-assistant
 
 [![CI](https://github.com/andreak3779/job-o-matic-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/andreak3779/job-o-matic-assistant/actions/workflows/ci.yml)
