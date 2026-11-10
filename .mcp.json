@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "claude-jobs": {
+    "job-o-matic": {
       "command": ".venv/bin/python3",
       "args": ["-m", "jobomatic.interfaces.mcp.server"]
     }

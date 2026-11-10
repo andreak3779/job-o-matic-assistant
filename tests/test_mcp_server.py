@@ -618,3 +618,10 @@ def test_server_announces_its_title_and_icons() -> None:
         assert header == f"data:{icon.mime_type};base64"
         assert base64.b64decode(payload)  # a real, non-empty file
     assert mcp.icons == icons
+
+
+def test_mcp_json_registers_the_server_under_its_own_name() -> None:
+    from jobomatic.interfaces.mcp.server import mcp
+
+    config = json.loads((Path(__file__).resolve().parents[1] / ".mcp.json").read_text("utf-8"))
+    assert list(config["mcpServers"]) == [mcp.name]
