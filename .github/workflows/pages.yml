@@ -1,7 +1,8 @@
 name: Pages
 
-# Publishes site/ (a single static page) to GitHub Pages. The logo, icons and social preview
-# are copied in from their one home in the repo, so there is only one copy of each to maintain.
+# Publishes site/ (a single static page and its assets) to GitHub Pages as it is in the repo.
+# site/assets/ holds copies of the branding files; tests/test_site_assets.py keeps them identical
+# to the originals in src/jobomatic/branding/ and docs/assets/.
 
 on:
   workflow_dispatch:
@@ -9,8 +10,6 @@ on:
     branches: [main]
     paths:
       - 'site/**'
-      - 'src/jobomatic/branding/**'
-      - 'docs/assets/**'
       - '.github/workflows/pages.yml'
 
 permissions:
@@ -28,19 +27,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Assemble the site
-        run: |
-          mkdir -p _site/assets
-          cp site/index.html _site/index.html
-          cp src/jobomatic/branding/* _site/assets/
-          cp docs/assets/social-preview.png _site/assets/
-          touch _site/.nojekyll
-
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: site
 
   deploy:
     needs: build
