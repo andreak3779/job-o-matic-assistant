@@ -1,0 +1,5 @@
+{
+  "_comment": "Copy to <your vault>/private/search-constraints.json and fill in. Amounts are CAD. Either key may be omitted. Never put the real file in this repo: it belongs in the private vault.",
+  "min_permanent_base_cad": 90000,
+  "min_contract_hourly_cad": 65
+}

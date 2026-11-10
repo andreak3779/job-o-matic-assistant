@@ -1,0 +1,13 @@
+coursework_summary: 10 courses + 2 labs completed
+certifications:
+- visibility: public
+  code: AZ-900
+  status: certified
+  date: 2026-04-18
+  credential_url: https://learn.microsoft.com/api/credentials/share/en-ca/x/1?sharingId=2
+- visibility: public
+  code: AI-200
+  status: in_progress
+  domain_coverage:
+  - domain: RAG
+    status: Partial

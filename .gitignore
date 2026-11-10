@@ -1,0 +1,30 @@
+outputs/
+*.meta.json
+*.raw-inputs.json
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+.venv-1/
+.venv-2/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+# Personal files that must never be committed (salary minimums etc.); the
+# *.example.* templates beside them are tracked.
+private/*
+!private/*.example.*
+
+# Generated documents (the project folders carried this rule before they were dissolved)
+*.docx
+*.pdf
+.DS_Store
+
+# Personal skill that lives in the private vault; each machine links it locally.
+.claude/skills/part_time_retail_resume_and_cover_letter

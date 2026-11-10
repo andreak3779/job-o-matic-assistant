@@ -1,0 +1,118 @@
+# Default topic rules: the first rule whose keyword appears in a title decides the topic.
+# A keyword matches a whole word or phrase, ignoring case. Order matters: a title about
+# "Azure Cosmos DB" is Azure, not NoSQL, because Azure comes first. A vault can replace this
+# file with its own profile/learning/topics.yaml.
+topics:
+  - topic: Claude
+    keywords: [claude, anthropic]
+  - topic: Terraform
+    keywords: [terraform, bicep, infrastructure as code]
+  - topic: Kusto Query Language (KQL)
+    keywords: [kql, kusto]
+  - topic: Microsoft Azure
+    keywords:
+      [azure, microsoft cloud, cloud computing, cloud services, cloud service types, iam, virtual network, subnet, blob, entra, key vault, logic apps]
+  - topic: RAG & Retrieval
+    keywords:
+      [rag, rags, retrieval, retrieval-augmented, knowledge base, knowledge bases, context indexing, vector space models]
+  - topic: Generative AI & AI-Assisted Development
+    keywords:
+      - copilot
+      - generative ai
+      - gen ai
+      - llm
+      - llms
+      - prompt
+      - prompts
+      - prompting
+      - openai
+      - chatgpt
+      - agent
+      - agents
+      - agentic
+      - rag
+      - embeddings
+      - vector
+      - machine learning
+      - ai
+      - mcp
+      - model context protocol
+      - context engineering
+      - hugging face
+      - langchain
+      - semantic kernel
+      - models and parameters
+  - topic: ASP.NET Core & .NET
+    keywords:
+      [asp.net, .net, dotnet, c#, csharp, entity framework, ef core, blazor, linq, dapper, classes, class implementations, class properties, exception handling, guided project]
+  - topic: Angular
+    keywords: [angular, ngrx, rxjs, nx]
+  - topic: TypeScript
+    keywords: [typescript]
+  - topic: React
+    keywords: [react, redux, next.js, nextjs]
+  - topic: Python 3
+    keywords: [python, fastapi, django, flask, pandas]
+  - topic: PowerShell
+    keywords: [powershell]
+  - topic: APIs, REST & Microservices
+    keywords:
+      [api, apis, rest, restful, microservices, microservice, graphql, grpc, protocol buffer, openapi, swagger, web api]
+  - topic: Security & Pen Testing
+    keywords:
+      [security, secure coding, owasp, penetration, pen testing, hacking, vulnerabilities, vulnerability, threat, encryption]
+  - topic: Testing & TDD
+    keywords:
+      [tdd, test-driven, behavior-driven, bdd, unit testing, unit tests, xunit, nunit, mocking, testing]
+  - topic: GitHub Actions, Docker & Kubernetes
+    keywords:
+      [github actions, docker, kubernetes, k8s, helm, container, containers, ci/cd, devops, pipelines, nginx]
+  - topic: Git & GitHub
+    keywords: [git, github, version control, repository, pull requests, branching and merging]
+  - topic: Messaging & Event-Driven
+    keywords:
+      [service bus, rabbitmq, event-driven, event driven, event grid, event hubs, kafka, messaging, masstransit]
+  - topic: NoSQL
+    keywords: [nosql, cosmos db, mongodb, redis, dynamodb, cassandra, document database]
+  - topic: PostgreSQL
+    keywords: [postgresql, postgres]
+  - topic: SQL Server
+    keywords:
+      [sql server, t-sql, tsql, ssis, ssrs, ssms, stored procedures, query tuning, common table expressions]
+  - topic: Software Architecture & DDD
+    keywords:
+      [architecture, domain-driven, ddd, design patterns, solid, cqrs, modular monolith]
+  - topic: Leadership & Soft Skills
+    keywords:
+      - leadership
+      - leading
+      - communication
+      - communicator
+      - communicating
+      - listener
+      - negotiator
+      - negotiation
+      - interpersonal
+      - audience
+      - burnout
+      - stress
+      - imposter
+      - workplace
+      - soft skills
+      - mentoring
+      - coaching
+      - feedback
+      - management
+      - manager
+      - stakeholder
+      - collaboration
+      - productivity
+      - emotional intelligence
+      - presentation
+      - career
+      - interview
+      - agile
+      - scrum
+  - topic: Other Technical
+    keywords:
+      [bootstrap, php, java, power platform, node.js, nodejs, robotic process automation, vue, ruby, go, rust, c++, visual studio code]

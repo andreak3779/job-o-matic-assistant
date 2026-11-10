@@ -1,0 +1,150 @@
+{
+  "description": "Place-name vocabulary for the fit engine's location check (src/jobomatic/fit/location.py). Terms are matched case-insensitively with accents stripped, as whole tokens, against location-bearing lines of a JD only (never the whole posting). 'abbreviations' are 2-letter province codes, matched only after a comma, '(' or 'CA-' so they cannot hit ordinary words. Edit this file to change the rules; a malformed entry fails loudly at import (ADR 0007). The candidate's own home city, excluded regions and French preference are not here: they come from the vault (profile/location-preferences.json).",
+  "excluded_regions": {
+    "quebec": {
+      "label": "Quebec",
+      "terms": [
+        "quebec",
+        "montreal",
+        "laval",
+        "gatineau",
+        "sherbrooke",
+        "longueuil",
+        "trois-rivieres",
+        "saguenay",
+        "levis",
+        "brossard"
+      ],
+      "abbreviations": [
+        "qc"
+      ]
+    },
+    "atlantic": {
+      "label": "Atlantic Canada",
+      "terms": [
+        "nova scotia",
+        "new brunswick",
+        "newfoundland",
+        "labrador",
+        "prince edward island",
+        "halifax",
+        "moncton",
+        "fredericton",
+        "dartmouth",
+        "charlottetown",
+        "st. john's",
+        "atlantic canada",
+        "atlantic time"
+      ],
+      "abbreviations": [
+        "ns",
+        "nb",
+        "nl",
+        "pe",
+        "pei"
+      ]
+    }
+  },
+  "other_places": {
+    "terms": [
+      "ontario",
+      "british columbia",
+      "alberta",
+      "saskatchewan",
+      "yukon",
+      "northwest territories",
+      "nunavut",
+      "toronto",
+      "ottawa",
+      "mississauga",
+      "waterloo",
+      "kitchener",
+      "hamilton",
+      "markham",
+      "vancouver",
+      "burnaby",
+      "victoria",
+      "surrey",
+      "calgary",
+      "edmonton",
+      "regina",
+      "saskatoon"
+    ],
+    "abbreviations": [
+      "ab",
+      "bc",
+      "sk",
+      "yt",
+      "nt",
+      "nu"
+    ]
+  },
+  "nationwide_terms": [
+    "canada-wide",
+    "canada wide",
+    "nationwide",
+    "nation-wide",
+    "across canada",
+    "anywhere in canada",
+    "pan-canadian",
+    "coast to coast",
+    "ca-nationwide",
+    "remote canada",
+    "remote (canada)",
+    "remote in canada",
+    "remote - canada",
+    "remote, canada"
+  ],
+  "arrangement_terms": {
+    "remote": [
+      "remote",
+      "work from home",
+      "telecommute",
+      "telework",
+      "distributed team"
+    ],
+    "hybrid": [
+      "hybrid"
+    ],
+    "onsite": [
+      "on-site",
+      "onsite",
+      "on site",
+      "in-office",
+      "in office",
+      "in-person",
+      "in person"
+    ]
+  },
+  "french": {
+    "language_terms": [
+      "french",
+      "francais"
+    ],
+    "requirement_terms": [
+      "required",
+      "requirement",
+      "must",
+      "mandatory",
+      "essential",
+      "fluent",
+      "fluency",
+      "proficient",
+      "proficiency",
+      "written and spoken",
+      "spoken and written",
+      "bilingual"
+    ],
+    "softener_terms": [
+      "asset",
+      "preferred",
+      "nice to have",
+      "an advantage",
+      "a plus",
+      "bonus",
+      "considered",
+      "beneficial",
+      "would be"
+    ]
+  }
+}

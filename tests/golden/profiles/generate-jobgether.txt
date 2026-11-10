@@ -1,0 +1,53 @@
+<!-- GENERATED DRAFT — regenerate via the generate_jobgether MCP tool / update_jobgether_profile skill.
+     Reflects the public profile data (hash 47e0f24b69ab). -->
+
+# Jobgether Profile Update Draft
+
+## Character Limits
+| Field | Limit | Notes |
+|---|---|---|
+| Title / Headline | ~100 chars (practical target) | No published hard limit — keep it scannable in a match-results card. |
+| About / Bio | ~1,000–1,500 chars (practical target) | No published cap; matches the Indeed/ZipRecruiter summary target. |
+| Skills | ~20 tags (practical target) | No published cap; keep to the most ATS/match-relevant subset. |
+
+---
+
+## Resume File Dependency Check
+- Resume file not found at `<ROOT>/demo-vault/outputs/templates/resume*.docx`.
+- Run the fullstack_net_profile_resume skill to generate it before uploading.
+
+## Step 1 — Title / Headline
+```
+Full-Stack .NET Developer | C# · ASP.NET Core · Angular · Azure | AZ-900 Certified · AI-200 in progress
+```
+
+## Step 2 — About / Bio
+```
+Full-stack developer with 10+ years of enterprise experience in C#, ASP.NET Core Web API, Entity Framework Core and Microsoft SQL Server, with Angular and TypeScript on the front end. Built ASP.NET Core APIs and Angular 12 to 14 features at Acme Software, and integrated HubSpot, Microsoft Dynamics 365 and SharePoint through a real-time C# API at Globex Industrial. CI/CD on GitLab, Azure DevOps and GitHub Actions, deployed with Docker.
+
+AZ-900 Certified · AI-200 in progress. Completed training in Azure Functions, App Services, Azure Monitor, Entra ID and serverless architecture. Uses GitHub Copilot and Claude Code, and has completed 5 GitHub Copilot courses covering secure coding, CI/CD integration and AI-assisted testing.
+
+Led legacy modernization at three employers (ASP.NET Web Forms to Angular, MS Access to ASP.NET Web Forms on SQL Server, Clipper to SQL Server), and practices TDD with xUnit and Moq.
+
+Open to software developer and full-stack .NET roles. Remote in Canada preferred, based in <home city, province>.
+```
+_1030 / ~1,500 chars (practical target)_
+
+## Step 3 — Skills
+C#, ASP.NET Core, Angular, Microsoft Azure, CI/CD, Entity Framework Core, TypeScript, Microsoft SQL Server, T-SQL, Azure Functions, Azure DevOps, Docker, GitHub Actions, Git, xUnit, JWT, Microservices, GitHub Copilot, Microsoft Dynamics 365, SharePoint Online
+
+## Step 4 — Job Preferences
+| Setting | Value |
+|---|---|
+| Desired job titles | Full-Stack Developer · .NET Developer · Software Developer · Azure Developer |
+| Employment type | Full-time · Contract |
+| Location | <home city, province> — open to remote |
+| Remote preference | Remote preferred |
+| Salary expectation | Leave as "negotiable" unless the user wants a specific figure — run the `salary_research` skill rather than guessing a number here |
+| Availability | Immediate, unless the user says otherwise |
+| Matching / visibility toggle | Set to actively matching / visible to employers |
+
+---
+
+## After applying
+Once each field above has been pasted into Jobgether, update the "Current State vs Target" diff table in SKILL.md by hand — this draft has no visibility into what's actually live on Jobgether.

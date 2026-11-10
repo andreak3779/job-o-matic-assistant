@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# No personal data is available here, by design: the data lives in the private vault repo
+# (ADR 0013). Every test runs against a throwaway vault built from fictional fixtures, and
+# the identifier scan in scripts/check_private_values.py skips itself when it finds no vault.
+
+jobs:
+  python:
+    name: Lint and tests (Python 3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+
+      - name: Install
+        run: pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
+
+      - name: Ruff (lint)
+        run: ruff check .
+
+      - name: Ruff (format)
+        run: ruff format --check .
+
+      - name: Import contracts (architecture rules)
+        run: lint-imports
+
+      - name: Types (new modules)
+        run: mypy src
+
+      - name: Tests
+        run: pytest -q -p no:cacheprovider

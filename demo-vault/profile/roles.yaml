@@ -1,0 +1,69 @@
+roles:
+- title: Senior Full-Stack Developer
+  company: Meridian Benefits Group
+  location: Springfield, MD (Hybrid)
+  dates: October 2022 – Present
+  bullets:
+  - Led migration of a legacy ASP.NET Web Forms quote engine to Angular 14 with a layered C#/Entity Framework
+    Core service architecture, reducing quote turnaround time and cutting reported defects by roughly
+    a third
+  - Introduced JWT-based authentication and a controller-service-repository pattern across the claims
+    module, replacing session-based auth
+  - Built RESTful APIs in ASP.NET Core Web API against SQL Server, optimizing slow claims-lookup queries
+    with targeted indexing and query rewrites
+  - Owned GitLab CI/CD pipeline for the claims platform, adding automated test gates that caught regressions
+    before they reached staging
+  - Raised unit and integration test coverage on the claims module from under 40% to over 75% using xUnit
+    and Moq, as a department-wide quality initiative
+- title: Software Developer
+  company: Aerotech Industries Ltd.
+  location: Springfield, MD (Hybrid)
+  dates: September 2019 – October 2022
+  bullets:
+  - Built a real-time integration service in C#/ASP.NET Core reconciling sales lead data between the CRM
+    and an ERP system, eliminating a recurring manual data-entry reconciliation process
+  - Developed a desktop-application plugin (C#, WPF) to import and validate vendor takeoff files against
+    a custom XML schema
+  - Automated quality-control issue tracking with Power Apps and Power Automate, replacing a spreadsheet-based
+    process
+  - Coordinated release management across environments using Azure DevOps Pipelines and a ticket-driven
+    change process
+- title: Programmer / Systems Analyst
+  company: Prairie Transport Co.
+  location: Springfield, MD (Onsite)
+  dates: May 2019 – August 2019
+  bullets:
+  - Modernized a legacy reporting application by migrating business logic into SQL Server stored procedures,
+    improving report generation speed
+  - Gathered requirements and built SSRS reports for dispatch and billing teams
+- title: .NET Developer
+  company: Riverside Pharmacy Ltd.
+  location: Springfield, MD (Onsite)
+  dates: November 2015 – April 2019
+  bullets:
+  - Built SSIS packages to automate a drug-data transformation process, cutting processing time from hours
+    to well under an hour
+  - Owned the organization's Git source-control server (Ubuntu, SSH-administered) and led the transition
+    off ad hoc file-share-based version control
+  - Migrated a legacy MS Access order-management tool to a centralized ASP.NET Web Forms application backed
+    by SQL Server
+- title: Software Developer
+  company: Vantage Technology Solutions
+  location: Springfield, MD (Onsite)
+  dates: October 2011 – March 2015
+  bullets:
+  - Developed and maintained VB.NET/C# applications against Sybase SQL Server to meet evolving client
+    business rules
+  - Provided on-call production support, investigating and remediating failed overnight batch jobs under
+    documented escalation procedures
+  - Built and enhanced custom reports in C# and Entity Framework against a DB2 database, working from
+    an Agile backlog with a geographically dispersed team
+- visibility: private
+  title: Systems Programmer
+  company: Northwind Traders
+  location: Springfield, MD
+  dates: June 2004 - May 2009
+  bullets:
+  - Maintained batch reporting jobs for the finance team
+  - Wrote Visual Basic tools for the support desk
+  tier: legacy

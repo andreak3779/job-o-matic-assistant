@@ -1,0 +1,20 @@
+SARAH ASHFORD
+Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years
+sarah.ashford.dev@example.com  |  (410) 555-0142  |  Springfield, MD
+
+<TODAY>
+Re: Senior Full-Stack .NET Developer — Northgate Insurance Group
+Dear Northgate Insurance Group Hiring Team,
+Your Senior Full-Stack .NET Developer posting asks for C#, which is a big part of what I do. I have hands-on experience at Meridian Benefits Group, so I could be useful on the team quickly.
+WHAT I BRING
+•  C#: hands-on experience at Meridian Benefits Group
+•  ASP.NET Core: hands-on experience at Meridian Benefits Group
+•  Angular: hands-on experience at Meridian Benefits Group
+•  SQL Server: hands-on experience at Meridian Benefits Group
+•  Entity Framework Core: hands-on experience at Meridian Benefits Group
+TWO RELEVANT HIGHLIGHTS
+•  Meridian Benefits Group (October 2022 – Present): Led migration of a legacy ASP.NET Web Forms quote engine to Angular 14 with a layered C#/Entity Framework Core service architecture, reducing quote turnaround time and cutting reported defects by roughly a third
+•  Aerotech Industries Ltd. (September 2019 – October 2022): Built a real-time integration service in C#/ASP.NET Core reconciling sales lead data between the CRM and an ERP system, eliminating a recurring manual data-entry reconciliation process
+I'd enjoy talking through how my C# and ASP.NET Core experience could help Northgate Insurance Group. Do you have time for a short call this week or next?
+Sincerely,
+SARAH ASHFORD

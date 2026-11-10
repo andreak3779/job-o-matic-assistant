@@ -1,0 +1,52 @@
+stories:
+- title: Example pipeline ownership (Example Co)
+  jd_tags:
+  - ci-cd
+  - testing
+  - ownership
+  use_for:
+  - CI/CD
+  - Ownership
+  situation: Raise confidence in releases for a small team.
+  task: Own the fix end to end.
+  action: Investigated, automated and documented the change.
+  result: Measurable improvement for the team.
+  last_used: never
+  used_for:
+  - none
+  adapt_when:
+  - Role emphasizes speed — lead with the measurable result
+- title: Example data migration (Example Co)
+  jd_tags:
+  - sql
+  - data-transformation
+  - performance
+  use_for:
+  - Quantified achievement
+  - SQL / data work
+  situation: Cut a nightly data job from hours to minutes.
+  task: Own the fix end to end.
+  action: Investigated, automated and documented the change.
+  result: Measurable improvement for the team.
+  last_used: never
+  used_for:
+  - none
+  adapt_when:
+  - Role emphasizes speed — lead with the measurable result
+- title: Example cloud migration (Example Co)
+  jd_tags:
+  - azure
+  - legacy-systems
+  - modernization
+  use_for:
+  - Cloud
+  - Modernization
+  situation: Move a legacy app to a hosted service.
+  task: Own the fix end to end.
+  action: Investigated, automated and documented the change.
+  result: Measurable improvement for the team.
+  last_used: never
+  used_for:
+  - none
+  adapt_when:
+  - Role emphasizes speed — lead with the measurable result

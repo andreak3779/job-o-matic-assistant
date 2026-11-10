@@ -1,0 +1,21 @@
+{
+  "contact": {
+    "name": "SARAH ASHFORD",
+    "email": "sarah.ashford.dev@example.com",
+    "phone": "(410) 555-0142",
+    "location": "Springfield, MD"
+  },
+  "date": "January 15, 2026",
+  "recipient": ["Hiring Team", "Corner Shop", "12 Main Street, Springfield, MD"],
+  "re_line": "Re: Part-time Sales Associate (Job ID 4471)",
+  "salutation": "Dear Hiring Team,",
+  "hook": "I am applying for the part-time Sales Associate role at Corner Shop. Your posting asks for someone who can work weekends, which suits me well.",
+  "strengths_intro": "Here is what I would bring to the team:",
+  "strengths": [
+    {"label": "Reliable", "body": "I arrive early and finish what I start."},
+    {"label": "Friendly", "body": "I stay calm and polite with every customer."},
+    {"label": "Quick to learn", "body": "I learn new systems fast and write down the steps."}
+  ],
+  "fit_paragraph": "I am available days, evenings and weekends. I am new to your till system and I learn systems quickly.",
+  "closing": "I would welcome a short call. Thank you for considering my application."
+}

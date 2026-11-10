@@ -1,0 +1,49 @@
+Senior Full-Stack .NET Developer Northgate Insurance Group Sarah Ashford Technical Screen · <TODAY>
+EXPERIENCE MATCH
+They Need | Your Evidence
+c# | Strong Match — Meridian Benefits Group: production
+asp.net core | Strong Match — Meridian Benefits Group: production
+angular | Strong Match — Meridian Benefits Group: production
+sql server | Strong Match — Meridian Benefits Group: production
+entity framework core | Strong Match — Meridian Benefits Group: production
+rest api design | Strong Match — Meridian Benefits Group: production
+azure | Strong Match — Aerotech Industries Ltd.: production
+ci | Strong Match — Meridian Benefits Group: production
+cd | Strong Match — Meridian Benefits Group: production
+agile | Strong Match — Vantage Technology Solutions: production
+scrum | Learning / Portfolio — coursework or self-study
+docker | Strong Match — Meridian Benefits Group: production
+xunit | Strong Match — Meridian Benefits Group: production
+typescript | Learning / Portfolio — coursework or self-study
+graphql | Genuine Gap — Not present in resume, portfolio, or coursework
+kubernetes | Learning / Portfolio — tracked gap — partial coursework
+ANTICIPATED QUESTIONS
+Walk me through how you used c# at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+Walk me through how you used asp.net core at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+Walk me through how you used angular at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+Walk me through how you used sql server at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+Walk me through how you used entity framework core at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+Walk me through how you used rest api design at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+If scrum comes up, answer honestly about your current level — no production or portfolio evidence for it in the profile.
+STAR STORIES
+Example pipeline ownership (Example Co)  ·  ci-cd, testing, ownership
+S: Raise confidence in releases for a small team.
+T: Own the fix end to end.
+A: Investigated, automated and documented the change.
+R: Measurable improvement for the team.
+Adapt when: Role emphasizes speed — lead with the measurable result
+Example cloud migration (Example Co)  ·  azure, legacy-systems, modernization
+S: Move a legacy app to a hosted service.
+T: Own the fix end to end.
+A: Investigated, automated and documented the change.
+R: Measurable improvement for the team.
+Adapt when: Role emphasizes speed — lead with the measurable result
+FIT RATING
+Strong — All 11 required skills covered (1 course/portfolio-only); 4 nice-to-have(s) present.
+Generated <TODAY> · Sarah Ashford · Senior Full-Stack .NET Developer · Technical Screen

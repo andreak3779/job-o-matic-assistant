@@ -1,0 +1,192 @@
+<!-- GENERATED DRAFT — regenerate via the generate_linkedin MCP tool / update_linkedin_profile skill.
+     Reflects the public profile data (hash 47e0f24b69ab). -->
+
+# LinkedIn Profile Update Draft
+
+## Character Limits
+| Field | Limit | Notes |
+|---|---|---|
+| Headline | 220 chars | Compute the actual length of the rendered headline at generation time — do not rely on a stored count, it drifts. |
+| About | 2,600 chars | Compute the actual length of the rendered About text (Step 1, after fragments are substituted) at generation time. |
+| Experience description | 2,000 chars per role | |
+| Skills | 50 max; pin top 5 | LinkedIn uses controlled vocabulary — search exact term |
+
+---
+
+## Headline
+```
+Full-Stack .NET Developer | C#, ASP.NET Core, Angular, SQL Server | Azure (AZ-900) | AI-Assisted Development
+```
+_108 / 220 chars_
+
+## Step 1 — About Section
+```
+I'm a full-stack developer with 10+ years of enterprise experience in C#, ASP.NET Core Web API, Entity Framework Core and Microsoft SQL Server, with Angular and TypeScript on the front end. At Acme Software I built ASP.NET Core APIs and Angular 12 to 14 features for a benefits administration platform, wrote xUnit and Moq tests, and covered on-call production support.
+
+A lot of my work has been modernizing legacy systems, and I've done it at three employers: ASP.NET Web Forms to Angular, MS Access to ASP.NET Web Forms on SQL Server, and a Clipper application to SQL Server. At Globex Industrial I built a real-time C#/ASP.NET Core API that fixed data mismatches between HubSpot and Dynamics 365 Sales. At Example Pharmacy I cut a drug data SSIS process from 8 hours to 1.
+
+AZ-900 Certified · AI-200 in progress. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed 5 GitHub Copilot courses and 3 leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with 118 automated tests, 80% coverage and a blocking CI gate, and career-fit-assistant, a Python MCP server.
+
+Core stack:
+Backend: C#, ASP.NET Core (Web API, MVC), .NET Framework, Entity Framework Core, REST API design
+Frontend: Angular, TypeScript, RxJS, NgRx, Angular Material
+Database: Microsoft SQL Server, T-SQL, stored procedures, query optimization, SSIS, SSRS
+Cloud: Azure (Functions, App Services, Monitor, Entra ID), AZ-900 certified
+DevOps and testing: GitLab CI/CD, Azure DevOps, GitHub Actions, Docker, xUnit, Moq, Jest
+
+Open to software developer and full-stack .NET roles. Remote in Canada preferred. I'm based in the home city.
+```
+_1729 / 2,600 chars_
+
+## Step 2 — Open to Work Banner
+*(Profile → Open to → Finding a new job)*
+
+| Setting | Value |
+|---|---|
+| Job titles | Full-Stack Developer · .NET Developer · Software Developer · Azure Developer |
+| Job types | Full-time · Contract |
+| Location | <home city, province> · Remote |
+| Visibility | **All LinkedIn members** (maximizes recruiter reach) |
+
+---
+
+## Step 3 — Add Experience Entry
+```
+Upskilling and expanding portfolio while actively seeking a full-stack .NET developer role.
+
+- 10 Pluralsight courses completed and 2 more in progress, plus 1 hands-on labs (1 completed, 0 in progress) — 13 total across Azure, ASP.NET Core, Angular, GitHub Copilot, DevOps, Python, and leadership.
+- AZ-900 Certified · AI-200 in progress.
+- Building portfolio projects on GitHub: CookingTime (.NET 10 Blazor legacy migration, 118 automated tests, 80% coverage, blocking CI gate).
+- Deepened GitHub Copilot expertise: enterprise deployment, AI agents, secure development, CI/CD integration, and automated test generation.
+- Designed AI-assisted workflows using prompt engineering and structured instruction systems to produce gap analyses, learning plans, and tailored application documents.
+```
+
+## Step 3.5 — Sync Existing Experience Entries
+### Senior Full-Stack Developer
+**Meridian Benefits Group | Springfield, MD (Hybrid) | October 2022 – Present**
+
+- Led migration of a legacy ASP.NET Web Forms quote engine to Angular 14 with a layered C#/Entity Framework Core service architecture, reducing quote turnaround time and cutting reported defects by roughly a third
+- Introduced JWT-based authentication and a controller-service-repository pattern across the claims module, replacing session-based auth
+- Built RESTful APIs in ASP.NET Core Web API against SQL Server, optimizing slow claims-lookup queries with targeted indexing and query rewrites
+- Owned GitLab CI/CD pipeline for the claims platform, adding automated test gates that caught regressions before they reached staging
+- Raised unit and integration test coverage on the claims module from under 40% to over 75% using xUnit and Moq, as a department-wide quality initiative
+
+_783 / 2,000 chars_
+
+### Software Developer
+**Aerotech Industries Ltd. | Springfield, MD (Hybrid) | September 2019 – October 2022**
+
+- Built a real-time integration service in C#/ASP.NET Core reconciling sales lead data between the CRM and an ERP system, eliminating a recurring manual data-entry reconciliation process
+- Developed a desktop-application plugin (C#, WPF) to import and validate vendor takeoff files against a custom XML schema
+- Automated quality-control issue tracking with Power Apps and Power Automate, replacing a spreadsheet-based process
+- Coordinated release management across environments using Azure DevOps Pipelines and a ticket-driven change process
+
+_543 / 2,000 chars_
+
+### Programmer / Systems Analyst
+**Prairie Transport Co. | Springfield, MD (Onsite) | May 2019 – August 2019**
+
+- Modernized a legacy reporting application by migrating business logic into SQL Server stored procedures, improving report generation speed
+- Gathered requirements and built SSRS reports for dispatch and billing teams
+
+_218 / 2,000 chars_
+
+### .NET Developer
+**Riverside Pharmacy Ltd. | Springfield, MD (Onsite) | November 2015 – April 2019**
+
+- Built SSIS packages to automate a drug-data transformation process, cutting processing time from hours to well under an hour
+- Owned the organization's Git source-control server (Ubuntu, SSH-administered) and led the transition off ad hoc file-share-based version control
+- Migrated a legacy MS Access order-management tool to a centralized ASP.NET Web Forms application backed by SQL Server
+
+_393 / 2,000 chars_
+
+### Software Developer
+**Vantage Technology Solutions | Springfield, MD (Onsite) | October 2011 – March 2015**
+
+- Developed and maintained VB.NET/C# applications against Sybase SQL Server to meet evolving client business rules
+- Provided on-call production support, investigating and remediating failed overnight batch jobs under documented escalation procedures
+- Built and enhanced custom reports in C# and Entity Framework against a DB2 database, working from an Agile backlog with a geographically dispersed team
+
+_404 / 2,000 chars_
+
+## Step 4 — Skills
+**Top 5 to pin (in order):**
+```
+1. C#
+2. ASP.NET Core
+3. Angular
+4. Microsoft Azure
+5. CI/CD
+```
+
+**Then add (45 more, 50 of 50 total):**
+- .NET
+- Entity Framework Core
+- Microsoft SQL Server
+- T-SQL
+- REST APIs
+- ASP.NET Web API
+- TypeScript
+- JavaScript
+- RxJS
+- NgRx
+- SQL Server Integration Services (SSIS)
+- SQL Server Reporting Services (SSRS)
+- Stored Procedures
+- Query Optimization
+- Test-Driven Development (TDD)
+- Unit Testing
+- Integration Testing
+- xUnit
+- Jest
+- Docker
+- GitLab
+- GitHub Actions
+- Azure DevOps
+- Azure Functions
+- Microsoft Entra ID
+- Git
+- GitHub Copilot
+- Prompt Engineering
+- Generative AI
+- Clean Architecture
+- SOLID Principles
+- Object-Oriented Programming (OOP)
+- Domain-Driven Design
+- Microservices
+- Service-Oriented Architecture (SOA)
+- OAuth
+- JSON Web Token (JWT)
+- Microsoft Dynamics 365
+- HubSpot
+- SharePoint
+- Agile Methodologies
+- Scrum
+- Code Review
+- Legacy System Modernization
+- Blazor
+
+## Step 5 — Certifications
+*(Licenses & Certifications section)*
+
+**AZ-900 is certified with a live credential** — add it now if not already present:
+1. Go to [Microsoft Learn credentials](https://learn.microsoft.com/en-us/users/me/credentials)
+2. Find the AZ-900 badge → click **Share** → **Add to LinkedIn**
+3. LinkedIn will auto-fill the credential ID, issuer, and date
+
+**Do NOT add AI-200 manually** — it hasn't been earned (the exam is on hold). Wait for Microsoft to issue that credential before repeating the steps above.
+
+**Existing old MS certs** (MS: Programming in C#, MCPS): leave as-is — they show tenure and are not harmful.
+
+---
+
+## Step 6 — Courses Section
+- Microsoft Azure Fundamentals (AZ-900): Exam Preparation — Pluralsight
+- Azure AI Cloud Developer Associate (AI-200): Exam Preparation — Pluralsight
+
+## Step 7 — Featured Section
+1. **CookingTime** — https://github.com/example-user/CookingTime
+   Legacy modernization demo.
+
+## After applying
+Once each field above has been pasted into LinkedIn, update the "Current State vs Target" diff table in SKILL.md by hand — this draft has no visibility into what's actually live on LinkedIn.

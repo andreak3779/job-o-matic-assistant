@@ -1,0 +1,487 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job-o-matic-assistant"
+version = "0.1.0"
+description = "Deterministic job-search automation toolkit"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "job-o-matic contributors"}
+]
+# Everything the CLI needs at import time. The extras below add
+# optional pieces (MCP server, Pluralsight HTML parser, PDF plans, dev tooling).
+dependencies = [
+    "jsonschema>=4.21,<5",
+    "python-docx>=1.1,<2",
+    "pyyaml>=6.0,<7",
+    "pydantic>=2.7,<3",
+    "sqlite-vec>=0.1.6,<0.2",
+]
+
+[project.optional-dependencies]
+parser = [
+    "beautifulsoup4>=4.12,<5",
+    "lxml>=5.0,<7",
+    "orjson>=3.9,<4",
+]
+# docx / yaml / schema are core dependencies now; the extras stay as empty-cost
+# aliases so existing `pip install -e ".[docx,schema]"` commands keep working.
+docx = [
+    "python-docx>=1.1,<2",
+]
+yaml = [
+    "pyyaml>=6.0,<7",
+]
+schema = [
+    "jsonschema>=4.21,<5",
+]
+pdf = [
+    "reportlab>=4.0,<6",
+]
+# server.py imports `mcp.server.MCPServer`, which is the 2.x API.
+mcp = [
+    "mcp[cli]>=2.2,<3",
+]
+dev = [
+    "pytest>=8.0,<10",
+    "pytest-cov>=5.0,<8",
+]
+lint = [
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "import-linter>=2.0,<3",
+]
+
+# `jobo` is the command. `claude-jobs` is the old name, kept for one release (it prints a notice).
+# `python -m jobomatic` does the same as `jobo` without the virtualenv on PATH.
+[project.scripts]
+jobo = "jobomatic.interfaces.cli.main:main"
+jobo-mcp = "jobomatic.interfaces.mcp.server:main"
+claude-jobs = "jobomatic.interfaces.cli.main:deprecated"
+
+# The packages are listed explicitly (new subpackages must be added here).
+[tool.setuptools]
+packages = [
+    "jobomatic",
+    "jobomatic.applications",
+    "jobomatic.applications.adapters",
+    "jobomatic.commands",
+    "jobomatic.fit",
+    "jobomatic.interfaces",
+    "jobomatic.interfaces.cli",
+    "jobomatic.interfaces.mcp",
+    "jobomatic.presence",
+    "jobomatic.privacy",
+    "jobomatic.profile",
+    "jobomatic.profile.adapters",
+    "jobomatic.learning",
+    "jobomatic.learning.adapters",
+    "jobomatic.documents",
+    "jobomatic.documents.adapters",
+    "jobomatic.retrieval",
+    "jobomatic.retrieval.adapters",
+]
+
+# The rule and style JSON files are read next to the code, so they must ship with it.
+# NOTE: only editable installs (`pip install -e .`) are supported.
+[tool.setuptools.package-data]
+"jobomatic.fit" = ["*.json"]
+"jobomatic.documents.adapters" = ["*.json"]
+"jobomatic.learning" = ["topics.yaml", "*.schema.json"]
+
+[tool.setuptools.package-dir]
+jobomatic = "src/jobomatic"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# Baseline ignores — add per-line `noqa` for false positives:
+# - E402: many project scripts intentionally bootstrap sys.path before
+#   imports (legacy pattern being phased out).
+# - E501: line-length handled by formatter, not linter.
+# - B008: function-call defaults in test fixtures are intentional.
+# - B023: loop variables in test fixtures are intentional closures.
+# - UP042: codebase keeps the (str, Enum) pattern for 3.10 compat in tests;
+#   migrate to StrEnum (3.11+) in a separate sweep.
+ignore = ["E501", "E402", "B008", "B023", "UP042"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+# Known limitation (TODO: tighten over time): docx_layout.py depends on python-docx stubs
+# (6 valid-type + 3 attr-defined), so it is not type-checked.
+[[tool.mypy.overrides]]
+module = [
+    "jobomatic.documents.adapters.docx_layout",
+]
+ignore_errors = true
+
+
+# Architecture rules (ADR 0016), checked by `lint-imports` in CI and the pre-commit hook.
+[tool.importlinter]
+root_packages = ["jobomatic"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Profile domain core knows nothing about adapters, infrastructure or file formats"
+type = "forbidden"
+source_modules = [
+    "jobomatic.profile.model",
+    "jobomatic.profile.ports",
+    "jobomatic.profile.service",
+    "jobomatic.profile.visibility",
+]
+forbidden_modules = [
+    "jobomatic.profile.adapters",
+    "jobomatic.bootstrap",
+    "jobomatic.interfaces",
+    "yaml",
+]
+
+[[tool.importlinter.contracts]]
+name = "Profile adapters depend on the module's core, never on the interfaces"
+type = "forbidden"
+source_modules = [
+    "jobomatic.profile.adapters",
+    "jobomatic.learning.adapters",
+    "jobomatic.documents.adapters",
+    "jobomatic.retrieval.adapters",
+]
+forbidden_modules = ["jobomatic.interfaces"]
+
+[[tool.importlinter.contracts]]
+name = "Learning domain core knows nothing about adapters, infrastructure or file formats"
+type = "forbidden"
+source_modules = [
+    "jobomatic.learning.model",
+    "jobomatic.learning.ports",
+    "jobomatic.learning.service",
+]
+forbidden_modules = [
+    "jobomatic.learning.adapters",
+    "jobomatic.bootstrap",
+    "jobomatic.yamlio",
+    "jobomatic.interfaces",
+    "yaml",
+    "bs4",
+    "jsonschema",
+]
+
+[[tool.importlinter.contracts]]
+name = "The learning module does not use the profile module"
+type = "forbidden"
+source_modules = ["jobomatic.learning"]
+forbidden_modules = ["jobomatic.profile"]
+
+[[tool.importlinter.contracts]]
+name = "The profile module does not use the learning module"
+type = "forbidden"
+source_modules = ["jobomatic.profile"]
+forbidden_modules = ["jobomatic.learning"]
+
+[[tool.importlinter.contracts]]
+name = "Documents domain core knows nothing about adapters, infrastructure or file formats"
+type = "forbidden"
+source_modules = [
+    "jobomatic.documents.model",
+    "jobomatic.documents.ports",
+    "jobomatic.documents.service",
+]
+forbidden_modules = [
+    "jobomatic.documents.adapters",
+    "jobomatic.bootstrap",
+    "jobomatic.interfaces",
+    "docx",
+]
+
+[[tool.importlinter.contracts]]
+name = "The documents module does not use the profile or learning modules"
+type = "forbidden"
+source_modules = ["jobomatic.documents"]
+forbidden_modules = ["jobomatic.profile", "jobomatic.learning"]
+
+[[tool.importlinter.contracts]]
+name = "Retrieval domain core knows nothing about adapters, infrastructure or storage"
+type = "forbidden"
+source_modules = [
+    "jobomatic.retrieval.model",
+    "jobomatic.retrieval.ports",
+    "jobomatic.retrieval.scoring",
+    "jobomatic.retrieval.service",
+]
+forbidden_modules = [
+    "jobomatic.retrieval.adapters",
+    "jobomatic.bootstrap",
+    "jobomatic.interfaces",
+    "sqlite3",
+    "sqlite_vec",
+    "urllib",
+]
+
+[[tool.importlinter.contracts]]
+name = "The retrieval module does not use the profile, learning or documents modules"
+type = "forbidden"
+source_modules = ["jobomatic.retrieval"]
+forbidden_modules = ["jobomatic.profile", "jobomatic.learning", "jobomatic.documents"]
+
+[[tool.importlinter.contracts]]
+name = "The profile, learning and documents modules do not use the retrieval module"
+type = "forbidden"
+source_modules = ["jobomatic.profile", "jobomatic.learning", "jobomatic.documents"]
+forbidden_modules = ["jobomatic.retrieval"]
+
+[[tool.importlinter.contracts]]
+name = "The fit module depends on neither the interfaces nor other modules"
+type = "forbidden"
+source_modules = ["jobomatic.fit"]
+forbidden_modules = [
+    "jobomatic.interfaces",
+    "jobomatic.bootstrap",
+    "jobomatic.documents",
+    "jobomatic.learning",
+    "jobomatic.retrieval",
+    "jobomatic.profile.adapters",
+]
+
+[[tool.importlinter.contracts]]
+name = "The profile, learning, documents and retrieval modules do not use the fit module"
+type = "forbidden"
+source_modules = [
+    "jobomatic.profile",
+    "jobomatic.learning",
+    "jobomatic.documents",
+    "jobomatic.retrieval",
+]
+forbidden_modules = ["jobomatic.fit"]
+
+[[tool.importlinter.contracts]]
+name = "Applications domain core knows nothing about adapters, infrastructure or file formats"
+type = "forbidden"
+source_modules = [
+    "jobomatic.applications.model",
+    "jobomatic.applications.ports",
+    "jobomatic.applications.service",
+]
+forbidden_modules = [
+    "jobomatic.applications.adapters",
+    "jobomatic.applications.api",
+    "jobomatic.bootstrap",
+    "jobomatic.interfaces",
+    "csv",
+]
+
+[[tool.importlinter.contracts]]
+name = "The applications module uses only the fit module's parser, and no other module"
+type = "forbidden"
+source_modules = ["jobomatic.applications"]
+forbidden_modules = [
+    "jobomatic.profile",
+    "jobomatic.learning",
+    "jobomatic.documents",
+    "jobomatic.retrieval",
+]
+
+[[tool.importlinter.contracts]]
+name = "The profile, learning, documents, retrieval and fit modules do not use the applications module"
+type = "forbidden"
+source_modules = [
+    "jobomatic.profile",
+    "jobomatic.learning",
+    "jobomatic.documents",
+    "jobomatic.retrieval",
+    "jobomatic.fit",
+]
+forbidden_modules = ["jobomatic.applications"]
+
+[[tool.importlinter.contracts]]
+name = "The privacy module depends on neither the interfaces nor other modules"
+type = "forbidden"
+source_modules = ["jobomatic.privacy"]
+forbidden_modules = [
+    "jobomatic.interfaces",
+    "jobomatic.bootstrap",
+    "jobomatic.profile",
+    "jobomatic.learning",
+    "jobomatic.documents",
+    "jobomatic.retrieval",
+    "jobomatic.applications",
+    "jobomatic.presence",
+]
+
+[[tool.importlinter.contracts]]
+name = "The presence module is driven by the interfaces and never uses them"
+type = "forbidden"
+source_modules = ["jobomatic.presence"]
+forbidden_modules = ["jobomatic.interfaces"]
+
+[[tool.importlinter.contracts]]
+name = "No other module uses the presence module"
+type = "forbidden"
+source_modules = [
+    "jobomatic.profile",
+    "jobomatic.learning",
+    "jobomatic.documents",
+    "jobomatic.retrieval",
+    "jobomatic.fit",
+    "jobomatic.applications",
+    "jobomatic.privacy",
+]
+forbidden_modules = ["jobomatic.presence"]
+
+[[tool.importlinter.contracts]]
+name = "No module uses the commands package"
+type = "forbidden"
+source_modules = [
+    "jobomatic.profile",
+    "jobomatic.learning",
+    "jobomatic.documents",
+    "jobomatic.retrieval",
+    "jobomatic.fit",
+    "jobomatic.applications",
+    "jobomatic.privacy",
+    "jobomatic.presence",
+]
+forbidden_modules = ["jobomatic.commands"]
+
+[[tool.importlinter.contracts]]
+name = "No module or command uses the interfaces"
+type = "forbidden"
+source_modules = [
+    "jobomatic.profile",
+    "jobomatic.learning",
+    "jobomatic.documents",
+    "jobomatic.retrieval",
+    "jobomatic.fit",
+    "jobomatic.applications",
+    "jobomatic.privacy",
+    "jobomatic.presence",
+    "jobomatic.commands",
+    "jobomatic.gate",
+]
+forbidden_modules = ["jobomatic.interfaces"]
+
+[[tool.importlinter.contracts]]
+name = "The gate is used by the interfaces and uses only the modules, never the commands"
+type = "forbidden"
+source_modules = ["jobomatic.gate"]
+forbidden_modules = ["jobomatic.commands", "jobomatic.interfaces", "jobomatic.bootstrap"]
+
+# ---- every module has a place, and third-party libraries stay in their adapters ----
+
+[[tool.importlinter.contracts]]
+name = "The modules form layers: each uses only the ones below it, and siblings are independent"
+type = "layers"
+layers = [
+    "jobomatic.interfaces",
+    "jobomatic.commands | jobomatic.gate | jobomatic.presence",
+    "jobomatic.bootstrap",
+    "jobomatic.corpus",
+    "jobomatic.applications | jobomatic.privacy",
+    "jobomatic.fit",
+    "jobomatic.documents | jobomatic.learning | jobomatic.profile | jobomatic.retrieval",
+    "jobomatic.paths | jobomatic.provenance | jobomatic.yamlio",
+]
+
+[[tool.importlinter.contracts]]
+name = "Fit: the engine uses the parser, the parser uses the rule modules, salary uses constraints"
+type = "layers"
+layers = [
+    "jobomatic.fit.engine | jobomatic.fit.salary",
+    "jobomatic.fit.parser | jobomatic.fit.constraints",
+    "jobomatic.fit.gap_coaching | jobomatic.fit.location | jobomatic.fit.soft_requirements | jobomatic.fit.soft_skills | jobomatic.fit.terms",
+]
+
+[[tool.importlinter.contracts]]
+name = "Presence: the five generators are independent and share only the helpers"
+type = "layers"
+layers = [
+    "jobomatic.presence.github | jobomatic.presence.job_board | jobomatic.presence.jobgether | jobomatic.presence.linkedin | jobomatic.presence.pluralsight",
+    "jobomatic.presence.resume_freshness | jobomatic.presence.skill_text",
+]
+
+[[tool.importlinter.contracts]]
+name = "Commands: each generator is independent and shares only the support module"
+type = "layers"
+layers = [
+    "jobomatic.commands.cold_call | jobomatic.commands.cover_letter | jobomatic.commands.fit_check | jobomatic.commands.gap_analysis | jobomatic.commands.interview_prep | jobomatic.commands.job_site_letter | jobomatic.commands.resume | jobomatic.commands.thank_you",
+    "jobomatic.commands.support",
+]
+
+[[tool.importlinter.contracts]]
+name = "Interfaces: the MCP server may use the command line, never the reverse; the CLI main is the top"
+type = "layers"
+layers = [
+    "jobomatic.interfaces.mcp",
+    "jobomatic.interfaces.cli.main",
+    "jobomatic.interfaces.cli.applications_cli | jobomatic.interfaces.cli.learning_cli | jobomatic.interfaces.cli.profile_cli | jobomatic.interfaces.cli.render_cli | jobomatic.interfaces.cli.retrieval_cli",
+]
+
+# Third-party libraries: only direct imports count here (a module using a command that uses docx is fine).
+[[tool.importlinter.contracts]]
+name = "python-docx is used only by the document adapters and the commands that build documents"
+type = "forbidden"
+source_modules = ["jobomatic"]
+forbidden_modules = ["docx"]
+allow_indirect_imports = true
+ignore_imports = [
+    "jobomatic.documents.adapters.* -> docx",
+    "jobomatic.commands.* -> docx",
+]
+
+[[tool.importlinter.contracts]]
+name = "reportlab is used only by the learning-plan PDF engine"
+type = "forbidden"
+source_modules = ["jobomatic"]
+forbidden_modules = ["reportlab"]
+allow_indirect_imports = true
+ignore_imports = ["jobomatic.documents.adapters.pdf_template -> reportlab"]
+
+[[tool.importlinter.contracts]]
+name = "SQLite and sqlite-vec are used only by the retrieval index adapter"
+type = "forbidden"
+source_modules = ["jobomatic"]
+forbidden_modules = ["sqlite3", "sqlite_vec"]
+allow_indirect_imports = true
+ignore_imports = [
+    "jobomatic.retrieval.adapters.sqlite_index -> sqlite3",
+    "jobomatic.retrieval.adapters.sqlite_index -> sqlite_vec",
+]
+
+[[tool.importlinter.contracts]]
+name = "PyYAML is used only by the YAML helper, the YAML adapters and the skill-prompt reader"
+type = "forbidden"
+source_modules = ["jobomatic"]
+forbidden_modules = ["yaml"]
+allow_indirect_imports = true
+ignore_imports = [
+    "jobomatic.yamlio -> yaml",
+    "jobomatic.profile.adapters.* -> yaml",
+    "jobomatic.learning.adapters.* -> yaml",
+    "jobomatic.interfaces.mcp.skill_prompts -> yaml",
+]
+
+[[tool.importlinter.contracts]]
+name = "HTML and JSON-schema parsing libraries are used only by the learning adapters"
+type = "forbidden"
+source_modules = ["jobomatic"]
+forbidden_modules = ["bs4", "jsonschema"]
+allow_indirect_imports = true
+ignore_imports = ["jobomatic.learning.adapters.* -> bs4", "jobomatic.learning.adapters.* -> jsonschema"]
+
+[[tool.importlinter.contracts]]
+name = "The MCP library is used only by the MCP interface"
+type = "forbidden"
+source_modules = ["jobomatic"]
+forbidden_modules = ["mcp"]
+allow_indirect_imports = true
+ignore_imports = ["jobomatic.interfaces.mcp.* -> mcp"]

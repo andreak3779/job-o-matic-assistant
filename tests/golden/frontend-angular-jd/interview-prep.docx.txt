@@ -1,0 +1,31 @@
+Senior Angular Frontend Developer Adventure Works UI Sarah Ashford Technical Screen · <TODAY>
+EXPERIENCE MATCH
+They Need | Your Evidence
+angular v17+ | Genuine Gap — Not present in resume, portfolio, or coursework
+typescript | Learning / Portfolio — coursework or self-study
+rest api integration | Genuine Gap — Not present in resume, portfolio, or coursework
+unit testing with jasmine | Genuine Gap — Not present in resume, portfolio, or coursework
+karma | Genuine Gap — Not present in resume, portfolio, or coursework
+responsive design with css | Genuine Gap — Not present in resume, portfolio, or coursework
+sass | Learning / Portfolio — coursework or self-study
+github actions ci | Genuine Gap — Not present in resume, portfolio, or coursework
+cd | Strong Match — Meridian Benefits Group: production
+react experience | Genuine Gap — Not present in resume, portfolio, or coursework
+azure static web apps | Genuine Gap — Not present in resume, portfolio, or coursework
+blazor webassembly | Genuine Gap — Not present in resume, portfolio, or coursework
+accessibility (wcag) | Genuine Gap — Not present in resume, portfolio, or coursework
+ANTICIPATED QUESTIONS
+Walk me through how you used cd at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+If angular v17+ comes up, answer honestly about your current level — no production or portfolio evidence for it in the profile.
+If typescript comes up, answer honestly about your current level — no production or portfolio evidence for it in the profile.
+STAR STORIES
+Example pipeline ownership (Example Co)  ·  ci-cd, testing, ownership
+S: Raise confidence in releases for a small team.
+T: Own the fix end to end.
+A: Investigated, automated and documented the change.
+R: Measurable improvement for the team.
+Adapt when: Role emphasizes speed — lead with the measurable result
+FIT RATING
+Pass — 6 genuine gaps in required skills — critical mismatch likely.
+Generated <TODAY> · Sarah Ashford · Senior Angular Frontend Developer · Technical Screen

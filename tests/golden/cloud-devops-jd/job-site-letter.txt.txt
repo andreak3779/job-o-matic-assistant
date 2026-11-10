@@ -1,0 +1,3 @@
+I'm applying for the Azure DevOps / SRE role at Northwind Tech. My background includes hands-on experience at Meridian Benefits Group, and I think that would carry over well to your team.
+
+I'd be glad to talk about how I could help Northwind Tech. You can see a recent example in CookingTime (C#, .NET 10). Thanks for taking a look.

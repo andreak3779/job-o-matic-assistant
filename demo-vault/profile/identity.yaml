@@ -1,0 +1,19 @@
+name: Sarah Ashford
+email: sarah.ashford.dev@example.com
+phone: (410) 555-0142
+location: Springfield, MD
+headline: '**Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years**'
+summary: Full-stack .NET developer with a track record of modernizing legacy enterprise systems into service-oriented,
+  cloud-hosted applications. Comfortable owning a feature from database schema through Angular UI through
+  CI/CD pipeline, with particular depth in insurance and manufacturing domains.
+differentiators:
+- 'Full-stack depth: ASP.NET Core + Angular'
+- 'Legacy modernization: one migration'
+- 'SQL Server: 10+ years'
+- 'TDD: xUnit'
+- 'GitHub Copilot: 5 courses'
+- 'Prompt Engineering: 1 course'
+- 'AI/LLM depth: none'
+- 'Communication: 3 leadership/communication Pluralsight courses'
+- 'Pace of learning: 10 courses completed + 2 in progress + 1 labs (1 completed, 0 in progress) = **13
+  total**'

@@ -1,0 +1,20 @@
+{
+  "home": {
+    "label": "Springfield",
+    "city": [
+      "springfield"
+    ],
+    "province_label": "Midland",
+    "province": [
+      "midland"
+    ],
+    "province_abbreviations": [
+      "md"
+    ]
+  },
+  "excluded_regions": [
+    "quebec",
+    "atlantic"
+  ],
+  "exclude_french_required": true
+}

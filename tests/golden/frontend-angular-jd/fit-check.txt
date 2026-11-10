@@ -1,0 +1,28 @@
+## Fit Check — Senior Angular Frontend Developer at Adventure Works UI
+
+**Required Skills**
+| Skill | Status | Evidence |
+|---|---|---|
+| angular v17+ | 🔴 | no evidence |
+| typescript | 🟡 | coursework or self-study |
+| rest api integration | 🔴 | no evidence |
+| unit testing with jasmine | 🔴 | no evidence |
+| karma | 🔴 | no evidence |
+| responsive design with css | 🔴 | no evidence |
+| sass | 🟡 | coursework or self-study |
+| github actions ci | 🔴 | no evidence |
+| cd | ✅ | Meridian Benefits Group, production |
+
+**Nice-to-Haves**
+| Skill | Status | Evidence |
+|---|---|---|
+| react experience | 🔴 | no evidence |
+| azure static web apps | 🔴 | no evidence |
+| blazor webassembly | 🔴 | no evidence |
+| accessibility (wcag) | 🔴 | no evidence |
+
+**Fit Rating: Pass**
+6 genuine gaps in required skills — critical mismatch likely.
+
+**Location & work arrangement**
+- ⚠️ Hybrid/on-site with no stated city — confirm it is Springfield (hybrid or on-site outside Springfield is a Pass)

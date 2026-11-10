@@ -1,0 +1,35 @@
+<!-- GENERATED DRAFT — regenerate via the generate_pluralsight MCP tool / update_pluralsight_profile skill.
+     Reflects the public profile data (hash 47e0f24b69ab). -->
+
+# Pluralsight Profile Update Draft
+
+## Character Limits
+| Field | Limit | Notes |
+|---|---|---|
+| Bio / Tagline | ~150 chars (practical target) | Pluralsight doesn't publish a hard limit for this field — keep it to one sentence that reads well under the name. |
+
+---
+
+## Step 1 — Bio / Tagline
+```
+Full-stack .NET/Angular developer. AZ-900 Certified · AI-200 in progress.
+```
+_73 chars (practical target: ~150)_
+
+## Step 2 — Profile Fields
+*(Profile → Edit profile)*
+
+| Field | Value |
+|---|---|
+| Job title | Full-Stack .NET Developer |
+| Location | <home city, province> |
+| Links | GitHub: https://github.com/<github-user> · LinkedIn: https://www.linkedin.com/in/<linkedin-user> |
+
+No further action needed beyond bio/title/location/links — do not hand-edit
+course or Skill IQ data here; that reflects automatically from Pluralsight's
+own tracking as courses complete.
+
+---
+
+## After applying
+Once each field above has been pasted into Pluralsight, update the "Current State vs Target" diff table in SKILL.md by hand — this draft has no visibility into what's actually live on Pluralsight.

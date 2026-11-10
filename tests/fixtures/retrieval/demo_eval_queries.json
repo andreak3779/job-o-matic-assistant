@@ -1,0 +1,25 @@
+{
+  "_comment": "Hand-labelled queries for the fictional demo vault: a JD-style phrasing and the chunk titles (substring, case-insensitive) that count as correct evidence. Phrased like job postings, not like the course titles. Used by scripts/eval_retrieval.py and tests/test_retrieval_eval.py.",
+  "queries": [
+    {"query": "tuning slow relational database queries", "expected": ["Practical SQL Query Tuning", "Fix a Slow Stored Procedure"]},
+    {"query": "container orchestration on a managed cluster", "expected": ["Kubernetes for App Developers", "Deploy an App to Azure Kubernetes Service"]},
+    {"query": "asynchronous messaging between services with a broker", "expected": ["Message Queues in Practice", "Azure Service Bus Messaging"]},
+    {"query": "package applications into images and run them locally", "expected": ["Docker for .NET Developers"]},
+    {"query": "automated build and release pipelines", "expected": ["CI/CD Pipelines with GitHub Actions", "Write a GitHub Actions Workflow", "Introduction to Azure DevOps"]},
+    {"query": "serverless functions triggered by events", "expected": ["Event-Driven Apps with Azure Functions", "Implement Azure Functions"]},
+    {"query": "writing automated tests and mocking dependencies", "expected": ["Unit Testing C# with xUnit"]},
+    {"query": "token based authentication and authorization for APIs", "expected": ["OAuth and OpenID Connect"]},
+    {"query": "building complex validated forms in a single page app", "expected": ["Angular Forms and Validation"]},
+    {"query": "avoiding deadlocks in concurrent code", "expected": ["Asynchronous Programming in C#"]},
+    {"query": "reducing latency with an in-memory data store", "expected": ["Caching with Redis"]},
+    {"query": "observability, tracing and production troubleshooting", "expected": ["Logging and Monitoring .NET Applications"]},
+    {"query": "object relational mapping and schema migrations", "expected": ["Entity Framework Core Fundamentals"]},
+    {"query": "designing and documenting HTTP interfaces", "expected": ["Designing RESTful APIs"]},
+    {"query": "breaking a monolith into independently deployable services", "expected": ["Microservices Architecture Patterns"]},
+    {"query": "infrastructure as code for cloud environments", "expected": ["Terraform: Getting Started"]},
+    {"query": "document database partitioning and throughput", "expected": ["Azure Cosmos DB for Developers"]},
+    {"query": "keyboard and screen reader support", "expected": ["Web Accessibility Fundamentals"]},
+    {"query": "credential-free access to cloud resources", "expected": ["managed identities"]},
+    {"query": "legacy application modernization", "expected": ["CookingTime"]}
+  ]
+}

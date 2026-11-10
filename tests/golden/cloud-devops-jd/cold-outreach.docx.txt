@@ -1,0 +1,15 @@
+SARAH ASHFORD
+Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years
+sarah.ashford.dev@example.com  |  (410) 555-0142  |  Springfield, MD
+
+<TODAY>
+Dear Hiring Team,
+I'm a Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years, and Northwind Tech looks like a place where my work could fit. I wanted to introduce myself in case you're hiring. A few things about me: Full-stack depth: ASP.NET Core + Angular; Legacy modernization: one migration; SQL Server: 10+ years.
+WHY I’M A FIT
+•  Full-stack depth: ASP.NET Core + Angular
+•  Legacy modernization: one migration
+•  SQL Server: 10+ years
+A recent example is CookingTime, built with C#, .NET 10, where Legacy modernization demo...
+I'd like to hear what Northwind Tech is working on and where I might help. Would you have 15 minutes for an intro call?
+Sincerely,
+SARAH ASHFORD

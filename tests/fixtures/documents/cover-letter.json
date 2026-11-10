@@ -1,0 +1,19 @@
+{
+  "contact": {
+    "name": "SARAH ASHFORD",
+    "email": "sarah.ashford.dev@example.com",
+    "phone": "(410) 555-0142",
+    "location": "Springfield, MD"
+  },
+  "tagline": "Senior .NET Developer",
+  "date": "January 15, 2026",
+  "role_title": "Senior .NET Developer",
+  "company": "Northgate Insurance Group",
+  "hook": "Your posting asks for ASP.NET Core, which is most of what I do every day.",
+  "bring": [
+    {"label": "ASP.NET Core", "body": "Production APIs at Acme Health."},
+    {"label": "SQL Server", "body": "Cut a nightly load from 3 hours to 25 minutes."}
+  ],
+  "highlights": [{"label": "Acme Health (2021 – Present)", "body": "Built claims-review features."}],
+  "closing": "I would enjoy talking through how this could help Northgate. Do you have time for a short call?"
+}

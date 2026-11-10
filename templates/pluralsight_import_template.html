@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job-o-matic-assistant · Pluralsight History Import</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #fff; --text: #1c1f2a; --muted: #5d6275; --line: #dfe2ec;
+    --accent: #2f5bea; --ok: #1a7f4b; --warn: #b26a00; --err: #c0392b; --new: #e8f0ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161d; --card: #1d2029; --text: #e8eaf2; --muted: #9aa0b4; --line: #2e3242;
+      --accent: #7c9bff; --ok: #4cc38a; --warn: #f0a843; --err: #ff7a6b; --new: #22305a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+  header.brand { background: var(--card); border-bottom: 1px solid var(--line); }
+  header.brand .inner { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  header.brand .name { font-weight: 700; font-size: 1.05rem; color: var(--accent); }
+  header.brand .tool { color: var(--muted); font-size: .9rem; }
+  footer.page { max-width: 1100px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .85rem; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  h2 { font-size: 1rem; margin: 0 0 8px; }
+  textarea { width: 100%; min-height: 160px; font: 12px/1.4 ui-monospace, monospace; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  button, label.btn { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font: inherit; cursor: pointer; }
+  button.secondary, label.btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  input[type=file] { display: none; }
+  input[type=search], select { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font: inherit; }
+  .msg { margin-top: 10px; font-size: .9rem; }
+  .msg.ok { color: var(--ok); } .msg.warn { color: var(--warn); } .msg.err { color: var(--err); white-space: pre-wrap; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: .9rem; }
+  .stats b { color: var(--text); }
+  .tablewrap { overflow-x: auto; margin-top: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  tr.new td { background: var(--new); }
+  a { color: var(--accent); }
+  details summary { cursor: pointer; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="brand">
+  <div class="inner">
+    <span class="name">Job-o-matic-assistant</span>
+    <span class="tool">Learning history · Pluralsight import</span>
+  </div>
+</header>
+<main>
+  <h1>Pluralsight History Import</h1>
+  <p class="sub">Paste the HTML of your Pluralsight course-history table and download an import file for <code>python -m jobomatic learning import</code>. Everything is parsed locally in your browser — nothing is uploaded.</p>
+
+  <section>
+    <h2>1. Paste Pluralsight course history HTML</h2>
+    <textarea id="paste" placeholder="Paste the table HTML here (copy the &lt;table role=&quot;grid&quot;&gt; element from the browser dev tools, or the whole saved page)…" spellcheck="false"></textarea>
+    <div class="row">
+      <button id="parseBtn">Parse</button>
+      <label class="btn secondary" for="htmlFile">Or open .html file…</label>
+      <input type="file" id="htmlFile" accept=".html,.htm">
+      <button class="secondary" id="clearBtn">Clear</button>
+    </div>
+    <div id="parseMsg" class="msg"></div>
+  </section>
+
+  <section>
+    <h2>2. Compare with a previous import file (optional)</h2>
+    <div class="sub" style="color:var(--muted);margin:0">Load an earlier import file (or the older bare-list JSON) to highlight entries that are new since then. The importer itself compares against the vault, so this is only a preview.</div>
+    <div class="row">
+      <label class="btn secondary" for="jsonFile">Load previous import file…</label>
+      <input type="file" id="jsonFile" accept=".json,application/json">
+      <span id="jsonMsg" class="msg" style="margin:0"></span>
+    </div>
+  </section>
+
+  <section id="results" hidden>
+    <h2>3. Results</h2>
+    <div class="stats" id="stats"></div>
+    <div class="row">
+      <input type="search" id="filter" placeholder="Filter by title…">
+      <select id="typeSel"><option value="">All types</option><option>Course</option><option>Lab</option></select>
+      <select id="pctSel"><option value="">All progress</option><option value="done">Completed (100%)</option><option value="inprog">In progress</option></select>
+      <select id="newSel"><option value="">New + existing</option><option value="new">New only</option></select>
+    </div>
+    <div class="row">
+      <button id="dlJson">Download import file (completed only)</button>
+      <button class="secondary" id="dlNew" disabled>Download new completed entries only</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Title</th><th>Type</th><th>Progress</th><th>Duration</th><th>Complete</th><th>Last activity</th><th>Timing profile</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <details style="margin-top:12px"><summary>How this fits the pipeline</summary>
+      <p class="sub">The import file holds only the entries at 100%. Save it anywhere, then run <code>python -m jobomatic learning import &lt;file&gt;</code> to see what is new (a dry run), and again with <code>--apply</code> to save it. The importer matches items by link, never by title, and keeps a copy of the file in the vault's <code>imports/pluralsight/</code>. Never edit the vault's <code>items.yaml</code> by hand.</p>
+    </details>
+  </section>
+</main>
+<footer class="page">
+  Last modified: <time id="lastModified">unknown</time>
+</footer>
+
+<script>
+// Mirrors the importer's Pluralsight reader (src/jobomatic/learning/adapters/pluralsight_html.py):
+// same column layout and the same structure checks. The import file format is read by
+// pluralsight_json.py; change FORMAT or VERSION in both places together.
+// The browser reports the file's own modification time, so this never goes stale by hand.
+(() => {
+  const el = document.getElementById("lastModified");
+  const d = new Date(document.lastModified);
+  if (el && !isNaN(d)) {
+    el.dateTime = d.toISOString();
+    el.textContent = d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  }
+})();
+const FORMAT = "jobomatic-pluralsight-history";
+const VERSION = 1;
+const MONTHS = ["", "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MIN_STRUCTURAL_ROWS = 10;
+let parsed = [];
+let existingNames = null;
+
+const $ = id => document.getElementById(id);
+const norm = s => s.replace(/\s+/g, " ").toLowerCase().trim();
+
+function parseTimeText(t) {
+  t = (t || "").trim();
+  return /^\d+[hm]/.test(t) ? t : null;
+}
+function parseProgressText(t) {
+  t = (t || "").trim();
+  return /^\d+[hm]/.test(t) || /^\d+ of \d+/.test(t) ? t : null;
+}
+function normalizeUrl(h) {
+  if (!h) return null;
+  if (h.startsWith("https://")) return h;
+  if (h.startsWith("/")) return "https://app.pluralsight.com" + h;
+  return h;
+}
+function parseDate(cell) {
+  const t = cell.querySelector("time");
+  if (!t) return null;
+  const dt = t.getAttribute("datetime") || "";
+  const m = dt.match(/^(\d{2})-(\d{2})-(\d{4})/);
+  if (m) return `${MONTHS[+m[1]]} ${String(+m[2]).padStart(2, "0")}, ${m[3]}`;
+  return t.textContent.trim() || null;
+}
+function parseIsoDate(cell) {
+  const t = cell.querySelector("time");
+  const m = ((t && t.getAttribute("datetime")) || "").match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  return m ? `${m[3]}-${m[1]}-${m[2]}` : null;
+}
+function timingProfile(type, duration) {
+  if (!duration) return type === "Lab" ? "Lab" : "Short Course";
+  const h = (duration.match(/(\d+)\s*h/) || [])[1] || 0;
+  const m = (duration.match(/(\d+)\s*m/) || [])[1] || 0;
+  if (type === "Lab") return "Full Lab";
+  return (+h + +m / 60) > 1 ? "Full Course" : "Short Course";
+}
+
+function parseHtml(html) {
+  // A bare <tr> fragment would be dropped by the HTML parser; wrap it.
+  if (!/<table[\s>]/i.test(html)) html = "<table>" + html + "</table>";
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const rows = [...doc.querySelectorAll('tr[role="row"]')];
+  const dataRows = rows.filter(r => r.querySelectorAll('td[role="gridcell"]').length >= 8);
+  const errors = [];
+  if (!rows.length) errors.push("No <tr role='row'> elements found — table structure is missing.");
+  if (dataRows.length < MIN_STRUCTURAL_ROWS)
+    errors.push(`Only ${dataRows.length} rows with 8+ gridcell columns (expected ${MIN_STRUCTURAL_ROWS}+). Possible format change or filtered export.`);
+  if (![...doc.querySelectorAll("span")].some(s => ["Course", "Lab"].includes(s.textContent.trim())))
+    errors.push("No <span>Course</span> or <span>Lab</span> — type column may have changed.");
+  if (![...doc.querySelectorAll("time")].some(t => /^\d{2}-\d{2}-\d{4}$/.test(t.getAttribute("datetime") || "")))
+    errors.push("No <time datetime='MM-DD-YYYY'> — date column format may have changed.");
+  if (errors.length) throw new Error("Structural validation failed — the Pluralsight HTML format may have changed:\n • " + errors.join("\n • "));
+
+  const out = []; let skipped = 0;
+  for (const row of dataRows) {
+    const cells = row.querySelectorAll('td[role="gridcell"]');
+    const link = cells[1].querySelector("a");
+    const name = link ? link.textContent.replace(/\s+/g, " ").trim() : "";
+    if (!name) { skipped++; continue; }
+    const type = (cells[2].querySelector("span")?.textContent.trim()) || "Course";
+    const vt = cells[3].querySelector("time");
+    const viewTime = parseTimeText(vt ? vt.textContent : null);
+    const c5 = cells[4].textContent.trim();
+    const progressRaw = c5 === "-" ? null : (cells[4].querySelector("time")?.textContent.trim() ?? c5);
+    const progress = parseProgressText(progressRaw);
+    const c6 = cells[5].textContent.trim();
+    const duration = c6 === "-" ? null : parseTimeText(cells[5].querySelector("time")?.textContent ?? c6);
+    const pctText = cells[6].textContent.trim();
+    out.push({
+      name, type,
+      url: normalizeUrl(link.getAttribute("href")),
+      view_time: viewTime,
+      progress: type === "Course" ? progress : null,
+      duration,
+      completion_percentage: /^\d+\.?\d*%$/.test(pctText) ? pctText : null,
+      completed_date: parseDate(cells[7]),
+      completed_on: parseIsoDate(cells[7]),
+      timing_profile: timingProfile(type, duration),
+    });
+  }
+  return { entries: out, skipped };
+}
+
+function isNew(e) { return existingNames && !existingNames.has(norm(e.name)); }
+function isDone(e) { return e.completion_percentage === "100.0%"; }
+
+// The importer keeps only entries at 100%, so the file carries only those.
+function importFile(entries) {
+  return JSON.stringify({
+    format: FORMAT, version: VERSION,
+    generated_on: new Date().toISOString().slice(0, 10),
+    entries: entries.filter(isDone),
+  }, null, 2) + "\n";
+}
+
+function render() {
+  const q = $("filter").value.toLowerCase(), ty = $("typeSel").value, pc = $("pctSel").value, nw = $("newSel").value;
+  const rows = parsed.filter(e =>
+    (!q || e.name.toLowerCase().includes(q)) && (!ty || e.type === ty) &&
+    (!pc || (pc === "done") === isDone(e)) && (!nw || isNew(e)));
+  const tb = $("tbody"); tb.textContent = "";
+  for (const e of rows) {
+    const tr = document.createElement("tr");
+    if (isNew(e)) tr.className = "new";
+    const td = (txt, link) => {
+      const c = document.createElement("td");
+      if (link) { const a = document.createElement("a"); a.href = link; a.target = "_blank"; a.rel = "noopener"; a.textContent = txt; c.append(a); }
+      else c.textContent = txt ?? "—";
+      return c;
+    };
+    tr.append(td(e.name, e.url), td(e.type), td(e.progress ?? "—"), td(e.duration ?? "—"),
+              td(e.completion_percentage ?? "—"), td(e.completed_date ?? "—"), td(e.timing_profile));
+    tb.append(tr);
+  }
+}
+
+function showStats(skipped) {
+  const c = parsed.filter(e => e.type === "Course"), l = parsed.filter(e => e.type === "Lab");
+  const parts = [
+    `<span><b>${parsed.length}</b> entries</span>`,
+    `<span><b>${c.filter(isDone).length}</b> courses completed / <b>${c.filter(e => !isDone(e)).length}</b> in progress</span>`,
+    `<span><b>${l.filter(isDone).length}</b> labs completed / <b>${l.filter(e => !isDone(e)).length}</b> in progress</span>`,
+    `<span><b>${parsed.filter(isDone).length}</b> will go in the import file</span>`,
+  ];
+  if (existingNames) parts.push(`<span><b>${parsed.filter(e => isDone(e) && isNew(e)).length}</b> completed and new vs. the previous file</span>`);
+  if (skipped) parts.push(`<span>${skipped} rows skipped (no title)</span>`);
+  $("stats").innerHTML = parts.join("");
+  $("dlNew").disabled = !existingNames;
+}
+
+let lastSkipped = 0;
+function doParse(html) {
+  const msg = $("parseMsg"); msg.className = "msg";
+  try {
+    if (!html.trim()) throw new Error("Nothing to parse — paste the HTML first.");
+    const { entries, skipped } = parseHtml(html);
+    parsed = entries; lastSkipped = skipped;
+    msg.className = "msg ok"; msg.textContent = `✓ Parsed ${entries.length} entries.`;
+    $("results").hidden = false; showStats(skipped); render();
+  } catch (err) {
+    parsed = []; $("results").hidden = true;
+    msg.className = "msg err"; msg.textContent = err.message;
+  }
+}
+
+function download(name, text, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+$("parseBtn").onclick = () => doParse($("paste").value);
+$("clearBtn").onclick = () => { $("paste").value = ""; parsed = []; $("results").hidden = true; $("parseMsg").textContent = ""; };
+$("htmlFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  $("paste").value = await f.text(); doParse($("paste").value); e.target.value = "";
+};
+$("jsonFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const arr = Array.isArray(data) ? data : data.entries;
+    if (!Array.isArray(arr)) throw new Error("no list of entries found");
+    existingNames = new Set(arr.map(x => norm(x.name)));
+    $("jsonMsg").className = "msg ok"; $("jsonMsg").textContent = `✓ ${arr.length} entries loaded from the previous file.`;
+    if (parsed.length) { showStats(lastSkipped); render(); }
+  } catch (err) { $("jsonMsg").className = "msg err"; $("jsonMsg").textContent = "Could not read JSON: " + err.message; }
+  e.target.value = "";
+};
+["filter", "typeSel", "pctSel", "newSel"].forEach(id => $(id).addEventListener("input", render));
+const today = () => new Date().toISOString().slice(0, 10);
+$("dlJson").onclick = () => download(`pluralsight_import_${today()}.json`, importFile(parsed), "application/json");
+$("dlNew").onclick = () => download(`pluralsight_import_new_${today()}.json`, importFile(parsed.filter(isNew)), "application/json");
+</script>
+</body>
+</html>

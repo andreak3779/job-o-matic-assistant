@@ -1,0 +1,84 @@
+<!-- GENERATED DRAFT — regenerate via the generate_github MCP tool / update_github_profile skill.
+     Reflects the public profile data (hash 47e0f24b69ab). -->
+
+# GitHub Profile Update Draft
+
+## Character Limits
+| Field | Limit |
+|---|---|
+| Bio | 160 chars |
+| Status | 80 chars (emoji + text) |
+| Name | 255 chars |
+| Location | Free text |
+| Website | One URL (must include https://) |
+
+---
+
+## Step 1 — Bio
+```
+Full-stack dev | C# · ASP.NET Core · Angular · Azure · SQL | CI/CD · GitHub Actions · Copilot | AZ-900 Certified · AI-200 in progress
+```
+_133 / 160 chars_
+
+## Step 2 — Status
+```
+🚀 Open to work | .NET · Angular · Azure | Building portfolio
+```
+_60 / 80 chars_
+
+**Settings:**
+- Emoji: 🚀
+- Clear after: **Never**
+- Busy checkbox: **Leave unchecked** (signals availability)
+
+## Step 3 — Profile README
+Create or edit the `README.md` in a repo named exactly like your username.
+
+```markdown
+## Hi, I'm the candidate 👋
+
+Full-stack developer with 10+ years building enterprise applications.
+
+**Core stack:** C# · ASP.NET Core · Angular · Azure · SQL Server
+
+**Currently:** AZ-900 Certified · AI-200 in progress · Open to work
+
+**Links:**
+- 🌐 [Resume](https://<github-user>.github.io/Resume_Site/)
+- 💼 [LinkedIn](https://www.linkedin.com/in/<linkedin-user>)
+- 📚 [Pluralsight](https://app.pluralsight.com/profile/<pluralsight-user>)
+```
+
+## Step 4 — Profile Fields
+*(Profile → Edit profile)*
+
+| Field | Value |
+|---|---|
+| Name | The candidate |
+| Location | <home city, province> |
+| Website | https://<github-user>.github.io/Resume_Site/ |
+| LinkedIn | https://www.linkedin.com/in/<linkedin-user> |
+
+---
+
+## Step 5 — Pinned Repositories
+*(Profile → Customize your pins → select up to 6)*
+
+**Before pinning:** visit https://github.com/<github-user>?tab=repositories to see actual available repos. Select from what exists — do not pin empty or placeholder repos.
+
+**Only pin public repos.** GitHub shows pins to every visitor, so a private repo can't be pinned and its link won't open for a recruiter. Check visibility first, for example `gh repo list <github-user> --json name,isPrivate,description`. The same applies to any repo linked from the profile README, LinkedIn Featured or dev.to.
+
+Prioritize repos that demonstrate:
+1. Angular + ASP.NET Core (full-stack pairing)
+2. GitHub Actions CI/CD workflow
+3. Azure Functions or Azure integration
+
+**For each pinned repo, verify it has:**
+- A short **description** (1 sentence, name the tech used)
+- A **README.md** with tech stack listed and setup instructions
+
+**Candidates from the profile's portfolio (private repos are left out; confirm each is public before pinning):**
+- CookingTime — https://github.com/example-user/CookingTime
+
+## After applying
+Once each field above has been pasted into GitHub, update the "Current State vs Target" diff table in SKILL.md by hand — this draft has no visibility into what's actually live on GitHub.

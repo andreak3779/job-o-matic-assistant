@@ -1,0 +1,85 @@
+groups:
+- category: Backend Development
+  skills:
+  - C#
+  - ASP.NET Core
+  - .NET Framework
+  - Entity Framework Core
+  - LINQ
+  - Web API
+  - REST
+  - dependency injection
+  - event-driven architecture
+  - microservices
+  - distributed systems
+  - OOP
+  - design patterns
+  - SOLID principles
+  - secure development
+  - async/await
+  - service-oriented architecture
+- category: Frontend & UI
+  skills:
+  - Angular (v12+)
+  - React frontend development
+  - TypeScript
+  - RxJS
+  - Angular Material
+  - HTML
+  - CSS/SASS
+  - Jest
+- category: Database & SQL
+  skills:
+  - SQL Server
+  - relational databases
+  - T-SQL
+  - DB2
+  - query optimization
+  - Entity Framework migrations
+- category: Cloud & Azure
+  skills:
+  - Azure App Service
+  - Azure Functions
+  - Azure Monitor
+  - monitoring and observability
+  - infrastructure as code
+  - Bicep
+  - Terraform
+  - PowerShell and Python scripting for automation
+  - Azure DevOps Pipelines
+  - Azure Application Insights
+  - Azure AD
+- category: DevOps & CI/CD
+  skills:
+  - Docker
+  - GitLab CI
+  - Azure Pipelines
+  - SonarQube
+  - code review process ownership
+- category: Testing
+  skills:
+  - xUnit
+  - Moq
+  - xUnit testing
+  - integration testing
+  - Jest
+  - integration testing
+  - test coverage improvement initiatives
+- category: Project Management & Agile
+  skills:
+  - GitHub Copilot
+  - prompt engineering
+  - Terraform on Azure
+  - Scrum
+  - sprint planning
+  - story pointing
+  - cross-functional stakeholder coordination
+keywords:
+- group: Cloud
+  keywords:
+  - Azure
+gaps:
+- skill: kubernetes
+  severity: genuine
+  evidence: course
+  notes: Kubernetes — course-level

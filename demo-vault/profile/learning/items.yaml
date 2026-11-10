@@ -1,0 +1,276 @@
+items:
+- id: pluralsight:practical-sql-query-tuning
+  provider: pluralsight
+  kind: course
+  title: Practical SQL Query Tuning
+  url: https://app.pluralsight.com/library/courses/practical-sql-query-tuning
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Reading execution plans, choosing indexes and rewriting slow queries so reports that took minutes
+    finish in seconds.
+  summary_source: manual
+  source: demo
+- id: pluralsight:kubernetes-for-app-developers
+  provider: pluralsight
+  kind: course
+  title: Kubernetes for App Developers
+  url: https://app.pluralsight.com/library/courses/kubernetes-for-app-developers
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: 'Packaging an application for a cluster: pods, deployments, services, config maps and rolling
+    updates.'
+  summary_source: manual
+  source: demo
+- id: pluralsight:message-queues-in-practice
+  provider: pluralsight
+  kind: course
+  title: Message Queues in Practice
+  url: https://app.pluralsight.com/library/courses/message-queues-in-practice
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: 'Decoupling services with a message broker: queues, exchanges, routing, acknowledgements and
+    retry behaviour.'
+  summary_source: manual
+  source: demo
+- id: pluralsight:docker-for-dotnet-developers
+  provider: pluralsight
+  kind: course
+  title: Docker for .NET Developers
+  url: https://app.pluralsight.com/library/courses/docker-for-dotnet-developers
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Containerizing ASP.NET Core applications, writing multi-stage Dockerfiles and running them
+    with Compose.
+  summary_source: manual
+  source: demo
+- id: pluralsight:ci-cd-pipelines-with-github-actions
+  provider: pluralsight
+  kind: course
+  title: CI/CD Pipelines with GitHub Actions
+  url: https://app.pluralsight.com/library/courses/ci-cd-pipelines-with-github-actions
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Building, testing and deploying on every push with workflows, caching, secrets and environment
+    approvals.
+  summary_source: manual
+  source: demo
+- id: pluralsight:azure-functions-event-driven
+  provider: pluralsight
+  kind: course
+  title: Event-Driven Apps with Azure Functions
+  url: https://app.pluralsight.com/library/courses/azure-functions-event-driven
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Serverless triggers and bindings for queues, timers and HTTP, plus durable orchestrations for
+    long workflows.
+  summary_source: manual
+  source: demo
+- id: pluralsight:unit-testing-csharp-xunit
+  provider: pluralsight
+  kind: course
+  title: Unit Testing C# with xUnit
+  url: https://app.pluralsight.com/library/courses/unit-testing-csharp-xunit
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Writing fast, isolated tests with xUnit, mocking dependencies and measuring what the tests
+    cover.
+  summary_source: manual
+  source: demo
+- id: pluralsight:oauth-and-openid-connect-aspnet
+  provider: pluralsight
+  kind: course
+  title: OAuth and OpenID Connect for ASP.NET Core
+  url: https://app.pluralsight.com/library/courses/oauth-and-openid-connect-aspnet
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: 'Securing web APIs with tokens: authorization code flow, scopes, refresh tokens and policy-based
+    authorization.'
+  summary_source: manual
+  source: demo
+- id: pluralsight:angular-forms-and-validation
+  provider: pluralsight
+  kind: course
+  title: Angular Forms and Validation
+  url: https://app.pluralsight.com/library/courses/angular-forms-and-validation
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Building reactive forms, custom validators and dynamic form arrays in Angular.
+  summary_source: manual
+  source: demo
+- id: pluralsight:async-programming-csharp
+  provider: pluralsight
+  kind: course
+  title: Asynchronous Programming in C#
+  url: https://app.pluralsight.com/library/courses/async-programming-csharp
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: 'Using async and await correctly: avoiding deadlocks, cancellation tokens and running work
+    in parallel.'
+  summary_source: manual
+  source: demo
+- id: pluralsight:caching-with-redis
+  provider: pluralsight
+  kind: course
+  title: Caching with Redis
+  url: https://app.pluralsight.com/library/courses/caching-with-redis
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: 'Speeding up applications with a distributed cache: expiry, invalidation strategies and cache-aside.'
+  summary_source: manual
+  source: demo
+- id: pluralsight:logging-and-monitoring-dotnet
+  provider: pluralsight
+  kind: course
+  title: Logging and Monitoring .NET Applications
+  url: https://app.pluralsight.com/library/courses/logging-and-monitoring-dotnet
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Structured logging, correlation ids, metrics and dashboards that make production problems easier
+    to find.
+  summary_source: manual
+  source: demo
+- id: pluralsight:entity-framework-core-fundamentals
+  provider: pluralsight
+  kind: course
+  title: Entity Framework Core Fundamentals
+  url: https://app.pluralsight.com/library/courses/entity-framework-core-fundamentals
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Mapping entities, writing migrations and querying with LINQ against a relational database.
+  summary_source: manual
+  source: demo
+- id: pluralsight:designing-restful-apis
+  provider: pluralsight
+  kind: course
+  title: Designing RESTful APIs
+  url: https://app.pluralsight.com/library/courses/designing-restful-apis
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Resource naming, status codes, versioning, pagination and documenting an HTTP API with OpenAPI.
+  summary_source: manual
+  source: demo
+- id: pluralsight:microservices-architecture-patterns
+  provider: pluralsight
+  kind: course
+  title: Microservices Architecture Patterns
+  url: https://app.pluralsight.com/library/courses/microservices-architecture-patterns
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: 'Splitting a monolith into services: boundaries, data ownership, sagas and handling partial
+    failure.'
+  summary_source: manual
+  source: demo
+- id: pluralsight:terraform-getting-started
+  provider: pluralsight
+  kind: course
+  title: 'Terraform: Getting Started'
+  url: https://app.pluralsight.com/library/courses/terraform-getting-started
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Describing cloud infrastructure as code, planning changes and managing state across environments.
+  summary_source: manual
+  source: demo
+- id: pluralsight:git-branching-strategies
+  provider: pluralsight
+  kind: course
+  title: Git Branching Strategies
+  url: https://app.pluralsight.com/library/courses/git-branching-strategies
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Trunk-based development, feature branches, pull request review and resolving merge conflicts.
+  summary_source: manual
+  source: demo
+- id: pluralsight:azure-cosmos-db-for-developers
+  provider: pluralsight
+  kind: course
+  title: Azure Cosmos DB for Developers
+  url: https://app.pluralsight.com/library/courses/azure-cosmos-db-for-developers
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Modelling documents, choosing partition keys and tuning request units for a globally distributed
+    NoSQL store.
+  summary_source: manual
+  source: demo
+- id: pluralsight:azure-service-bus-messaging
+  provider: pluralsight
+  kind: course
+  title: Azure Service Bus Messaging
+  url: https://app.pluralsight.com/library/courses/azure-service-bus-messaging
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Queues, topics and subscriptions in the cloud, with dead-letter handling and message sessions.
+  summary_source: manual
+  source: demo
+- id: pluralsight:web-accessibility-fundamentals
+  provider: pluralsight
+  kind: course
+  title: Web Accessibility Fundamentals
+  url: https://app.pluralsight.com/library/courses/web-accessibility-fundamentals
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: 'Making pages usable with a keyboard and a screen reader: semantic HTML, ARIA and colour contrast.'
+  summary_source: manual
+  source: demo
+- id: pluralsight:lab-fix-a-slow-stored-procedure
+  provider: pluralsight
+  kind: lab
+  title: 'Lab: Fix a Slow Stored Procedure'
+  url: https://app.pluralsight.com/library/courses/lab-fix-a-slow-stored-procedure
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Hands-on lab where a stored procedure is profiled and rewritten, with an index added to remove
+    a table scan.
+  summary_source: manual
+  source: demo
+- id: pluralsight:lab-deploy-to-aks
+  provider: pluralsight
+  kind: lab
+  title: 'Lab: Deploy an App to Azure Kubernetes Service'
+  url: https://app.pluralsight.com/library/courses/lab-deploy-to-aks
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Hands-on lab deploying a containerized API to a managed cluster and scaling it out.
+  summary_source: manual
+  source: demo
+- id: pluralsight:lab-write-a-github-actions-workflow
+  provider: pluralsight
+  kind: lab
+  title: 'Lab: Write a GitHub Actions Workflow'
+  url: https://app.pluralsight.com/library/courses/lab-write-a-github-actions-workflow
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Hands-on lab building a workflow that runs tests and publishes a container image.
+  summary_source: manual
+  source: demo
+- id: mslearn:implement-azure-functions
+  provider: mslearn
+  kind: module
+  title: Implement Azure Functions
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Create functions with triggers and bindings, and connect them to storage and messaging services.
+  summary_source: manual
+  source: demo
+- id: mslearn:secure-azure-resources-with-managed-identities
+  provider: mslearn
+  kind: module
+  title: Secure Azure resources with managed identities
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  summary: Give an application an identity so it can reach other Azure services without storing credentials.
+  summary_source: manual
+  source: demo
+- id: mslearn:introduction-to-azure-devops
+  provider: mslearn
+  kind: module
+  title: Introduction to Azure DevOps
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  source: demo
+- id: mslearn:az-204-develop-solutions-for-azure
+  provider: mslearn
+  kind: learning_path
+  title: Develop solutions for Microsoft Azure
+  completed_on: '2026-01-15'
+  duration_minutes: 60
+  source: demo

@@ -1,0 +1,71 @@
+# Gap Analysis: Azure DevOps / SRE
+**Northwind Tech — Remote** · October 2026
+
+## Overall Fit: Stretch
+All required skills present but 7 are course/portfolio-only, with no production evidence.
+
+## Summary Table
+| Requirement | Status | Evidence |
+|---|---|---|
+| azure app service and azure functions | 🟡 Coursework | coursework or self-study [azure app service] |
+| infrastructure as code | 🟡 Coursework | coursework or self-study |
+| bicep | 🟡 Coursework | coursework or self-study |
+| terraform | 🟡 Coursework | coursework or self-study |
+| ci | ✅ Match | Meridian Benefits Group: production |
+| cd with github actions | ✅ Match | Meridian Benefits Group: production |
+| docker | ✅ Match | Meridian Benefits Group: production |
+| kubernetes | 🟡 Coursework | tracked gap — partial coursework |
+| powershell or python scripting for automation | 🟡 Coursework | coursework or self-study [powershell] |
+| monitoring and observability with azure monitor | 🟡 Coursework | coursework or self-study [monitoring] |
+
+### Nice-to-Have Skills
+| Skill | Status | Evidence |
+|---|---|---|
+| github copilot | 🟡 Coursework | coursework or self-study |
+| terraform on azure | 🟡 Coursework | coursework or self-study |
+| xunit testing | 🟡 Coursework | coursework or self-study |
+| legacy system modernization | ✅ Match | Meridian Benefits Group: production |
+
+## ✅ Strong Matches
+- **ci** — Meridian Benefits Group: production
+- **cd with github actions** — Meridian Benefits Group: production
+- **docker** — Meridian Benefits Group: production
+- **legacy system modernization** — Meridian Benefits Group: production
+
+## 🟡 Framing Gaps
+- **azure app service and azure functions** — coursework or self-study [azure app service]
+- **infrastructure as code** — coursework or self-study
+- **bicep** — coursework or self-study
+- **terraform** — coursework or self-study
+- **kubernetes** — tracked gap — partial coursework
+- **powershell or python scripting for automation** — coursework or self-study [powershell]
+- **monitoring and observability with azure monitor** — coursework or self-study [monitoring]
+
+## 🕰️ Legacy Experience
+Only evidenced by legacy work, which is kept off the active resume by default by design. Surfacing it is a per-application decision.
+- None identified
+
+## 🔴 Genuine Gaps
+- None identified
+
+## Recommendations
+### Close with coursework or lab
+These skills are course-only. Add a small hands-on project or cert lab to upgrade them to portfolio/production evidence:
+- azure app service and azure functions
+- infrastructure as code
+- bicep
+- terraform
+- kubernetes
+- powershell or python scripting for automation
+- monitoring and observability with azure monitor
+- github copilot
+- terraform on azure
+- xunit testing
+
+## How to Frame the Application
+### Resume tailoring priorities
+1. Lead with production evidence for ci, cd with github actions, docker — these map directly to required skills.
+2. Upgrade course-only signal to portfolio/production evidence where possible: azure app service and azure functions, infrastructure as code, bicep, terraform.
+
+### Cover letter angle
+Hook: production experience with ci, directly aligned with Northwind Tech's stated requirements; proof points from Meridian Benefits Group.

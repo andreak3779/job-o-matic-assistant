@@ -1,0 +1,197 @@
+{
+  "_comment": "Hand-labelled by the author: a JD-style phrasing and the course titles (substring, case-insensitive) that would count as correct evidence in the learning history. Used by scripts/eval_retrieval.py; the set is small and self-labelled, so treat recall figures as indicative.",
+  "queries": [
+    {
+      "query": "container orchestration with Kubernetes clusters",
+      "expected": [
+        "Kubernetes for Software Development",
+        "Docker and Kubernetes",
+        "Kubernetes Basic Concepts",
+        "Deploy and Manage Your First App on Kubernetes",
+        "Plan Azure Kubernetes Service",
+        "Kubernetes for Developers"
+      ]
+    },
+    {
+      "query": "asynchronous messaging between services using brokers",
+      "expected": [
+        "RabbitMQ by Example",
+        "Messaging Systems with Python",
+        "Introduction to Event-Driven Architecture",
+        "Azure Service Bus In-depth"
+      ]
+    },
+    {
+      "query": "tuning slow relational database queries",
+      "expected": [
+        "Understanding Query Optimization in SQL Server",
+        "Advanced Querying Techniques in SQL Server",
+        "Advanced SQL Server Triggers: Optimizing"
+      ]
+    },
+    {
+      "query": "provisioning cloud infrastructure declaratively",
+      "expected": [
+        "Terraform"
+      ]
+    },
+    {
+      "query": "capturing logs, metrics and traces from production services",
+      "expected": [
+        "Logging, Monitoring, and OpenTelemetry",
+        "Azure Monitoring Fundamentals",
+        "Monitor and Debug Azure Functions"
+      ]
+    },
+    {
+      "query": "building autonomous agents on top of language models",
+      "expected": [
+        "LLM Agents",
+        "Agentic AI",
+        "Introduction to Developing AI Agents",
+        "Building with Claude Agent SDK"
+      ]
+    },
+    {
+      "query": "storing and searching high-dimensional embeddings",
+      "expected": [
+        "Vector Databases"
+      ]
+    },
+    {
+      "query": "defending against common web vulnerabilities",
+      "expected": [
+        "OWASP Top 10",
+        "Secure Coding",
+        "Web App Pen Testing",
+        "API Security"
+      ]
+    },
+    {
+      "query": "login, tokens and role-based access for APIs",
+      "expected": [
+        "Securing ASP.NET Core with OAuth2",
+        "Authentication and Authorization in Angular",
+        "Angular in Practice: Authentication",
+        "API Security",
+        "Azure Identity and Access"
+      ]
+    },
+    {
+      "query": "designing HTTP interfaces and resource models",
+      "expected": [
+        "Designing RESTful Web APIs",
+        "REST Fundamentals",
+        "Best Practices in RESTful API",
+        "Designing APIs for Microservices"
+      ]
+    },
+    {
+      "query": "continuous integration and automated deployment pipelines",
+      "expected": [
+        "GitHub Actions",
+        "CI/CD Integration",
+        "Integrating Azure Functions with CI/CD"
+      ]
+    },
+    {
+      "query": "document databases and schemaless storage",
+      "expected": [
+        "NoSQL Foundations: Document",
+        "Insert and Query JSON",
+        "Azure Cosmos DB",
+        "NoSQL and Polyglot",
+        "Using ASP.NET Core Web API and NoSQL"
+      ]
+    },
+    {
+      "query": "modelling the business domain with bounded contexts",
+      "expected": [
+        "Domain-Driven Design",
+        "Domain-driven Design"
+      ]
+    },
+    {
+      "query": "writing unit tests before implementation",
+      "expected": [
+        "Test-driven Development"
+      ]
+    },
+    {
+      "query": "function-as-a-service event handlers in the cloud",
+      "expected": [
+        "Azure Functions",
+        "Serverless"
+      ]
+    },
+    {
+      "query": "state management in single-page applications",
+      "expected": [
+        "NgRx",
+        "SignalStore",
+        "Modern State Management",
+        "Manage State",
+        "Advanced State Management"
+      ]
+    },
+    {
+      "query": "mentoring junior engineers",
+      "expected": [
+        "How to Be a Great Mentor",
+        "Leadership for Non-managers",
+        "Introduction to Leadership and Management for Developers"
+      ]
+    },
+    {
+      "query": "refactoring legacy codebases",
+      "expected": [
+        "Refactoring Legacy Code with AI",
+        "Refactoring Code",
+        "Clean Architecture"
+      ]
+    },
+    {
+      "query": "writing prompts that get reliable output from language models",
+      "expected": [
+        "Prompt Engineering",
+        "Prompting Basics",
+        "ChatGPT Prompt"
+      ]
+    },
+    {
+      "query": "Python web services",
+      "expected": [
+        "Flask Foundations",
+        "FastAPI Foundations",
+        "Building a REST API with Python 3",
+        "Building a REST API in Python",
+        "Django"
+      ]
+    },
+    {
+      "query": "reverse proxy and web server configuration",
+      "expected": [
+        "NGINX"
+      ]
+    },
+    {
+      "query": "component-based user interface library",
+      "expected": [
+        "React"
+      ]
+    },
+    {
+      "query": "binary remote procedure calls between services",
+      "expected": [
+        "gRPC",
+        "Protocol Buffer"
+      ]
+    },
+    {
+      "query": "querying telemetry with a log analytics query language",
+      "expected": [
+        "Kusto Query Language"
+      ]
+    }
+  ]
+}

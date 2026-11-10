@@ -1,0 +1,4 @@
+REFUSED: Fit rating is Pass — refusing to generate resume/cover letter.
+6 core requirements have no evidence; coverage 22% of 9 required skills. Core gap(s): angular v17+, rest api integration, unit testing with jasmine, karma, responsive design with css, github actions ci.
+A Pass on skills cannot be confirmed past: run fit-check for the full breakdown, or supply a stronger-fit posting.
+exit status: 2

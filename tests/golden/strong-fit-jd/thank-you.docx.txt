@@ -1,0 +1,14 @@
+SARAH ASHFORD
+Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years
+sarah.ashford.dev@example.com  |  (410) 555-0142  |  Springfield, MD
+
+<TODAY>
+Re: Thank You — Senior Full-Stack .NET Developer Interview, Northgate Insurance Group
+Dear Pat Example,
+Thank you, Pat Example, for taking the time to speak with me today about the Senior Full-Stack .NET Developer role at Northgate Insurance Group. Hearing more about the team made me feel good about how my c#, asp.net core background fits.
+KEY TAKEAWAYS
+•  We talked about release pipelines.
+Something from my own experience that connects: example pipeline ownership (example co) — Raise confidence in releases for a small team. Own the fix end to end. Investigated, automated and documented the change. Measurable improvement for the team... Happy to walk through the whole story if that's useful.
+If it would help to have anything else from me, just let me know. I'm still very interested and look forward to hearing about next steps.
+Sincerely,
+SARAH ASHFORD

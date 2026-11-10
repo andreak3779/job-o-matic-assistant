@@ -1,0 +1,26 @@
+## Fit Check — Azure DevOps / SRE at Northwind Tech
+
+**Required Skills**
+| Skill | Status | Evidence |
+|---|---|---|
+| azure app service and azure functions | 🟡 | coursework or self-study [azure app service] |
+| infrastructure as code | 🟡 | coursework or self-study |
+| bicep | 🟡 | coursework or self-study |
+| terraform | 🟡 | coursework or self-study |
+| ci | ✅ | Meridian Benefits Group, production |
+| cd with github actions | ✅ | Meridian Benefits Group, production |
+| docker | ✅ | Meridian Benefits Group, production |
+| kubernetes | 🟡 | tracked gap — partial coursework |
+| powershell or python scripting for automation | 🟡 | coursework or self-study [powershell] |
+| monitoring and observability with azure monitor | 🟡 | coursework or self-study [monitoring] |
+
+**Nice-to-Haves**
+| Skill | Status | Evidence |
+|---|---|---|
+| github copilot | 🟡 | coursework or self-study |
+| terraform on azure | 🟡 | coursework or self-study |
+| xunit testing | 🟡 | coursework or self-study |
+| legacy system modernization | ✅ | Meridian Benefits Group, production |
+
+**Fit Rating: Stretch**
+All required skills present but 7 are course/portfolio-only, with no production evidence.

@@ -1,0 +1,36 @@
+Azure DevOps / SRE Northwind Tech Sarah Ashford Technical Screen · <TODAY>
+EXPERIENCE MATCH
+They Need | Your Evidence
+azure app service and azure functions | Learning / Portfolio — coursework or self-study [azure app service]
+infrastructure as code | Learning / Portfolio — coursework or self-study
+bicep | Learning / Portfolio — coursework or self-study
+terraform | Learning / Portfolio — coursework or self-study
+ci | Strong Match — Meridian Benefits Group: production
+cd with github actions | Strong Match — Meridian Benefits Group: production
+docker | Strong Match — Meridian Benefits Group: production
+kubernetes | Learning / Portfolio — tracked gap — partial coursework
+powershell or python scripting for automation | Learning / Portfolio — coursework or self-study [powershell]
+monitoring and observability with azure monitor | Learning / Portfolio — coursework or self-study [monitoring]
+github copilot | Learning / Portfolio — coursework or self-study
+terraform on azure | Learning / Portfolio — coursework or self-study
+xunit testing | Learning / Portfolio — coursework or self-study
+legacy system modernization | Strong Match — Meridian Benefits Group: production
+ANTICIPATED QUESTIONS
+Walk me through how you used ci at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+Walk me through how you used cd with github actions at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+Walk me through how you used docker at Meridian Benefits Group in a production system.
+Evidence on file: Meridian Benefits Group: production
+If azure app service and azure functions comes up, answer honestly about your current level — no production or portfolio evidence for it in the profile.
+If infrastructure as code comes up, answer honestly about your current level — no production or portfolio evidence for it in the profile.
+STAR STORIES
+Example pipeline ownership (Example Co)  ·  ci-cd, testing, ownership
+S: Raise confidence in releases for a small team.
+T: Own the fix end to end.
+A: Investigated, automated and documented the change.
+R: Measurable improvement for the team.
+Adapt when: Role emphasizes speed — lead with the measurable result
+FIT RATING
+Stretch — All required skills present but 7 are course/portfolio-only, with no production evidence.
+Generated <TODAY> · Sarah Ashford · Azure DevOps / SRE · Technical Screen

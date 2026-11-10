@@ -1,0 +1,39 @@
+{
+  "contact": {
+    "name": "SARAH ASHFORD",
+    "email": "sarah.ashford.dev@example.com",
+    "phone": "(410) 555-0142",
+    "location": "Springfield, MD"
+  },
+  "availability": "days, evenings and weekends, short notice for daytime interviews",
+  "summary": "Reliable, friendly team member looking for a part-time sales associate role. Quick to learn a till, a stock system or a new shelf layout.",
+  "strengths": [
+    {"label": "Reliability", "body": "I arrive early, finish what I start and tell my manager early if something is wrong."},
+    {"label": "Customers", "body": "I stay calm and polite with customers, including when they are frustrated."},
+    {"label": "Learning systems", "body": "I pick up new software and procedures quickly and write down the steps."}
+  ],
+  "experience": [
+    {
+      "title": "Software Developer",
+      "company": "Acme Health, Springfield",
+      "dates": "Mar 2021 – Present",
+      "bullets": [
+        "Support a team of 120 claims adjusters and answer their questions the same day.",
+        "Document procedures so new staff can follow them without help."
+      ]
+    },
+    {
+      "title": "Programmer",
+      "company": "Contoso Benefits Group, Springfield",
+      "dates": "2015",
+      "bullets": ["Trained new users on a reporting tool."]
+    }
+  ],
+  "software": "Microsoft Office, point-of-sale systems, inventory spreadsheets",
+  "previous_retail": "Worked weekends in a family-run hardware shop while studying.",
+  "education": [
+    "Computer Analyst and Programmer Diploma, Lakeshore Polytechnic",
+    "Applied Computer Science coursework, Northfield University",
+    "Microsoft Azure Fundamentals (AZ-900), certified April 2026"
+  ]
+}

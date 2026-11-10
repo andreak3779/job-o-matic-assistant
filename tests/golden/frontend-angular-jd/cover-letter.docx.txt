@@ -1,0 +1,15 @@
+SARAH ASHFORD
+Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years
+sarah.ashford.dev@example.com  |  (410) 555-0142  |  Springfield, MD
+
+<TODAY>
+Re: Senior Angular Frontend Developer — Adventure Works UI
+Dear Adventure Works UI Hiring Team,
+Your Senior Angular Frontend Developer posting asks for Angular v17+, which is a big part of what I do. I have hands-on experience at Meridian Benefits Group, so I could be useful on the team quickly.
+WHAT I BRING
+•  CD: hands-on experience at Meridian Benefits Group
+TWO RELEVANT HIGHLIGHTS
+•  Meridian Benefits Group (October 2022 – Present): Owned GitLab CI/CD pipeline for the claims platform, adding automated test gates that caught regressions before they reached staging
+I'd enjoy talking through how my CD experience could help Adventure Works UI. Do you have time for a short call this week or next?
+Sincerely,
+SARAH ASHFORD

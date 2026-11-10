@@ -1,0 +1,32 @@
+{
+  "contact": {
+    "name": "SARAH ASHFORD",
+    "email": "sarah.ashford.dev@example.com",
+    "phone": "(410) 555-0142",
+    "location": "Springfield, MD",
+    "linkedin": "https://www.linkedin.com/in/example-sarah-ashford",
+    "github": "https://github.com/example-sarah"
+  },
+  "tagline": "Senior .NET Developer | C# · ASP.NET Core · Azure",
+  "summary": [
+    "Senior .NET Developer with 9+ years building enterprise web applications in C# and ASP.NET Core.",
+    "Azure Fundamentals certified; led a legacy migration from WinForms to a web application."
+  ],
+  "skills": [
+    {"label": "Backend", "skills": "C#, ASP.NET Core Web API, Entity Framework Core"},
+    {"label": "Cloud", "skills": "Azure App Service, Azure DevOps"}
+  ],
+  "experience": [
+    {
+      "title": "Software Developer",
+      "company": "Acme Health",
+      "location": "Springfield, MD",
+      "dates": "March 2021 – Present",
+      "bullets": ["Built claims-review features used by 120 adjusters.", "Raised test coverage from 20% to 75%."]
+    },
+    {"title": "Professional Development", "dates": "2020 – 2021", "bullets": ["Completed Azure coursework."]}
+  ],
+  "additional_experience": "Earlier programming roles in finance and logistics.",
+  "education": ["Computer Analyst and Programmer Diploma — Lakeshore Polytechnic, 2010"],
+  "certifications": ["Microsoft Azure Fundamentals (AZ-900) — Certified April 2026"]
+}

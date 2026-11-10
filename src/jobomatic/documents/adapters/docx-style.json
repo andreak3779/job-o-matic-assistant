@@ -1,0 +1,11 @@
+{
+  "blue_hex": "2E6DA4",
+  "margin_top_bottom_in": 0.5,
+  "margin_sides_in": 0.75,
+  "font_name": "Carlito",
+  "name_size_pt": 16,
+  "section_size_pt": 11,
+  "body_size_pt": 11,
+  "summary_size_pt": 10.5,
+  "default_signature_name": "Candidate Name"
+}

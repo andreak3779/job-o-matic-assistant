@@ -1,0 +1,7 @@
+projects:
+- name: CookingTime
+  url: https://github.com/example-user/CookingTime
+  stack:
+  - C#
+  - .NET 10
+  description: Legacy modernization demo.

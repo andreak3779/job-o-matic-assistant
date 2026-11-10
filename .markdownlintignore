@@ -1,0 +1,27 @@
+# Generated artifacts
+outputs/
+*.meta.json
+
+# Virtual environments / tooling caches
+node_modules/
+.venv/
+.venv-1/
+.venv-2/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# LLM runtime skill files — formatting is intentionally conversational,
+# and reformatting them risks changing token boundaries / prompt behavior.
+# (Actual layout is skills/<skill-name>/SKILL.md, one directory deeper than
+# these patterns originally accounted for — ** covers the skill-name segment.)
+**/skills/**/SKILL.md
+
+# Test fixtures are parser input data, not documentation.
+tests/fixtures/
+
+# Data / reference markdown where compact formatting is intentional
+reference/
+templates/Resume_Snapshot.example.md

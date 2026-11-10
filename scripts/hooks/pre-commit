@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Local pre-commit guardrail — no GitHub Actions minutes involved.
+#
+# CI repeats the checks that do not need the private vault, but it runs after the
+# push. This hook is the first line of defence and also runs the vault-dependent
+# checks. It must catch a broken import, a syntax error or a private value before
+# it is committed; the full suite is small enough to run every time.
+#
+# Enabled by scripts/install-hooks.sh (sets core.hooksPath, so edits to this file
+# take effect immediately — there is no copy to keep in sync).
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+PY=".venv/bin/python3"
+if [ ! -x "$PY" ]; then
+    PY="python3"
+fi
+
+status=0
+
+echo "[pre-commit] staged-file guard..."
+# Generated output and personal documents must never be committed.
+blocked=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)outputs/|\.docx$|\.pyc$|(^|/)__pycache__/|(^|/)node_modules/|\.meta\.json$|\.raw-inputs\.json$' || true)
+if [ -n "$blocked" ]; then
+    echo "  refusing to commit generated/personal files:"
+    echo "$blocked" | sed 's/^/    /'
+    status=1
+fi
+
+private_blocked=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)private/' | grep -v '\.example\.' || true)
+if [ -n "$private_blocked" ]; then
+    echo "  refusing to commit private files:"
+    echo "$private_blocked" | sed 's/^/    /'
+    status=1
+fi
+
+echo "[pre-commit] private values not restated in tracked files..."
+"$PY" scripts/check_private_values.py || status=1
+
+echo "[pre-commit] byte-compile (syntax / import errors)..."
+"$PY" -m compileall -q src cli mcp_server scripts tests || status=1
+
+echo "[pre-commit] ruff check + format..."
+if "$PY" -m ruff --version >/dev/null 2>&1; then
+    "$PY" -m ruff check . || status=1
+    "$PY" -m ruff format --check . || status=1
+else
+    echo "  (ruff not installed — skipping; run: pip install -e '.[lint]')"
+fi
+
+# These two read the personal profile, which live in the vault (ADR 0013).
+if "$PY" -c "from jobomatic import paths; paths.vault_root()" >/dev/null 2>&1; then
+    echo "[pre-commit] check_skill_hardcoding.py..."
+    "$PY" scripts/check_skill_hardcoding.py . || status=1
+
+    echo "[pre-commit] profile validate..."
+    "$PY" -m jobomatic profile validate || status=1
+else
+    echo "[pre-commit] no vault found — skipping check_skill_hardcoding.py and profile validate"
+fi
+
+echo "[pre-commit] import contracts + types for src/..."
+if [ -x .venv/bin/lint-imports ]; then
+    .venv/bin/lint-imports || status=1
+    "$PY" -m mypy src || status=1
+else
+    echo "  (import-linter not installed — skipping; run: pip install -e '.[lint]')"
+fi
+
+echo "[pre-commit] pytest..."
+if "$PY" -m pytest --version >/dev/null 2>&1; then
+    "$PY" -m pytest tests -q -x -p no:cacheprovider || status=1
+else
+    echo "  (pytest not installed — skipping; run: pip install -e '.[dev]')"
+fi
+
+if [ "$status" -ne 0 ]; then
+    echo ""
+    echo "[pre-commit] BLOCKED — fix the issue(s) above, or commit with --no-verify"
+    echo "             only if you're deliberately bypassing this (not recommended)."
+    exit 1
+fi
+
+echo "[pre-commit] clean"
+exit 0
