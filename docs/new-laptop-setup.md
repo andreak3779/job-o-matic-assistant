@@ -158,7 +158,7 @@ need one.
 
 **Claude Code.** `.mcp.json` uses a path relative to the repo (`.venv/bin/python3`), so it works
 on any machine if the virtual environment is at `.venv/` and you open Claude Code **from the repo
-root**. Approve the `claude-jobs` server the first time it asks.
+root**. Approve the `job-o-matic` server the first time it asks.
 
 **Claude Desktop.** Its config, `~/.config/Claude/claude_desktop_config.json` (macOS:
 `~/Library/Application Support/Claude/`), holds absolute paths for this machine and is never
