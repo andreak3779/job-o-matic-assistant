@@ -3,9 +3,8 @@
 Decision record: [ADR 0018 in `claude-projects`, ADR 0021 in `job-o-matic-assistant`](adr/) (the two
 copies of the ADR differ only in their number). This plan is the work breakdown for it.
 
-> This file is kept free of personal data even though the repo is private, so it could be shared
-> without a clean-up: no names, employers, salary figures or private rules. Example postings are
-> described by shape ("11 requirements, 7 met, 3 course-level") and never by employer.
+> This file is kept free of personal data because the repo is public: no names, employers, salary
+> figures or private rules. Example postings are described by shape ("11 requirements, 7 met, 3 course-level") and never by employer.
 > Implementation lands in `job-o-matic-assistant`; the prototype repo keeps a copy of this record.
 
 ## Goal

@@ -1,9 +1,9 @@
 # How this was built
 
-> **Note (November 2026):** I first planned to share this repository as a portfolio piece. I have
-> decided to keep it private, because I would rather my other repositories be the public ones. The
-> passages below that mention going public or sharing the code describe that earlier plan and are
-> left as written.
+> **Note (November 2026):** This repository is public. I planned to share it as a portfolio piece,
+> briefly decided to keep it private, and then published it from a fresh single-commit history, so
+> the earlier commits never became public. The passages below that mention going public describe
+> that plan and are left as written.
 
 ## The short version
 
