@@ -3,8 +3,10 @@
 This tool works with one person's career history, contact details and application history. This
 page says what exists, where it lives, and what keeps it out of this repository.
 
-This repository is private and is meant to stay private. The checks below keep personal data out of
-it anyway, so that sharing or moving the code later would not need a clean-up.
+This repository is public. It holds code, documentation and a fictional demo vault, and no
+personal data. It was published from a fresh, single-commit history so that nothing from the
+earlier private working repository's history is exposed. The checks below keep personal data out of
+it.
 
 ## What personal data exists
 
