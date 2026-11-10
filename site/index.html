@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job-O-Matic Assistant</title>
+<meta name="description" content="A rule-based job-search toolkit. It rates a posting against a typed profile, refuses weak or duplicate applications, and drafts documents for you to review and send.">
+<link rel="icon" href="assets/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="assets/job-o-matic-icon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Job-O-Matic Assistant">
+<meta property="og:description" content="A rule-based job-search toolkit that rates a posting, refuses weak or duplicate applications, and drafts documents for you to review and send.">
+<meta property="og:url" content="https://andreak3779.github.io/job-o-matic-assistant/">
+<meta property="og:image" content="https://andreak3779.github.io/job-o-matic-assistant/assets/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root {
+  --bg: #fdf6e3;
+  --surface: #ffffff;
+  --text: #1b1f4b;
+  --muted: #4a4f7a;
+  --line: #e4d9b8;
+  --accent: #0e8f96;
+  --accent-ink: #ffffff;
+  --pink: #c4207f;
+  --sun: #ffd23f;
+  --term-bg: #1b1f4b;
+  --term-text: #fdf6e3;
+  --term-dim: #9aa0d6;
+  --ok: #7ee08a;
+  --warn: #ffd23f;
+  --bad: #ff8a7a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11143a;
+    --surface: #1b1f4b;
+    --text: #fdf6e3;
+    --muted: #b4b9e6;
+    --line: #333873;
+    --accent: #38c9d0;
+    --accent-ink: #11143a;
+    --pink: #ff7cc0;
+    --term-bg: #0b0d28;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11143a; --surface: #1b1f4b; --text: #fdf6e3; --muted: #b4b9e6; --line: #333873;
+  --accent: #38c9d0; --accent-ink: #11143a; --pink: #ff7cc0; --term-bg: #0b0d28;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+a { color: var(--accent); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+header.hero {
+  background: var(--sun); color: #1b1f4b; border-bottom: 6px solid #1b1f4b;
+  background-image: repeating-conic-gradient(from 0deg at 50% 120%, #ffe27a 0 7.5deg, #ffd23f 7.5deg 15deg);
+}
+.hero .wrap { display: grid; grid-template-columns: 1fr 280px; gap: 32px; align-items: center; padding-top: 48px; padding-bottom: 48px; }
+.hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.05; margin: 0 0 8px; letter-spacing: -0.01em; }
+.hero .kicker { font-weight: 700; letter-spacing: .22em; text-transform: uppercase; font-size: .85rem; margin: 0 0 8px; }
+.hero p.lead { font-size: 1.2rem; margin: 12px 0 24px; max-width: 34em; }
+.hero img { width: 100%; height: auto; border-radius: 22px; border: 4px solid #1b1f4b; background: #ffd23f; display: block; }
+.btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn {
+  display: inline-block; padding: 10px 18px; border-radius: 10px; font-weight: 700; text-decoration: none;
+  border: 3px solid #1b1f4b; background: #1b1f4b; color: #fdf6e3;
+}
+.btn.alt { background: #fdf6e3; color: #1b1f4b; }
+.btn:hover, .btn:focus-visible { transform: translateY(-1px); outline: 3px solid #e83e9c; outline-offset: 2px; }
+section { padding: 52px 0 8px; }
+h2 { font-size: 1.7rem; margin: 0 0 6px; line-height: 1.2; }
+h2 + p.sub { color: var(--muted); margin: 0 0 24px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+.card { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 20px; }
+.card h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.card h3::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--pink); margin-right: 8px; }
+.card p { margin: 0; color: var(--muted); }
+pre.term {
+  background: var(--term-bg); color: var(--term-text); border-radius: 12px; padding: 18px 20px; overflow-x: auto;
+  font: 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace; margin: 0; border: 2px solid #1b1f4b;
+}
+.term .dim { color: var(--term-dim); } .term .ok { color: var(--ok); } .term .warn { color: var(--warn); } .term .bad { color: var(--bad); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 20px; }
+.cap { font-size: .9rem; color: var(--muted); margin: 8px 2px 0; }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; counter-reset: s; }
+.flow div { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 16px; position: relative; }
+.flow div::before { counter-increment: s; content: counter(s); position: absolute; top: -12px; left: 14px; background: var(--pink); color: #fff; font-weight: 700; width: 26px; height: 26px; border-radius: 50%; text-align: center; line-height: 26px; font-size: .9rem; }
+.flow b { display: block; margin-bottom: 4px; }
+.flow span { color: var(--muted); font-size: .95rem; }
+ul.plain { padding-left: 1.2rem; margin: 0; } ul.plain li { margin: 6px 0; }
+.note { background: var(--surface); border-left: 6px solid var(--pink); padding: 16px 20px; border-radius: 0 12px 12px 0; }
+.note p { margin: 0 0 8px; } .note p:last-child { margin: 0; }
+.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 24px; list-style: none; padding: 0; margin: 0; }
+.links a { font-weight: 600; }
+footer { margin-top: 60px; padding: 28px 0 40px; border-top: 2px solid var(--line); color: var(--muted); font-size: .95rem; }
+@media (max-width: 760px) {
+  .hero .wrap { grid-template-columns: 1fr; padding-top: 32px; padding-bottom: 36px; }
+  .hero img { max-width: 220px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn:hover { transform: none; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <p class="kicker">Job-O-Matic</p>
+      <h1>Assistant</h1>
+      <p class="lead">A rule-based job-search toolkit. It rates a posting against a typed career profile, refuses weak or duplicate applications, and drafts documents for you to review and send yourself.</p>
+      <div class="btns">
+        <a class="btn" href="https://github.com/andreak3779/job-o-matic-assistant">View on GitHub</a>
+        <a class="btn alt" href="#try-it">Try it</a>
+        <a class="btn alt" href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/HOW_THIS_WAS_BUILT.md">How it was built</a>
+      </div>
+    </div>
+    <img src="assets/job-o-matic-logo.png" width="560" height="560" alt="Job-O-Matic Assistant logo: a retro appliance with a rating gauge pointing at green and a resume coming out of its top slot">
+  </div>
+</header>
+
+<main class="wrap">
+  <section aria-labelledby="what">
+    <h2 id="what">What it does</h2>
+    <p class="sub">One person's job search, made more honest and less repetitive.</p>
+    <div class="cards">
+      <div class="card"><h3>Rates the fit</h3><p>Compares each required skill in a posting with the evidence in your profile and gives Strong, Good, Worth a try, Stretch or Pass. The rating comes from counts, so the same posting and profile always give the same answer.</p></div>
+      <div class="card"><h3>Refuses weak applications</h3><p>A gate in code, not in a prompt, blocks documents when the fit is weak, the location rules fail, you already applied, or the pay is below your minimum. Some refusals cannot be confirmed past.</p></div>
+      <div class="card"><h3>Drafts, never sends</h3><p>Writes a tailored resume and cover letter as Word files for you to read and send. It never applies for you, never scrapes job boards, and never records an application as sent unless you say so.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="demo">
+    <h2 id="demo">The refusal is the point</h2>
+    <p class="sub">Real output from the fictional demo profile. A strong match is rated; a weak one is refused.</p>
+    <div class="two">
+      <div>
+<pre class="term" aria-label="Terminal output of jobo fit-check on a strong-fit posting"><span class="dim">$ jobo fit-check tests/fixtures/strong-fit-jd.md</span>
+## Fit Check — Senior Full-Stack .NET Developer
+
+| Skill                 | Status | Evidence                 |
+|-----------------------|--------|--------------------------|
+| c#                    | <span class="ok">✅</span>     | production               |
+| asp.net core          | <span class="ok">✅</span>     | production               |
+| azure                 | <span class="ok">✅</span>     | production               |
+| ...                   |        |                          |
+| typescript            | <span class="warn">🟡</span>     | coursework or self-study |
+| graphql               | <span class="bad">🔴</span>     | no evidence              |
+
+<b>Fit Rating: Strong</b>
+All 9 required skills covered; 4 nice-to-haves present.</pre>
+        <p class="cap">Output trimmed. Employers and skills come from a made-up persona.</p>
+      </div>
+      <div>
+<pre class="term" aria-label="Terminal output of jobo generate-resume refusing a weak-fit posting"><span class="dim">$ jobo generate-resume tests/fixtures/data-engineer-jd.md</span>
+<span class="bad">REFUSED:</span> Fit rating is Pass — refusing to
+generate resume/cover letter.
+7 core requirements have no evidence; coverage
+22% of 9 required skills.
+
+A Pass on skills cannot be confirmed past:
+run fit-check for the full breakdown, or supply
+a stronger-fit posting.
+
+<span class="dim">exit status 2</span></pre>
+        <p class="cap">Weaker fits (Stretch, Worth a try) can be confirmed past, only when you say so.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="how">
+    <h2 id="how">How it works</h2>
+    <p class="sub">Your data stays in a separate private vault. This repository holds code only.</p>
+    <div class="flow">
+      <div><b>Save a posting</b><span>As a markdown file. The tool never reads job boards.</span></div>
+      <div><b>Rate it</b><span>The fit engine matches skills to your typed profile, plus location and soft requirements.</span></div>
+      <div><b>Pass the gate</b><span>Fit, location, duplicate and pay checks run for the command line and the MCP server alike.</span></div>
+      <div><b>Review and send</b><span>Tailored Word documents, checked for page count. You read them and you send them.</span></div>
+    </div>
+    <p style="margin-top:18px">Three ways in, one codebase: a command line (<code>jobo</code>), an MCP server for Claude Desktop, and skills for Claude Code.</p>
+  </section>
+
+  <section aria-labelledby="try-it">
+    <h2 id="try-it">Try it</h2>
+    <p class="sub">Uses the fictional demo vault. No personal data, no model calls.</p>
+<pre class="term"><span class="dim"># Python 3.11+</span>
+git clone https://github.com/andreak3779/job-o-matic-assistant.git
+cd job-o-matic-assistant
+python3 -m venv .venv
+.venv/bin/pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
+source .venv/bin/activate
+
+export JOBOMATIC_VAULT=$PWD/demo-vault
+jobo fit-check tests/fixtures/strong-fit-jd.md          <span class="dim"># rating: Strong</span>
+jobo generate-resume tests/fixtures/data-engineer-jd.md <span class="dim"># refused: the skills do not match</span></pre>
+    <p class="cap">Full setup, including your own vault, is in the <a href="https://github.com/andreak3779/job-o-matic-assistant#readme">README</a>.</p>
+  </section>
+
+  <section aria-labelledby="honest">
+    <h2 id="honest">Built with Claude Code, and honest about it</h2>
+    <div class="note">
+      <p>Claude wrote the code. I wrote the requirements, the design decisions, the standing instructions and the skill files, asked for tests and revisions, and decided whether each change merged. I read every generated document myself.</p>
+      <p>It began as resume-editing prompts. It became tested code because prompt versions let wrong claims through, and the repository documents where the AI went wrong and how each case was caught.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="not">
+    <h2 id="not">What it is not</h2>
+    <ul class="plain">
+      <li>Not an auto-apply tool. You submit every application by hand.</li>
+      <li>Not a scraper. You save a posting and give it to the tool.</li>
+      <li>Not an applicant-screening tool. It serves the candidate's own go or no-go decision.</li>
+      <li>Not a multi-user product. It is built for one person's search.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="read">
+    <h2 id="read">Read more</h2>
+    <p class="sub">The engineering is written down.</p>
+    <ul class="links">
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/HOW_THIS_WAS_BUILT.md">How this was built</a></li>
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/TRUTHFULNESS.md">What it guarantees</a></li>
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/LIMITS.md">Its limits</a></li>
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/RESPONSIBLE_USE.md">Responsible use</a></li>
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/PRIVACY.md">Privacy</a></li>
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/architecture.md">Architecture</a></li>
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/tree/main/docs/adr">Decision records</a></li>
+      <li><a href="https://github.com/andreak3779/job-o-matic-assistant/tree/main/samples">Sample output</a></li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Job-O-Matic Assistant · MIT licence · <a href="https://github.com/andreak3779/job-o-matic-assistant">github.com/andreak3779/job-o-matic-assistant</a></div>
+</footer>
+</body>
+</html>
