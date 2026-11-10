@@ -22,6 +22,7 @@ import tempfile
 import threading
 from collections.abc import Callable
 from datetime import date
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,7 @@ from mcp.types import (
     BlobResourceContents,
     ContentBlock,
     EmbeddedResource,
+    Icon,
     TextContent,
     TextResourceContents,
 )
@@ -40,7 +42,33 @@ from jobomatic import paths
 from jobomatic.interfaces.cli.main import main as cli_main
 from jobomatic.interfaces.mcp import access, skill_prompts
 
-mcp = MCPServer("job-o-matic")
+# Icons shown by MCP clients that display them. The server runs over stdio and hosts nothing, so
+# each icon is sent as a data: URI. (file name, MIME type, sizes). The gauge icon is used rather
+# than the full logo because the logo's lettering is unreadable at icon sizes.
+_ICON_FILES = (
+    ("job-o-matic-icon.svg", "image/svg+xml", ["any"]),
+    ("icon-512.png", "image/png", ["512x512"]),
+)
+
+
+def server_icons() -> list[Icon]:
+    """The server's icons, read from the branding folder. A missing file is skipped, since an
+    icon is cosmetic and must never stop the server starting."""
+    folder = resources.files("jobomatic") / "branding"
+    icons: list[Icon] = []
+    for name, mime_type, sizes in _ICON_FILES:
+        try:
+            data = (folder / name).read_bytes()
+        except OSError:
+            continue
+        encoded = base64.b64encode(data).decode("ascii")
+        icons.append(
+            Icon(src=f"data:{mime_type};base64,{encoded}", mime_type=mime_type, sizes=sizes)
+        )
+    return icons
+
+
+mcp = MCPServer("job-o-matic", title="Job-O-Matic Assistant", icons=server_icons())
 
 # contextlib.redirect_stdout/stderr mutate process-global sys.stdout/sys.stderr
 # for the duration of the `with` block — not thread-safe. The mcp SDK dispatches

@@ -89,6 +89,7 @@ packages = [
 # The rule and style JSON files are read next to the code, so they must ship with it.
 # NOTE: only editable installs (`pip install -e .`) are supported.
 [tool.setuptools.package-data]
+"jobomatic" = ["branding/*"]
 "jobomatic.fit" = ["*.json"]
 "jobomatic.documents.adapters" = ["*.json"]
 "jobomatic.learning" = ["topics.yaml", "*.schema.json"]

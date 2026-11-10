@@ -605,3 +605,16 @@ def test_generate_learning_plan_rejects_output_outside_write_roots(tmp_path: Pat
 def test_unknown_user_tilde_path_is_a_tool_error() -> None:
     with pytest.raises(ToolError):
         interview_prep(str(FIXTURE_JD), out="~no_such_user_xyz/out.docx")
+
+
+def test_server_announces_its_title_and_icons() -> None:
+    from jobomatic.interfaces.mcp.server import mcp, server_icons
+
+    assert mcp.title == "Job-O-Matic Assistant"
+    icons = server_icons()
+    assert [i.mime_type for i in icons] == ["image/svg+xml", "image/png"]
+    for icon in icons:
+        header, _, payload = icon.src.partition(",")
+        assert header == f"data:{icon.mime_type};base64"
+        assert base64.b64decode(payload)  # a real, non-empty file
+    assert mcp.icons == icons
