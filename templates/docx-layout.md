@@ -26,9 +26,41 @@
 
 ---
 
-## Resume Formatting Standards
+## Resume and cover-letter layout (`docx_tailored.py`)
 
-**The candidate's proven layout** (used in production since May 2025):
+Matches the candidate's own template files. US Letter, margins 0.5" top and bottom, 0.75" sides,
+header distance 0.25". Carlito is set as the document's default font (`apply_base_font`), so a run
+that names no font never falls back to a serif face. Colours: blue `2E6DA4` for headings, gray
+`888888` for the thin rules. Sizes and the gray colour live in `docx-style.json`.
+
+| Element | Size | Bold | Notes |
+|---|---|---|---|
+| Name | 16pt | yes | centered; 6pt below on the resume, 1.5pt on the letter |
+| Tagline | 10pt | no | centered; a `**` in the stored headline is stripped, never bold |
+| Contact lines | 9.5pt | no | `email \| phone \| location`, then links; 0.5pt gray rule under the last line |
+| Section heading | 11pt | yes | ALL CAPS blue, 0.75pt blue rule under it |
+| Resume summary, skills, bullets | 9.5pt | label only | skill label bold; bullets `•  ` with 0.25" hanging indent |
+| Role line | 10pt | yes | `Title \| Company, Location`, dates italic 9.5pt on a right tab at 7.0", keep-with-next |
+| Letter body | 10.5pt | no | bullets are `•  **Label:** body`; bold `Re: Role — Company` line |
+| Later-page header | 8.5pt | no | `NAME \| contact \| links` over a gray rule; page 1 has none |
+
+The letter has no "Dear ..." line: date, `Re:`, hook, WHAT I BRING, highlights, closing, `Sincerely,`,
+name. The date has no zero-padded day (`November 5, 2026`).
+
+**Gaps are written on one side only.** The template spaced blocks with empty paragraphs. The
+generator uses real spacing instead (heading: 19.5pt above, 14.6pt below; next role: 16pt above;
+bullets: 1pt between on the resume, 2.5pt on the letter) and puts each gap before the item, never
+after the one above. Word adds "after" to the next "before"; LibreOffice keeps the larger, so a gap
+set on both sides differs between the two. `tests/test_tailored_layout.py` enforces this.
+
+`pagefit.py` mirrors these sizes and gaps to estimate the page count. If you change a size here,
+change its constant there and recalibrate against LibreOffice (see the comments in `pagefit.py`).
+
+---
+
+## Part-time resume formatting standards (`docx_part_time.py`)
+
+**The part-time layout** (used in production since May 2025):
 
 | Element | Size | Bold | Before (DXA) | After (DXA) | Before (pt) | After (pt) | Notes |
 |---------|------|------|---|---|---|---|---|
@@ -139,7 +171,8 @@ pt to DXA: pt × 12.74 ≈ DXA
 
 **Official templates:**
 
-- `src/jobomatic/documents/adapters/docx_part_time.py` — Uses the DXA values from the table above
+- `src/jobomatic/documents/adapters/docx_tailored.py` — the resume and cover letter (see the first section)
+- `src/jobomatic/documents/adapters/docx_part_time.py` — the part-time documents; uses the DXA values from the table above
 - `src/jobomatic/documents/adapters/docx_layout.py` — the shared helpers for the other generated documents
 
 All spacing in templates should match the DXA column exactly. If generating a new document and spacing looks off, compare against this table first.

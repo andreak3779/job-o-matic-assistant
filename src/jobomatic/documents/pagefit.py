@@ -35,22 +35,28 @@ RECENT_ROLES = 3  # the newest roles keep at least MIN_BULLETS; older ones may f
 LAST_RESORT_SKILL_LINES = 5
 
 # Layout constants, mirrored from the DOCX renderer (US Letter, 0.5" top and bottom, 0.75" sides,
-# Carlito 11 pt body). Calibrated against LibreOffice; see tests/test_pagefit.py.
+# Carlito 9.5 pt body, 10 pt role lines). Calibrated against LibreOffice; see tests/test_pagefit.py.
 _PAGE_HEIGHT_PT = 720.0  # 11" minus 1" of margin
 _TEXT_WIDTH_PT = 504.0  # 8.5" minus 1.5" of margin
 _BULLET_INDENT_PT = 18.0  # 0.25" hanging indent on experience bullets
-_CHAR_EM = 0.50  # average character width as a share of the font size (Carlito)
+_CHAR_EM = 0.44  # average character width as a share of the font size (Carlito)
 _LINE_HEIGHT = 1.22  # line height as a share of the font size
-_BODY = 11.0
-_SUMMARY = 10.5
+_BODY = 9.5  # summary, skills, bullets
+_TITLE = 10.0  # the tagline and the role lines
+_SECTION = 11.0  # section headings
 _CONTACT = 9.5
 _NAME = 16.0
-_CALIBRATION = 1.055  # measured: the raw estimate ran 1-5% below LibreOffice's real height
+_HEADING_BEFORE = 19.5
+_HEADING_AFTER = 14.6
+_NEXT_JOB_BEFORE = 16.0
+_CALIBRATION = (
+    1.03  # measured: the raw estimate runs 1-5% above LibreOffice's real height at 0.44 em
+)
 _SAFETY = 0.97  # keep 3% of the budget free so a small estimate error cannot spill a line
 _LATER_PAGE_HEADER_PT = (
-    14.0  # the compact header pushes the body down on every page after the first
+    26.0  # the compact header (one or two lines) and its gap push the body down on later pages
 )
-_FIRST_PAGE_HEADER_PT = 14.0  # the empty first-page header paragraph does the same
+_FIRST_PAGE_HEADER_PT = 0.0  # the empty first-page header fits inside the top margin
 
 
 def _lines(text: str, size: float, width_pt: float = _TEXT_WIDTH_PT) -> int:
@@ -65,45 +71,56 @@ def _para(
 
 
 def _heading() -> float:
-    return _para("X", _BODY, before=8, after=2)
+    return _para("X", _SECTION, before=_HEADING_BEFORE, after=_HEADING_AFTER)
 
 
 def estimate_height(content: TailoredResume) -> float:
     """Estimated height of the whole resume in points (one tall column)."""
     c = content.contact
     total = _FIRST_PAGE_HEADER_PT
-    total += _para(c.name, _NAME)
-    total += _para(content.tagline, _BODY) if content.tagline else 0
+    total += _para(c.name, _NAME, after=6)
+    total += _para(content.tagline, _TITLE, after=1.5) if content.tagline else 0
     line1 = "  |  ".join(p for p in (c.email, c.phone, c.location) if p)
     line2 = "  |  ".join(p for p in (c.linkedin, c.github, c.pluralsight) if p)
-    total += _para(line1, _CONTACT) + _para(line2, _CONTACT, after=4)
+    total += _para(line1, _CONTACT) + _para(line2, _CONTACT)
 
     total += _heading()
-    total += sum(_para(line.strip(), _SUMMARY, after=2) for line in content.summary[:2])
+    total += sum(
+        _para(line.strip(), _BODY, before=2 if i else 0)
+        for i, line in enumerate(content.summary[:2])
+    )
 
     total += _heading()
-    total += sum(_para(f"{s.label}: {s.skills}", _BODY, after=2) for s in content.skills)
+    total += sum(
+        _para(f"{s.label}: {s.skills}", _BODY, before=1.75 if i else 0)
+        for i, s in enumerate(content.skills)
+    )
 
     total += _heading()
-    for job in content.experience:
+    width = _TEXT_WIDTH_PT - _BULLET_INDENT_PT
+    for index, job in enumerate(content.experience):
         left = job.title
         if job.company:
             left += f" | {job.company}"
         if job.location:
             left += f", {job.location}"
-        total += _para(f"{left}  {job.dates}", _SUMMARY, before=6)
-        width = _TEXT_WIDTH_PT - _BULLET_INDENT_PT
-        total += sum(_para(f"•  {b}", _BODY, after=2, width=width) for b in job.bullets)
-    if content.additional_experience.strip():
-        total += _para(
-            f"Additional Experience: {content.additional_experience.strip()}",
-            _BODY,
-            before=6,
-            after=2,
+        total += _para(f"{left}  {job.dates}", _TITLE, before=_NEXT_JOB_BEFORE if index else 0)
+        total += sum(
+            _para(f"•  {b}", _BODY, before=1 if i else 0, width=width)
+            for i, b in enumerate(job.bullets)
         )
+    if content.additional_experience.strip():
+        total += _para("Additional Experience", _TITLE, before=_NEXT_JOB_BEFORE)
+        total += _para(f"•  {content.additional_experience.strip()}", _BODY, width=width)
     if content.education:
-        total += _heading() + sum(_para(f"•  {e}", _BODY) for e in content.education)
-    total += _heading() + sum(_para(f"•  {line}", _BODY) for line in content.certifications)
+        total += _heading() + sum(
+            _para(f"•  {e}", _BODY, before=1 if i else 0, width=width)
+            for i, e in enumerate(content.education)
+        )
+    total += _heading() + sum(
+        _para(f"•  {line}", _BODY, before=1 if i else 0, width=width)
+        for i, line in enumerate(content.certifications)
+    )
     return total * _CALIBRATION
 
 

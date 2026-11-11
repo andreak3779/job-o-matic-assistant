@@ -13,10 +13,9 @@ from typing import Any
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor, Twips
 
+from jobomatic.documents.adapters.docx_layout import add_bottom_border
 from jobomatic.documents.humanize import find_ai_tells
 from jobomatic.documents.model import PartTimeCoverLetter, PartTimeJob, PartTimeResume, Strength
 
@@ -71,13 +70,11 @@ def _run(
 
 
 def _bottom_rule(p: Any, space: int) -> None:
-    """A single blue line under the paragraph (the template's section rule)."""
-    border = OxmlElement("w:pBdr")
-    bottom = OxmlElement("w:bottom")
-    for key, value in (("val", "single"), ("sz", "6"), ("space", str(space)), ("color", BLUE)):
-        bottom.set(qn(f"w:{key}"), value)
-    border.append(bottom)
-    p._p.get_or_add_pPr().append(border)
+    """A single blue line under the paragraph (the template's section rule).
+
+    Written in the schema's order (``pBdr`` before ``spacing`` and ``jc``), which Word expects.
+    """
+    add_bottom_border(p, BLUE, eighths_pt=6, space_pt=space)
 
 
 def _section_heading(doc: Any, text: str) -> None:
@@ -163,8 +160,6 @@ class DocxPartTimeResume:
         _section_heading(doc, "EDUCATION AND TRAINING")
         for line in content.education:
             _plain_bullet(doc, line)
-        _section_heading(doc, "REFERENCES")
-        _body(doc, "Available on request.")
         doc.save(str(out_path))
         return out_path
 

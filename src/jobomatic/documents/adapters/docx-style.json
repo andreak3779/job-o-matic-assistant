@@ -7,5 +7,13 @@
   "section_size_pt": 11,
   "body_size_pt": 11,
   "summary_size_pt": 10.5,
-  "default_signature_name": "Candidate Name"
+  "default_signature_name": "Candidate Name",
+  "rule_hex": "888888",
+  "tagline_size_pt": 10,
+  "contact_size_pt": 9.5,
+  "letter_body_size_pt": 10.5,
+  "resume_body_size_pt": 9.5,
+  "resume_title_size_pt": 10,
+  "page2_header_size_pt": 8.5,
+  "header_distance_in": 0.25
 }

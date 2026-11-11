@@ -60,7 +60,7 @@ def _fixture_json(kind: str) -> dict:
 def test_content_errors_name_the_field() -> None:
     data = _fixture_json("part-time-resume")
     del data["contact"]["email"]
-    data["experience"][0]["bullets"] = ["a", "b", "c"]
+    data["experience"][0]["bullets"] = ["a", "b", "c", "d"]
     with pytest.raises(DocumentError) as info:
         service.parse_content("part-time-resume", json.dumps(data), "mine.json")
     text = str(info.value)
@@ -150,7 +150,8 @@ def test_render_resume_lays_out_the_content_as_written(tmp_path: Path) -> None:
     assert "Software Developer | Acme Health, Springfield, MD\tMarch 2021 – Present" in lines
     assert "Professional Development\t2020 – 2021" in lines  # no company: no separator
     assert "•  Raised test coverage from 20% to 75%." in lines
-    assert "Additional Experience: Earlier programming roles in finance and logistics." in lines
+    assert "Additional Experience" in lines  # a bold line of its own, then one bullet
+    assert "•  Earlier programming roles in finance and logistics." in lines
     assert "•  Microsoft Azure Fundamentals (AZ-900) — Certified April 2026" in lines
     headings = [line for line in lines if line.isupper() and len(line) > 8][1:]  # not the name
     assert headings == [
@@ -172,7 +173,6 @@ def test_render_cover_letter_keeps_its_parts_in_order(tmp_path: Path) -> None:
     assert lines[:2] == ["SARAH ASHFORD", "Senior .NET Developer"]
     order = [
         "Re: Senior .NET Developer — Northgate Insurance Group",
-        "Dear Northgate Insurance Group Hiring Team,",
         "WHAT I BRING",
         "RELEVANT HIGHLIGHT",  # the fixture has one highlight
         "Sincerely,",
@@ -183,6 +183,7 @@ def test_render_cover_letter_keeps_its_parts_in_order(tmp_path: Path) -> None:
     ]
     assert positions == sorted(positions)
     assert "January 15, 2026" in lines
+    assert not [line for line in lines if line.startswith("Dear ")]  # the template has none
 
 
 def test_render_files_a_tailored_document_by_posting_and_logs_a_draft() -> None:
@@ -261,3 +262,42 @@ def test_the_highlights_heading_matches_how_many_there_are(
 def test_a_letter_without_highlights_has_no_highlights_heading(tmp_path: Path) -> None:
     lines = _letter_lines_with_highlights(tmp_path, 0)
     assert not [line for line in lines if "HIGHLIGHT" in line]
+
+
+@pytest.mark.parametrize("kind", sorted(KINDS))
+def test_a_paragraph_border_is_written_before_spacing_and_alignment(
+    kind: str, tmp_path: Path
+) -> None:
+    """The schema orders ``pBdr`` before ``spacing`` and ``jc``; Word is stricter than LibreOffice."""
+    import zipfile
+
+    from lxml import etree
+
+    out = service.render_document(_content(kind), KINDS[kind](), tmp_path / "out.docx")
+    root = etree.fromstring(zipfile.ZipFile(out).read("word/document.xml"))
+    w = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    bordered = [p for p in root.iter(w + "pPr") if p.find(w + "pBdr") is not None]
+    assert bordered
+    for p_pr in bordered:
+        tags = [child.tag.removeprefix(w) for child in p_pr]
+        for later in ("spacing", "ind", "jc"):
+            if later in tags:
+                assert tags.index("pBdr") < tags.index(later), tags
+
+
+def test_the_part_time_resume_has_no_references_section(tmp_path: Path) -> None:
+    out = service.render_document(
+        _content("part-time-resume"), DocxPartTimeResume(), tmp_path / "out.docx"
+    )
+    text = golden_outputs.docx_text(out)
+    assert "REFERENCES" not in text and "Available on request" not in text
+
+
+def test_the_part_time_resume_allows_three_bullets_a_role_and_six_strengths() -> None:
+    data = _fixture_json("part-time-resume")
+    data["experience"][0]["bullets"] = ["One.", "Two.", "Three."]
+    data["strengths"] = data["strengths"] * 2
+    service.parse_content("part-time-resume", json.dumps(data))
+    data["experience"][0]["bullets"].append("Four.")
+    with pytest.raises(DocumentError):
+        service.parse_content("part-time-resume", json.dumps(data))

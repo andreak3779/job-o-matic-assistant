@@ -34,6 +34,7 @@ from jobomatic.fit.parser import parse_jd
 from jobomatic.provenance import write_sidecar
 
 _PAGE2_HEADER_SIZE = Pt(9)
+_MARKDOWN_RULE = re.compile(r"[-*_]{3,}")  # a leftover "---" line is not a paragraph
 
 
 def _skill_score(skill: str, jd_pool: str) -> int:
@@ -84,18 +85,21 @@ def _job_content(profile: Any, parsed: Any) -> list[ResumeJob]:
     ]
 
 
+def _cert_status(cert: Any) -> str:
+    """The cert's own note when it has one, else its status in words ("In Progress")."""
+    return str(cert.notes or cert.status.value.replace("_", " ").title())
+
+
 def _certification_lines(profile: Any) -> list[str]:
     certs = {c.code: c for c in profile.certifications}
     lines: list[str] = []
     az900 = certs.get("AZ-900")
     ai200 = certs.get("AI-200")
     if az900:
-        lines.append(f"Microsoft Azure Fundamentals (AZ-900) — {az900.notes or az900.status.value}")
+        lines.append(f"Microsoft Azure Fundamentals (AZ-900) — {_cert_status(az900)}")
     # A not-pursuing / on-hold cert is omitted: its notes are internal, not resume copy.
     if ai200 and ai200.status.value != "not_pursuing":
-        lines.append(
-            f"Azure AI Cloud Developer Associate (AI-200) — {ai200.notes or ai200.status.value}"
-        )
+        lines.append(f"Azure AI Cloud Developer Associate (AI-200) — {_cert_status(ai200)}")
     return lines
 
 
@@ -112,7 +116,12 @@ def _education_lines(profile: Any) -> list[str]:
 def _resume_content(profile: Any, parsed: Any, tagline: str) -> TailoredResume:
     """The resume for a posting. ``parsed`` orders skills and bullets by relevance to it."""
     ident = profile.identity
-    summary = [line.strip() for line in ident.summary.splitlines()[:2]] or [""]
+    # Paragraphs only: a blank line between them must not become an empty second paragraph.
+    summary = [
+        line.strip()
+        for line in ident.summary.splitlines()
+        if line.strip() and not _MARKDOWN_RULE.fullmatch(line.strip())
+    ][:2] or [""]
     full = TailoredResume(
         contact=ResumeContact(
             name=ident.name or DEFAULT_SIGNATURE_NAME,

@@ -40,7 +40,7 @@ def test_cover_letter_template_keeps_the_placeholders_as_literal_text() -> None:
     assert main(["generate-profile-cover-letter"]) == 0
     text = _text(paths.output_dir("templates") / "cover-letter.docx")
     assert "[Company Name]" in text and "[Role Title]" in text
-    assert "Dear [Company Name] Hiring Team," in text
+    assert "Dear " not in text  # the candidate's template goes straight from "Re:" to the hook
     assert "SARAH ASHFORD" in text
     assert applications.load_applications() == []
 
