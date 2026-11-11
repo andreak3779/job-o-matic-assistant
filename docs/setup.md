@@ -4,6 +4,8 @@ A step-by-step guide for Debian, Ubuntu and systems built on them (Linux Mint, P
 You need a terminal, an internet connection and about 250 MB of disk. Part 1 takes about 15 minutes
 and uses no personal data. Tested on Zorin OS 18 (Ubuntu 24.04 base).
 
+> **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee. Commit and push your vault before you update.
+
 This page is the **only** place the install steps are written in full. Everywhere else links here.
 For what the commands do once you are set up, see [GETTING_STARTED.md](../GETTING_STARTED.md).
 

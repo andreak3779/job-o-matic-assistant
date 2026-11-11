@@ -108,3 +108,59 @@ def test_the_checker_catches_a_broken_link_and_a_broken_anchor(tmp_path: Path) -
     assert len(problems) == 2
     assert "no such file" in problems[0] and "gone.md" in problems[0]
     assert "no such heading" in problems[1] and "#nope" in problems[1]
+
+
+# ── The pre-1.0 notice and the single source of install steps (ADR 0026) ─────
+
+NOTICE = (
+    "> **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its "
+    "author for a live job search. It is not yet 1.0: command options, the profile file layout "
+    "and generated-document formats can still change, and there is no migration guarantee. "
+    "Commit and push your vault before you update."
+)
+FRONT_DOORS = [
+    ROOT / "README.md",
+    ROOT / "GETTING_STARTED.md",
+    ROOT / "docs" / "setup.md",
+    ROOT / "src" / "jobomatic" / "interfaces" / "mcp" / "README.md",
+]
+SITE = ROOT / "site" / "index.html"
+CLONE = "git clone https://github.com/andreak3779/job-o-matic-assistant.git"
+
+
+@pytest.mark.parametrize("doc", FRONT_DOORS, ids=lambda p: str(p.relative_to(ROOT)))
+def test_each_front_door_document_carries_the_pre_1_0_notice(doc: Path) -> None:
+    assert NOTICE in doc.read_text(encoding="utf-8")
+
+
+def test_the_site_carries_the_pre_1_0_notice() -> None:
+    text = SITE.read_text(encoding="utf-8")
+    assert "Pre-1.0 and in active development." in text
+    assert "no migration guarantee" in text
+
+
+def test_the_scripts_print_the_short_form_of_the_notice() -> None:
+    library = (ROOT / "scripts" / "lib" / "setup-common.sh").read_text(encoding="utf-8")
+    assert 'NOTICE_SHORT="Pre-1.0, in active development."' in library
+
+
+def test_the_package_classifier_says_alpha() -> None:
+    import tomllib
+
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    assert "Development Status :: 3 - Alpha" in project["classifiers"]
+
+
+@pytest.mark.parametrize("doc", [ROOT / "README.md", ROOT / "docs" / "setup.md", SITE])
+def test_the_quick_start_is_the_same_everywhere(doc: Path) -> None:
+    text = doc.read_text(encoding="utf-8")
+    assert CLONE in text
+    assert "bash scripts/setup.sh" in text
+
+
+@pytest.mark.parametrize("doc", [*FRONT_DOORS, SITE, ROOT / "docs" / "architecture.md"])
+def test_the_docs_do_not_repeat_the_install_commands(doc: Path) -> None:
+    """The steps live in scripts/setup.sh and docs/setup.md; copies drift (ADR 0026)."""
+    text = doc.read_text(encoding="utf-8")
+    assert "pip install" not in text
+    assert "python3 -m venv" not in text

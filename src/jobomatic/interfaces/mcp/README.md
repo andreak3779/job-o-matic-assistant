@@ -6,6 +6,8 @@ or any other MCP-capable app — can run fit checks, search the evidence in your
 own record, and generate application documents without a terminal. The server
 is registered as `job-o-matic`.
 
+> **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee. Commit and push your vault before you update.
+
 Every tool is a thin wrapper: it builds the same argv list the CLI itself
 uses and calls `jobomatic.main(argv)`, capturing stdout/stderr. No
 generation logic lives here — see `src/jobomatic/interfaces/cli/main.py` and the

@@ -4,6 +4,8 @@ A first session with `jobo`, the job-o-matic command line, followed by a referen
 command. **Not installed yet?** Do [Part 1 of docs/setup.md](docs/setup.md) first; it takes about 15
 minutes and uses no personal data.
 
+> **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee. Commit and push your vault before you update.
+
 ## At the start of every session
 
 Open a terminal and run these two lines. A new terminal forgets them.

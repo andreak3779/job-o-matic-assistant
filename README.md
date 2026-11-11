@@ -8,6 +8,8 @@
 
 A rule-based job-search toolkit for one person's search. It rates a job posting against a typed profile, refuses weak or duplicate applications unless you confirm, and drafts tailored documents for you to review and send yourself.
 
+> **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee. Commit and push your vault before you update.
+
 **What this is**
 
 - A command line (`jobo`), an MCP server for Claude Desktop, and skills for Claude Code, all running the same code.
@@ -36,7 +38,7 @@ The second command exits with status 2 and a `REFUSED:` message. The refusal is 
 
 **Stack.** Python, because this is command-line and MCP tooling. My .NET work is in [CookingTime](https://github.com/andreak3779/CookingTime), a .NET 10 migration with Clean Architecture and tests. Sample output for a fictional person is in [samples/](samples/README.md).
 
-**Status.** Working, and used by its author for a live job search. The decisions behind it are in [docs/adr/](docs/adr/), what it guarantees in [docs/TRUTHFULNESS.md](docs/TRUTHFULNESS.md), and where its edges are in [docs/LIMITS.md](docs/LIMITS.md) and [docs/SCOPE.md](docs/SCOPE.md).
+**Status.** Pre-1.0, as the note at the top says: it works for its author's live job search, and its interfaces can still change. The decisions behind it are in [docs/adr/](docs/adr/), what it guarantees in [docs/TRUTHFULNESS.md](docs/TRUTHFULNESS.md), and where its edges are in [docs/LIMITS.md](docs/LIMITS.md) and [docs/SCOPE.md](docs/SCOPE.md).
 
 **Reviewing this project?** Start with [how it was built](docs/HOW_THIS_WAS_BUILT.md), the [architecture](docs/architecture.md) and the [decision records](docs/adr/), then see the [sample output](samples/README.md) and [what it does not do](docs/LIMITS.md).
 
