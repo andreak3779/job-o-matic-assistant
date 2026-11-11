@@ -1,65 +1,97 @@
-# Installing job-o-matic
+# Setting up job-o-matic
 
-An ordered checklist for a first install, a second laptop, or a clean reinstall. Allow about 15
-minutes. The steps were run from a fresh clone: the install takes under a minute, and the 1,300
-tests pass on the fictional demo vault.
+A step-by-step guide for Debian, Ubuntu and systems built on them (Linux Mint, Pop!_OS, Zorin OS).
+You need a terminal, an internet connection and about 250 MB of disk. Part 1 takes about 15 minutes
+and uses no personal data. Tested on Zorin OS 18 (Ubuntu 24.04 base).
 
-This page is the **only** place the install steps are written in full, so the other docs cannot
-drift from it. For what each command does once you are set up, see
-[GETTING_STARTED.md](../GETTING_STARTED.md).
+This page is the **only** place the install steps are written in full. Everywhere else links here.
+For what the commands do once you are set up, see [GETTING_STARTED.md](../GETTING_STARTED.md).
 
-## What you are installing
+## Where do you want to go?
 
-Two folders, side by side:
+```mermaid
+flowchart TD
+    A(["Start here"]) --> B{"What do you want?"}
+    B -->|"Look around"| C["Part 1: Try it"]
+    B -->|"Use it for my search"| D["Part 1, then Part 2A"]
+    B -->|"Second laptop"| E["Part 1, then Part 2B"]
+    C --> F{"Claude Code or Desktop?"}
+    D --> F
+    E --> F
+    F -->|"Yes"| G["Part 3: Optional extras"]
+    F -->|"Not yet"| H(["Check it: scripts/check-setup.sh"])
+    G --> H
+```
 
-| Folder | What | Visibility |
-| --- | --- | --- |
-| `job-o-matic-assistant/` | The code: commands, the fit engine, the MCP server, the skills, a fictional `demo-vault/` | Can be public |
-| `job-o-matic-vault/` | **Your** data: profile YAML, applications log, learning history, private limits such as salary minimums, generated documents | **Private. Never make it public** |
+| If you want to... | Do |
+| --- | --- |
+| Look around, with no personal data | Part 1 |
+| Use it for your own search | Part 1, then Part 2A |
+| Set up a second laptop (you already have a vault) | Part 1, then Part 2B |
+| Use it from Claude Code or Claude Desktop | Part 3 |
+| Change the code | Part 4 |
 
-The code finds the vault by itself when it sits next to the checkout. Nothing about you is ever
-stored in the code folder.
+## Words you will see
 
-**Just want to look around?** Do steps 1 to 5 and stop. The demo vault is a fictional candidate, so
-you need no personal data. Go on to step 6 when you want your own.
+| Word | Meaning |
+| --- | --- |
+| **terminal** | The text window where you type commands. Open it from your applications menu, or with Ctrl+Alt+T on many systems. |
+| **repository (repo)** | A folder tracked by git, a tool that records every change to it. |
+| **vault** | Your private folder with your profile, applications log and generated documents. Its own repo, kept apart from the code. |
+| **demo vault** | A vault for an invented person, included so you can try everything with no personal data. |
+| **virtual environment (venv)** | A private folder (`.venv`) holding this project's Python packages, so nothing touches your system. It must be *activated* in each terminal. |
+| **`jobo`** | The command this project gives you, available once the venv is active. |
+| **MCP** | The way Claude Desktop and Claude Code call this project's tools. Optional. |
+| **hook** | A check git runs before each commit. Only for people changing the code. |
 
-## Before you start: protect the machine
+## What goes where
 
-The vault holds your contact details, work history and education dates. Two-factor authentication
-protects your GitHub account but not a clone that is already on disk:
+You will have two folders side by side. Keep them that way.
 
-1. **Disk encryption is on.** On Linux, run `lsblk -f` and look for `crypto_LUKS` on the main
-   partition. Enable it before cloning; it is far easier on a fresh install.
-2. **A screen lock and a login password.**
-3. **Never move the vault through email, chat apps or shared cloud folders.** Use `git clone`.
+```text
+~/src/                               any ordinary folder (not /tmp)
+├── job-o-matic-assistant/           THE CODE. Safe to share; can be public.
+│   ├── scripts/setup.sh             the installer you will run
+│   ├── demo-vault/                  a FICTIONAL person, for trying it out
+│   └── .venv/                       made by setup.sh (not tracked by git)
+└── job-o-matic-vault/               YOUR DATA. Private. Never make it public.
+    ├── profile/                     your roles, skills, education
+    ├── applications/                what you drafted and applied for
+    ├── outputs/                     the documents it writes for you
+    └── private/                     salary minimums and similar
+```
 
-## Steps
+The code finds the vault by itself when it sits next to the code folder, as above. Nothing about you
+is ever stored in the code folder.
 
-### 1. Install the system tools
+---
 
-Debian and Ubuntu:
+## Part 1: Try it with the demo vault
+
+### Step 1 of 4: Install the basics
+
+In a terminal, run these. `sudo` runs a command as the administrator, so it asks for your password
+(nothing shows as you type; press Enter when done).
 
 ```bash
 sudo apt update
-sudo apt install git python3 python3-venv python3-pip gh poppler-utils
-python3 --version   # must be 3.11 or newer
+sudo apt install -y git python3 python3-venv python3-pip
+python3 --version
 ```
 
-`poppler-utils` provides `pdfinfo`, used only by the optional page check (step 9). macOS and other
-distros: install the same things with your package manager.
+The last line must say **3.11 or newer**. If it says less, find your system below.
 
-### 2. Sign in to GitHub and set your git identity
+| System | Python it ships | What to do |
+| --- | --- | --- |
+| Ubuntu 24.04, Linux Mint 22 (Ubuntu 24.04 base), Zorin OS 18 | 3.12 | Nothing |
+| Debian 12 | 3.11 | Nothing |
+| Debian 13 | 3.13 | Nothing. It has not been tested here; the script falls back if a package will not install. |
+| Ubuntu 22.04, Linux Mint 21, Pop!_OS 22.04 | 3.10 | Too old. The script prints the fix (a newer Python from the deadsnakes package source), or move to a newer release. |
+| Debian 11 | 3.9 | Too old. Upgrade to Debian 12 or newer. |
 
-```bash
-gh auth login        # choose GitHub.com, then HTTPS or SSH, and follow the prompts
-git config --global user.name  "Your Name"
-git config --global user.email "<id>+<username>@users.noreply.github.com"
-```
+*Versions as of November 2026.*
 
-Use your GitHub **noreply** address (Settings, Emails). Commit metadata is public once the code
-repo is, and it keeps your real address out of it. Use the same identity on every machine.
-
-### 3. Clone the code
+### Step 2 of 4: Get the code
 
 ```bash
 mkdir -p ~/src && cd ~/src
@@ -67,204 +99,286 @@ git clone https://github.com/andreak3779/job-o-matic-assistant.git
 cd job-o-matic-assistant
 ```
 
-Keep it somewhere ordinary such as `~/src`, not under `/tmp`: the MCP server may write to the
-temp directory, and three of its safety tests skip themselves when the checkout is inside it.
+Keep it somewhere ordinary such as `~/src`, not under `/tmp`: some safety tests skip themselves
+when the folder is inside the temp directory.
 
-### 4. Create the virtual environment and install
+### Step 3 of 4: Run the setup script
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
-.venv/bin/python -c "import docx, bs4, yaml, jsonschema, reportlab, mcp; print('deps OK')"
+bash scripts/setup.sh
 ```
 
-- `-e` (editable) is required. The package lives under `src/` and is found through the editable
-  install; without it every command fails with `ModuleNotFoundError`.
-- `-c requirements-lock.txt` pins the exact versions the repo is tested with (generated on Python
-  3.12). If pip cannot resolve it on an older Python, drop that flag.
-- The extras: `parser` reads the Pluralsight and Microsoft Learn pages you save, `pdf` makes
-  learning-plan PDFs, `mcp` is the Claude Desktop server (skip it if you will not use that),
-  `dev` and `lint` are pytest, ruff, mypy and import-linter for the checks and the commit hook.
-- Put `jobo` on your PATH with `source .venv/bin/activate`, or run `.venv/bin/jobo`. The same
-  commands work as `python -m jobomatic <command>`.
+It checks Python, builds the virtual environment, installs the packages (about 250 MB, from the
+internet) and runs a short demo. It takes a minute or two and is safe to run again. It never uses
+`sudo`; if something is missing it prints the command for you to run.
 
-### 5. Try it on the demo vault
+**What you should see** (paths shortened):
 
-```bash
-export JOBOMATIC_VAULT=$PWD/demo-vault
-jobo profile validate                                      # [OK] Profile valid ...
-jobo fit-check tests/fixtures/strong-fit-jd.md             # rating: Strong
-jobo generate-resume tests/fixtures/data-engineer-jd.md    # refused, exit status 2
+```text
+job-o-matic setup
+...
+[1/5] Checking this computer
+  OK    Ubuntu 24.04 LTS, in the Debian/Ubuntu family
+  OK    Python 3.12.3 (/usr/bin/python3)
+
+[2/5] Creating the virtual environment (.venv)
+  OK    created .venv
+
+[3/5] Installing the packages
+  OK    installed with the versions the tests use (requirements-lock.txt)
+...
+[5/5] Trying the demo vault (a fictional candidate, no personal data)
+  OK    jobo profile validate
+  OK    jobo fit-check gives Strong for a matching posting
+  OK    jobo generate-resume refuses a posting that does not match (exit 2). That is the tool working.
+
+Done. job-o-matic is installed. 0 warning(s).
 ```
 
-The refusal is the point: skills rated Pass cannot be confirmed past. A few `[WARNING]` lines from
-`profile validate` about counts in the fictional text are expected. Without a vault the commands
-stop with `ERROR: No vault found` and say how to set one; that is the next step.
+If it stops, it says **FAIL**, what went wrong and what to run. Fix that and run it again.
 
-### 6. Your own vault
+**What it installs.** The core packages, plus these extras (add `--no-dev` to skip the last two and
+save about half the disk space):
 
-The code looks for a vault in this order: `$JOBOMATIC_VAULT`, then `vault = "/path"` in
-`~/.config/job-o-matic/config.toml`, then a folder named `job-o-matic-vault` next to the checkout.
-A folder only counts as a vault if it holds a `.jobomatic.toml` file.
+| Extra | What it is for |
+| --- | --- |
+| `mcp` | The server Claude Code and Claude Desktop use (Part 3) |
+| `parser` | Reading the Pluralsight and Microsoft Learn pages you save, to import completed courses |
+| `pdf` | Making learning-plan PDFs |
+| `dev`, `lint` | The tests, and the code checks (ruff, mypy, import-linter) |
 
-**On a second laptop** (you already have a vault repo):
+### Step 4 of 4: Try it yourself
+
+Run these in the code folder. The first two lines are needed **in every new terminal**:
 
 ```bash
-cd ~/src
-git clone https://github.com/<you>/job-o-matic-vault.git
-unset JOBOMATIC_VAULT          # the sibling folder is found by itself
-cd job-o-matic-assistant && jobo profile validate
+cd ~/src/job-o-matic-assistant
+source .venv/bin/activate                       # your prompt now starts with (.venv)
+export JOBOMATIC_VAULT="$PWD/demo-vault"        # use the demo vault in this terminal
+
+jobo profile validate
+jobo fit-check tests/fixtures/strong-fit-jd.md
+jobo generate-resume tests/fixtures/data-engineer-jd.md
 ```
 
-**Starting from nothing:** copy the demo vault as a template, then replace its fictional content
-with yours. Make it a **private** repo, never a public one:
+**What you should see:**
+
+```text
+$ jobo profile validate
+[WARNING] ...                       <- a few of these are normal on the demo vault
+[OK] Profile valid: ...
+
+$ jobo fit-check tests/fixtures/strong-fit-jd.md
+## Fit Check — Senior Full-Stack .NET Developer at Northgate Insurance Group
+...
+**Fit Rating: Strong**
+
+$ jobo generate-resume tests/fixtures/data-engineer-jd.md
+REFUSED: Fit rating is Pass — refusing to generate resume/cover letter.
+...
+```
+
+The `REFUSED` is the point of the tool: a posting that does not match your skills is not turned into
+a resume. The command ends with exit status 2.
+
+**To generate real files with the demo**, use a copy. Generating documents writes into the vault,
+and you do not want that inside your code folder:
 
 ```bash
-cp -r demo-vault ../job-o-matic-vault
-cd ../job-o-matic-vault
-git init && git add -A && git commit -m "Start my vault"
+cp -r demo-vault ~/job-o-matic-demo
+export JOBOMATIC_VAULT="$HOME/job-o-matic-demo"
+jobo generate-resume tests/fixtures/strong-fit-jd.md
+```
+
+That is the end of Part 1. **Next:** [GETTING_STARTED.md](../GETTING_STARTED.md) walks through a first
+session, or carry on with Part 2 to use your own data.
+
+---
+
+## Part 2: Your own vault
+
+Your vault holds your contact details, work history and education dates.
+
+**Before you put real data on this computer:**
+
+1. **Turn on disk encryption.** Run `lsblk -f` and look for `crypto_LUKS` on the main partition. It
+   is far easier to set up when you install the system than afterwards.
+2. **Use a screen lock and a login password.**
+3. **Never move the vault by email, chat or a shared cloud folder.** Use `git clone`.
+
+### Part 2A: Starting from nothing
+
+```bash
+cd ~/src/job-o-matic-assistant
+bash scripts/setup.sh --new-vault
+```
+
+This copies the demo vault to `~/src/job-o-matic-vault` and starts a git repository in it, on this
+computer only. If git does not know who you are yet, it tells you the two lines to run first. Use
+the private "noreply" address GitHub shows under Settings, Emails if you do not want your real
+address in your commits.
+
+**The copy still holds the invented person.** Replace its files in `profile/` with yours.
+`identity.yaml` and `roles.yaml` are the best place to start. After every change run:
+
+```bash
+jobo profile validate
+```
+
+The profile is plain YAML, and there is no build step. Edit it by hand, or ask Claude to and then
+run the check. `check-setup.sh` warns while the vault still holds the invented person.
+
+**Back it up privately.** Install the GitHub tool, sign in, and create a **private** repository. Run
+this yourself; the setup script never does:
+
+```bash
+sudo apt install -y gh
+gh auth login
+cd ~/src/job-o-matic-vault
 gh repo create job-o-matic-vault --private --source=. --push
 ```
 
-The profile is YAML in `profile/` (identity, roles, skills, projects, certifications, education,
-stories). Edit it by hand, or with Claude and then check it; there is no build step. Run
-`jobo profile validate` after every change: it reports what is wrong and warns when counts written
-in the text no longer match the imported learning data.
-
-**Private limits.** Salary minimums live in the vault's `private/search-constraints.json` (a
-template is in `private/search-constraints.example.json` here). Amounts are CAD and either key may
-be left out; without the file the salary screen is skipped.
+**Private limits.** Salary minimums live in the vault's `private/search-constraints.json`. A template
+is in `private/search-constraints.example.json` in the code folder. Amounts are CAD and either key
+may be left out; without the file the salary screen is skipped.
 
 ```bash
 jobo constraints show        # prints your minimums, or says none are set
 ```
 
-Because it is the vault's private repo, the file travels with `git pull`. Do not copy it into the
-code repo: a hook blocks that and blocks any minimum retyped in a tracked file.
+Do not copy the real file into the code folder: a hook blocks that.
 
-### 7. Turn on the pre-commit hook
+### Part 2B: A second laptop (you already have a vault)
 
-```bash
-bash scripts/install-hooks.sh
-```
-
-This points `core.hooksPath` at the tracked `scripts/hooks` folder, so the hook is always the
-current one. On every commit it blocks generated or private files, scans for your private values
-(read from the vault's `private/pii-terms.json`), byte-compiles, runs ruff, the import contracts,
-mypy, `profile validate` and the tests (about a minute). With no vault it skips the two checks that
-need one.
-
-### 8. Optional: connect Claude Code and Claude Desktop
-
-**Claude Code.** `.mcp.json` uses a path relative to the repo (`.venv/bin/python3`), so it works
-on any machine if the virtual environment is at `.venv/` and you open Claude Code **from the repo
-root**. Approve the `job-o-matic` server the first time it asks.
-
-**Claude Desktop.** Its config, `~/.config/Claude/claude_desktop_config.json` (macOS:
-`~/Library/Application Support/Claude/`), holds absolute paths for this machine and is never
-synced. Follow
-[Wire up Claude Desktop](../src/jobomatic/interfaces/mcp/README.md#wire-up-claude-desktop), then
-restart Desktop: it only reads the file on startup. The server finds your vault the same way the
-command line does; add `"env": {"JOBOMATIC_VAULT": "/path/to/job-o-matic-vault"}` to pin it.
-
-### 9. Optional: page counts (`--check-pages`)
-
-A resume must be at most 2 pages and a cover letter exactly 1. `generate-resume` trims itself to
-two pages by an estimate; `--check-pages` measures the real count by converting the file with
-LibreOffice. It works on `generate-resume`, `generate-cover-letter`, `generate-profile-resume` and
-`render`, and exits 1 (keeping the file) when a limit is broken:
+Do Part 1 first, then:
 
 ```bash
-jobo generate-resume posting.md --check-pages        # Pages: 2
-jobo render resume content.json --out r.docx --check-pages
+cd ~/src/job-o-matic-assistant
+bash scripts/setup.sh --vault-url https://github.com/<you>/job-o-matic-vault.git
+unset JOBOMATIC_VAULT          # the folder next to the code is found by itself
+bash scripts/check-setup.sh
 ```
 
-It needs `pdfinfo` (step 1) and **one working LibreOffice**. Pick either:
+A private repository needs you signed in first (`gh auth login`, above).
 
-- **Flatpak** (what the author uses):
-  ```bash
-  sudo apt install flatpak
-  flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-  flatpak install flathub org.libreoffice.LibreOffice
-  export JOBOMATIC_LIBREOFFICE=flatpak      # put this line in ~/.bashrc
-  ```
-- **The distro package:** `sudo apt install libreoffice-writer`. Installing only
-  `libreoffice-common` or `libreoffice-core` gives you a `soffice` that exists but cannot open a
-  DOCX ("source file could not be loaded"); Writer is the part that can.
+### How the vault is found
 
-`JOBOMATIC_LIBREOFFICE` chooses which one: `flatpak`, or a command or path to use. Unset, `jobo`
-tries `soffice` and `libreoffice` on the PATH, then the Flatpak. A value that cannot be found is an
-error, never a silent fallback. Details: [ADR 0024](adr/0024-resume-page-budget.md).
+In this order: the `JOBOMATIC_VAULT` setting, then `vault = "/path"` in
+`~/.config/job-o-matic/config.toml`, then a folder named `job-o-matic-vault` next to the code. A
+folder only counts if it holds a `.jobomatic.toml` file.
 
-### 10. Optional: evidence search (Ollama)
+### Check it
+
+```bash
+bash scripts/check-setup.sh
+```
+
+---
+
+## Part 3: Optional extras
+
+None of these are needed to start. Skip whatever you do not want.
+
+### Claude Code
+
+`.mcp.json` in the code folder points at `.venv/bin/python3`, so it works on any machine once the
+install is done. Install Claude Code ([Anthropic's documentation](https://code.claude.com/docs)),
+open it **from the code folder** and approve the `job-o-matic` server when it asks.
+
+### Claude Desktop (beta on Linux)
+
+Anthropic released a Linux beta of Claude Desktop in mid-2026 for Ubuntu and Debian, according to
+press coverage; see [Anthropic's Linux page](https://code.claude.com/docs/en/desktop-linux) for the
+current install steps. Then follow
+[Wire up Claude Desktop](../src/jobomatic/interfaces/mcp/README.md#wire-up-claude-desktop) and
+restart Desktop, because it only reads its settings on startup. Its settings file,
+`~/.config/Claude/claude_desktop_config.json`, holds paths for this computer and is never synced.
+
+### Page counts (`--check-pages`)
+
+A resume must be at most 2 pages and a cover letter exactly 1. `--check-pages` measures the real
+page count with LibreOffice:
+
+```bash
+sudo apt install -y poppler-utils libreoffice-writer
+jobo generate-resume tests/fixtures/strong-fit-jd.md --check-pages     # prints a "Pages:" line
+```
+
+Install `libreoffice-writer`, not just `libreoffice-common`: the smaller package has a `soffice` that
+cannot open a Word file. If you already use the Flatpak build of LibreOffice, run
+`export JOBOMATIC_LIBREOFFICE=flatpak`. Details: [ADR 0024](adr/0024-resume-page-budget.md).
+
+### Evidence search (Ollama)
 
 `jobo evidence` and `jobo search` find the closest course, project and resume evidence for a skill.
-They need a local [Ollama](https://ollama.com) server with an embedding model:
+They need a local [Ollama](https://ollama.com) server:
 
 ```bash
 ollama pull nomic-embed-text
-jobo index build          # embeds new or changed evidence; the index is rebuildable
+jobo index build          # embeds new or changed evidence; rebuildable
 jobo search "event-driven architecture"
 ```
 
-Without Ollama, `jobo search --keyword-only` still works, and the evidence tools say "skipped"
-instead of failing. Retrieval is advisory and never changes a fit rating.
+Without Ollama, `jobo search --keyword-only` still works. Retrieval is advisory and never changes a
+fit rating.
 
-### 11. Optional, once only: import a spreadsheet tracker
+---
 
-Do this on **one** machine, one time. The applications log lives in the vault and syncs through
-git, so the other machine gets the entries when it pulls.
-
-1. Export the tracker sheet as CSV.
-2. Preview: `jobo applications import-csv tracker.csv --dry-run`
-3. Fix any rows it reports (ambiguous dates such as `04/05/2026` and unknown statuses are
-   rejected, never guessed), then run it again without `--dry-run`.
-4. Commit and push the vault (`applications/applications.jsonl`).
-
-## Check that it works
-
-All of these should succeed (use your own vault, or `export JOBOMATIC_VAULT=$PWD/demo-vault`):
+## Part 4: If you change the code
 
 ```bash
-jobo profile validate
-jobo fit-check tests/fixtures/strong-fit-jd.md
-jobo applications list
-jobo constraints show
-.venv/bin/python -m pytest -q        # about a minute; uses a throwaway copy of the demo vault
-git config core.hooksPath            # prints scripts/hooks
-git status --short                   # prints nothing
+bash scripts/setup.sh --hooks          # or, later: bash scripts/install-hooks.sh
+.venv/bin/python -m pytest -q          # about a minute; uses a throwaway copy of the demo vault
 ```
 
-The tests never touch your vault: each one gets its own copy of the demo vault.
+The hook runs on every commit: it blocks generated or private files, scans for your private values,
+and runs ruff, the import contracts, mypy and the tests. It works without a vault (it skips the two
+checks that need one). `git commit --no-verify` skips it; use that only on purpose. Pinned versions
+are in `requirements-lock.txt`; the header of that file says how to regenerate it.
+
+---
 
 ## Working across two laptops
 
-- **Pull before you start, push when you finish**, in **both** repos: code in one, your data in the
+- **Pull before you start, push when you finish**, in **both** folders: code in one, your data in the
   other.
 - **The applications log merges itself.** It is append-only, one event per line, and the vault's
-  `.gitattributes` keeps both machines' lines (`merge=union`). Two laptops adding entries between
-  pulls do not conflict.
-- **The evidence index is not synced.** It is rebuildable and ignored by git: run `jobo index
-  build` after pulling profile or learning changes.
+  `.gitattributes` keeps both laptops' lines. Two laptops adding entries between pulls do not
+  conflict.
+- **The evidence index is not synced.** Run `jobo index build` after pulling profile or learning
+  changes.
 - **Record "applied" on whichever laptop you used**, with `jobo applications applied --jd <file>`,
-  then commit and push the vault so the other machine's duplicate check agrees.
-- **Generated documents** go to the vault's `outputs/` and are committed there; they are never
-  committed to the code repo (the hook blocks `*.docx`, `*.pdf` and `outputs/`).
+  then commit and push the vault so the other laptop's duplicate check agrees.
+- **Generated documents** go to the vault's `outputs/` and are committed there, never to the code repo.
+
+## Updating
+
+This project changes often. To update:
+
+```bash
+cd ~/src/job-o-matic-vault && git add -A && git commit -m "Before updating" && git push   # a backup first
+cd ~/src/job-o-matic-assistant && git pull
+bash scripts/setup.sh          # safe to run again; installs anything new
+jobo profile validate          # tells you if the profile layout changed
+```
 
 ## When something goes wrong
 
-| Symptom | Likely cause and fix |
+Run `bash scripts/check-setup.sh` first: it names the problem. The usual ones:
+
+| You see | Why, and what to do |
 | --- | --- |
-| `ModuleNotFoundError: No module named 'jobomatic'` | The install was not editable, or you used a different Python. Re-run step 4 with `-e` and use `.venv/bin/...`. |
-| `ERROR: No vault found` | No vault is configured. Set `JOBOMATIC_VAULT`, add the config file, or put `job-o-matic-vault` next to the checkout (step 6). |
-| `... points at <path>, which has no .jobomatic.toml` | The folder is not a vault. Copy the marker from `demo-vault/`, or fix the path. |
-| `No private/search-constraints.json found` | No salary minimums yet; the salary screen is skipped. Add the file to the vault's `private/` (step 6). |
-| `unknown key(s)` from `constraints show` | A typo in the file. Only `min_permanent_base_cad` and `min_contract_hourly_cad` are allowed. |
-| `cannot count pages: LibreOffice failed (soffice: Error: source file could not be loaded)` | A `soffice` without Writer is on the PATH. Install `libreoffice-writer`, or set `JOBOMATIC_LIBREOFFICE=flatpak` (step 9). |
-| `cannot count pages: 'pdfinfo' ... was not found` | Install `poppler-utils` (step 1). |
-| 3 MCP tests skipped | The checkout is under the temp directory (step 3). Move it. |
-| Commit blocked: "refusing to commit private files" | You staged something under `private/` or `outputs/`. Unstage it; only `*.example.*` files belong in the code repo. |
+| `jobo: command not found` | The virtual environment is not active in this terminal. Run `cd ~/src/job-o-matic-assistant && source .venv/bin/activate`. This is needed in every new terminal. |
+| `ERROR: No vault found` | No vault is chosen in this terminal. For the demo run `export JOBOMATIC_VAULT="$PWD/demo-vault"`; for your own, see "How the vault is found". |
+| `JD file not found: ...` | A relative path starts from the folder you are in. The message shows where it looked. Run from the folder that holds the file, or give the full path. |
+| The script says Python is too old | See the table in Step 1. |
+| The script cannot create the virtual environment | Run `sudo apt install -y python3-venv`, then the script again. |
+| `python -m jobomatic` says `No module named jobomatic` | You are using the system Python. Activate the venv first, or use `.venv/bin/jobo`. |
+| `ModuleNotFoundError` after a `git pull` | Run `bash scripts/setup.sh` again. |
+| `... points at <path>, which has no .jobomatic.toml` | That folder is not a vault. Fix the path, or copy the marker from `demo-vault/`. |
+| `cannot count pages: ... source file could not be loaded` | A `soffice` without Writer is installed. `sudo apt install -y libreoffice-writer`. |
+| `cannot count pages: 'pdfinfo' ... not found` | `sudo apt install -y poppler-utils`. |
+| Commit blocked: "refusing to commit private files" | You staged something under `private/` or `outputs/`. Unstage it. |
 | Commit blocked: "private value" | A name, employer, city or pay figure from your vault was typed into a tracked file. Remove it. |
-| Commit blocked by ruff, mypy or tests | Fix what it reports. `git commit --no-verify` bypasses the hook; do it only on purpose. |
-| The MCP server fails to start in Claude Code | Open Claude Code from the repo root and confirm `.venv/bin/python3` exists. |
+| Claude Code cannot start the server | Open it from the code folder, and check that `.venv/bin/python3` exists. |
 | `applications check` reports an unreadable log | A bad merge left a broken line. The error names the line in `applications.jsonl`; fix or remove it. |

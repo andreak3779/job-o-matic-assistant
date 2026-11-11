@@ -1,27 +1,183 @@
 # Getting started
 
-How to run `jobo`, the job-o-matic command line. This page is a command reference. It assumes
-the package is installed; for first-time setup (virtual environment, extras, vault, MCP server,
-pre-commit hook) follow [docs/setup.md](docs/setup.md) or the
-[README](README.md#setup). Install steps are kept there only, so the two cannot drift apart.
+A first session with `jobo`, the job-o-matic command line, followed by a reference for every
+command. **Not installed yet?** Do [Part 1 of docs/setup.md](docs/setup.md) first; it takes about 15
+minutes and uses no personal data.
+
+## At the start of every session
+
+Open a terminal and run these two lines. A new terminal forgets them.
 
 ```bash
-jobo <command> [options]          # with the virtual environment on your PATH
-python -m jobomatic <command>     # the same thing, from anywhere the package is installed
+cd ~/src/job-o-matic-assistant      # the code folder; the examples below start here
+source .venv/bin/activate           # puts jobo on your PATH; your prompt starts with (.venv)
 ```
 
-`claude-jobs` still works as an alias and prints a notice; it will be removed.
+`jobo: command not found` means the second line was skipped. `python -m jobomatic` does the same
+thing as `jobo`, but only with the virtual environment active, because it needs that environment's
+Python. `claude-jobs` still works as an old name for `jobo` and prints a notice; it will be removed.
 
-## Before the first command
+A relative path such as `tests/fixtures/strong-fit-jd.md` starts from the folder you are in
+([ADR 0027](docs/adr/0027-relative-paths-resolve-against-the-current-folder.md)). If a file is "not
+found", the message shows where it looked. Run from the code folder, or give the full path.
 
-- Python 3.11 or later, installed with `pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"`
-  (drop `mcp` if you will not use Claude Desktop, and `dev,lint` if you will not run the checks).
-- A **vault**: the private repo with your profile and outputs. The code finds it through
-  `JOBOMATIC_VAULT`, then `~/.config/job-o-matic/config.toml`, then a sibling `../job-o-matic-vault`.
-  For a trial run use the fictional one: `export JOBOMATIC_VAULT=$PWD/demo-vault`. Without a vault
-  every command stops with `ERROR: No vault found` and says how to set one.
-- `jobo profile validate` should print no errors.
-- Optional, for `--check-pages`: `pdfinfo` and a working LibreOffice (see below).
+## Your first session
+
+Two tracks. Start with A: it uses an invented person, so every result is predictable. Move to B when
+you have your own vault.
+
+### Track A: the demo vault
+
+**1. Use a copy of the demo vault.** Generating documents writes into the vault, and you do not want
+that inside your code folder:
+
+```bash
+cp -r demo-vault ~/job-o-matic-demo
+export JOBOMATIC_VAULT="$HOME/job-o-matic-demo"
+```
+
+To start over later, delete `~/job-o-matic-demo` and copy again.
+
+**2. Rate a posting.** `fit-check` compares a posting with the profile by fixed rules, with no AI
+guessing, so the same posting always gets the same rating:
+
+```bash
+jobo fit-check tests/fixtures/strong-fit-jd.md
+```
+
+```text
+## Fit Check — Senior Full-Stack .NET Developer at Northgate Insurance Group
+...
+**Fit Rating: Strong**
+All 9 required skills covered (...); 4 nice-to-have(s) present.
+```
+
+The ratings, best to worst, are **Strong**, **Good**, **Worth a try**, **Stretch** and **Pass**.
+
+**3. Read the gap analysis.** It lists what matched, what is missing and how to frame the rest:
+
+```bash
+jobo gap-analysis tests/fixtures/strong-fit-jd.md
+```
+
+It prints a `Wrote <path>` line: the report is a markdown file in the vault's
+`outputs/applications/<date>_<company>_<role>/` folder. Open it in any editor, or with
+`less <path>`.
+
+**4. Draft the documents.**
+
+```bash
+jobo generate-resume tests/fixtures/strong-fit-jd.md
+jobo generate-cover-letter tests/fixtures/strong-fit-jd.md
+```
+
+```text
+Fit Rating: Strong — ...
+Logged as drafted (not applied): application <date>_northgate-insurance-group_...
+Wrote <vault>/outputs/applications/<date>_northgate-insurance-group_.../resume.docx
+```
+
+Open the `.docx` files with LibreOffice or any word processor. They are drafts for you to read and
+rewrite. The tool never sends anything.
+
+**5. See the gate say no.** A posting that does not match is refused, and no document is written:
+
+```bash
+jobo generate-resume tests/fixtures/data-engineer-jd.md
+```
+
+```text
+REFUSED: Fit rating is Pass — refusing to generate resume/cover letter.
+...
+```
+
+It exits with status 2. The checks and which of them you can override are in [The gate](#the-gate).
+
+**6. Keep track.** Generating documents only logs a posting as *drafted*. *Applied* is recorded only
+when you say so:
+
+```bash
+jobo applications list
+jobo applications applied --jd tests/fixtures/strong-fit-jd.md      # only after you really submitted
+```
+
+That is the whole loop: rate, read, draft, decide, record.
+
+### Track B: your own vault and a real posting
+
+You need a vault with your profile ([Part 2 of docs/setup.md](docs/setup.md#part-2-your-own-vault))
+and `bash scripts/check-setup.sh` showing no FAIL. If you exported the demo vault above, run
+`unset JOBOMATIC_VAULT` so your own is found.
+
+**1. Save the posting as a markdown file.** Keep your postings in one folder, outside the code
+folder:
+
+```bash
+mkdir -p ~/job-postings
+nano ~/job-postings/acme-backend.md        # paste the posting, then Ctrl+O, Enter, Ctrl+X
+```
+
+The tool reads this shape best: a title, then the company, location and skills. It copes with other
+layouts too (see `tests/fixtures/atypical-*`).
+
+```markdown
+# Backend Developer
+
+**Company:** Acme Corp
+**Location:** Remote (Canada)
+
+## Required Skills
+- C#
+- SQL Server
+
+## Nice to Have
+- Docker
+```
+
+**2. Rate it.** `~` is expanded by your shell, so this works from any folder. Check that the first
+line shows the right title and company; that tells you it understood the posting:
+
+```bash
+jobo fit-check ~/job-postings/acme-backend.md
+```
+
+**3. Decide from the rating.**
+
+| Rating | What to do |
+| --- | --- |
+| **Strong**, **Good** | Go on to step 4. |
+| **Worth a try**, **Stretch** | Run `gap-analysis` and read the gaps. Only if you still want to apply, add `--confirm-gaps` to the generate commands. That is your decision, not a default. |
+| **Pass** | Stop. A Pass on skills, and a Pass on location, cannot be overridden. |
+
+**4. Draft, read, then submit yourself.**
+
+```bash
+jobo generate-resume ~/job-postings/acme-backend.md
+jobo generate-cover-letter ~/job-postings/acme-backend.md
+```
+
+Read every line of both. Fix anything that is not true or not in your voice. You submit the
+application yourself, on the employer's site.
+
+**5. Record it after you submit, then save your vault.**
+
+```bash
+jobo applications applied --jd ~/job-postings/acme-backend.md
+cd ~/src/job-o-matic-vault && git add -A && git commit -m "Applied to Acme" && git push
+```
+
+Pushing the vault keeps the duplicate check right on your other laptop.
+
+---
+
+## Command reference
+
+Run `jobo <command> --help` for every option of a command.
+
+```bash
+jobo <command> [options]          # with the virtual environment active
+python -m jobomatic <command>     # the same thing, from any folder, with the virtual environment active
+```
 
 ## Rate a posting
 
@@ -66,7 +222,7 @@ export JOBOMATIC_LIBREOFFICE=flatpak                    # use the Flatpak build 
 
 It needs `pdfinfo` and one working LibreOffice: the Flatpak, or `sudo apt install libreoffice-writer`
 (the `libreoffice-common` package alone cannot open a DOCX). Setup and troubleshooting are in
-[docs/setup.md](docs/setup.md#9-optional-page-counts---check-pages).
+[docs/setup.md](docs/setup.md#page-counts---check-pages).
 
 ### The gate
 

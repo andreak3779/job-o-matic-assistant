@@ -139,6 +139,8 @@ else
     if [ "$vault" = "$ROOT/demo-vault" ]; then
         ok "using the demo vault (a fictional candidate). Fine for trying it out."
         line "found through $source_of"
+        info "To generate documents with it, use a copy so this folder stays clean:"
+        line "    cp -r demo-vault ~/job-o-matic-demo && export JOBOMATIC_VAULT=\"\$HOME/job-o-matic-demo\""
     else
         ok "using $vault"
         line "found through $source_of"
