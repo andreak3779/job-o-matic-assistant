@@ -10,7 +10,7 @@ from typing import Any
 
 from jobomatic.documents.service import DocumentError
 from jobomatic.fit.terms import extract_skill_terms
-from jobomatic.paths import VaultError
+from jobomatic.paths import VaultError, not_found_message
 from jobomatic.profile.model import Profile
 from jobomatic.profile.service import ProfileError
 
@@ -31,7 +31,7 @@ def story_mentions(text: str, term: str) -> bool:
 def require_path(path: Path, label: str = "File") -> Path:
     """Return ``path`` if it exists, otherwise raise FileNotFoundError."""
     if not path.exists():
-        raise FileNotFoundError(f"{label} not found: {path}")
+        raise FileNotFoundError(not_found_message(path, label))
     return path
 
 

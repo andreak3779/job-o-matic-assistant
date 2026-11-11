@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from jobomatic import applications as apps
+from jobomatic import paths
 from jobomatic.fit.constraints import MISSING_MESSAGE, constraints_path, load_constraints
 from jobomatic.fit.parser import looks_unknown, parse_jd
 
@@ -66,7 +67,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
 
 def _read_jd(path: Path) -> str:
     if not path.is_file():
-        raise ValueError(f"job description file not found: {path}")
+        raise ValueError(paths.not_found_message(path, "Job description file"))
     return path.read_text(encoding="utf-8")
 
 
@@ -155,7 +156,7 @@ def _list(status: str | None, company: str | None) -> int:
 
 def _import(csv_path: Path, dry_run: bool) -> int:
     if not csv_path.is_file():
-        raise ValueError(f"CSV file not found: {csv_path}")
+        raise ValueError(paths.not_found_message(csv_path, "CSV file"))
     report = apps.import_csv(csv_path, dry_run=dry_run)
     verb = "Would import" if dry_run else "Imported"
     print(

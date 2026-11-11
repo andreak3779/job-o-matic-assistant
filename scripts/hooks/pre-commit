@@ -39,7 +39,7 @@ echo "[pre-commit] private values not restated in tracked files..."
 "$PY" scripts/check_private_values.py || status=1
 
 echo "[pre-commit] byte-compile (syntax / import errors)..."
-"$PY" -m compileall -q src cli mcp_server scripts tests || status=1
+"$PY" -m compileall -q src scripts tests || status=1
 
 echo "[pre-commit] ruff check + format..."
 if "$PY" -m ruff --version >/dev/null 2>&1; then

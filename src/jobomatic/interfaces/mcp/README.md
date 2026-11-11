@@ -43,10 +43,11 @@ gate before dispatching (see "Fit gate" below).
 | `search_evidence(query, k=3)` | `search <query> --k` over courses, labs, Microsoft Learn items and projects only — advisory (ADR 0012); needs the local Ollama service, and says "Evidence search skipped" without it. Resume bullets and interview stories are `local_only` (ADR 0019) and never returned, because a tool result goes to the model Claude Desktop talks to |
 | `profile_summary()` | `profile show --public facts` — headline, summary, certifications and skills; no contact details, nothing marked private |
 
-`jd`, `out`, and `role_json` paths may be absolute or relative to the repo
-root (path resolution is anchored to this file's location, not the
-process's working directory, same as the CLI). Prefer absolute paths from
-MCP clients since they don't have a reliable notion of "current directory."
+`jd`, `out`, and `role_json` paths may be absolute or relative. A relative
+path starts from the server process's current folder, exactly as on the
+command line ([ADR 0027](../../../../docs/adr/0027-relative-paths-resolve-against-the-current-folder.md)).
+Prefer absolute paths from MCP clients since they don't have a reliable notion
+of "current directory."
 For `generate_learning_plan`, this applies to the role config's own
 `"output"` key too — it's resolved relative to this server's working
 directory, so prefer an absolute path there as well.

@@ -199,3 +199,13 @@ def test_constraints_show_missing_and_present(capsys, _isolate_personal_data) ->
     )
     assert main(["constraints", "show"]) == 0
     assert "$85,000" in capsys.readouterr().out
+
+
+def test_a_missing_relative_jd_names_the_current_folder(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert main(["applications", "check", "nope.md"]) == 1
+    err = capsys.readouterr().err
+    assert f"Current folder: {tmp_path}" in err
+    assert "give the full path" in err

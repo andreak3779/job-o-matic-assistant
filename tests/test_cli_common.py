@@ -21,6 +21,27 @@ def test_require_path_raises_when_missing(tmp_path: Path) -> None:
         require_path(tmp_path / "does-not-exist.txt", "File")
 
 
+def test_require_path_says_where_it_looked_for_a_relative_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(FileNotFoundError) as caught:
+        require_path(Path("posting.md"), "JD file")
+    text = str(caught.value)
+    assert text.startswith("JD file not found: posting.md")
+    assert f"Looked for: {tmp_path / 'posting.md'}" in text
+    assert f"Current folder: {tmp_path}" in text
+    assert "give the full path" in text
+
+
+def test_require_path_for_an_absolute_path_only_asks_for_the_spelling(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError) as caught:
+        require_path(tmp_path / "nope.md", "JD file")
+    text = str(caught.value)
+    assert "Check the spelling" in text
+    assert "Current folder" not in text
+
+
 def test_load_profile_or_none_returns_the_profile_from_the_vault() -> None:
     profile = load_profile_or_none()
 
