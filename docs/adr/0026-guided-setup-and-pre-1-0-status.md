@@ -31,9 +31,10 @@ could not tell what to do. Following them in a clean clone in November 2026 show
 
 ## Decision
 
-1. **One page holds the install steps**: `docs/setup.md`. The README, `GETTING_STARTED.md`, the MCP
-   README and the site carry a short quick start that is the same command and a link, never the
-   steps. A test keeps the quick-start line identical and every relative link resolving.
+1. **One page holds the install steps**: `docs/setup.md`. The README and the site carry a short
+   quick start (the same commands); `GETTING_STARTED.md` and the MCP README carry a link. None of
+   them repeats the steps. Tests keep the quick start identical, fail if a document brings back a
+   `pip install` or `venv` command, and check that every relative link and heading anchor resolves.
 2. **Scripts do the work and the page explains.** `scripts/setup.sh` creates the virtual
    environment, installs with the lock file (retrying without it if pip cannot resolve it),
    checks the install and runs a demo smoke test. `scripts/check-setup.sh` is a read-only health

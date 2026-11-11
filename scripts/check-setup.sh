@@ -145,8 +145,13 @@ else
         ok "using $vault"
         line "found through $source_of"
         if cmp -s "$vault/profile/identity.yaml" "$ROOT/demo-vault/profile/identity.yaml" 2>/dev/null; then
-            warn "This vault still holds the FICTIONAL demo candidate."
-            line "Replace the files in $vault/profile with your own details before generating anything."
+            if [ "$(basename "$vault")" = "job-o-matic-vault" ]; then
+                # The name a real vault has, so this is probably a new vault nobody has filled in yet.
+                warn "This vault still holds the FICTIONAL demo candidate."
+                line "Replace the files in $vault/profile with your own details before generating anything."
+            else
+                info "this is a copy of the demo vault (a fictional candidate). Fine for trying things out."
+            fi
         fi
         case "$vault" in
             "$ROOT"/*)
