@@ -529,48 +529,5 @@
     "000000"
    ]
   ]
- ],
- [
-  null,
-  140,
-  60,
-  true,
-  null,
-  null,
-  [
-   "single",
-   "6",
-   "2E6DA4",
-   "1"
-  ],
-  [],
-  [
-   [
-    "Carlito",
-    11.0,
-    true,
-    false,
-    "2E6DA4"
-   ]
-  ]
- ],
- [
-  null,
-  0,
-  40,
-  false,
-  null,
-  null,
-  null,
-  [],
-  [
-   [
-    "Carlito",
-    10.5,
-    false,
-    false,
-    "000000"
-   ]
-  ]
  ]
 ]

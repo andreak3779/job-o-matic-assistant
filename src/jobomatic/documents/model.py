@@ -34,18 +34,19 @@ class PartTimeJob(_Content):
     dates: str = Field(
         min_length=1, description="'Mon YYYY – Mon YYYY' (a spaced en dash), or one date"
     )
-    bullets: list[str] = Field(min_length=1, max_length=2)
+    bullets: list[str] = Field(min_length=1, max_length=3)
 
 
 class PartTimeResume(_Content):
-    """One page, plain words, no tables or columns (ATS-safe)."""
+    """One page, plain words, no tables or columns (ATS-safe). No references section: the space
+    goes to more detail (up to 3 bullets a role, up to 6 strengths)."""
 
     contact: Contact
     availability: str = Field(min_length=1)
     summary: str = Field(
         min_length=1, description="2 to 3 sentences using the posting's role title"
     )
-    strengths: list[Strength] = Field(min_length=1, max_length=5)
+    strengths: list[Strength] = Field(min_length=1, max_length=6)
     experience: list[PartTimeJob] = Field(min_length=1, description="Reverse chronological")
     software: str = Field(default="", description="Computer skills line, or empty to omit")
     previous_retail: str = Field(default="", description="One undated sentence, or empty to omit")
