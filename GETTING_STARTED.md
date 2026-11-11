@@ -2,7 +2,7 @@
 
 How to run `jobo`, the job-o-matic command line. This page is a command reference. It assumes
 the package is installed; for first-time setup (virtual environment, extras, vault, MCP server,
-pre-commit hook) follow [docs/new-laptop-setup.md](docs/new-laptop-setup.md) or the
+pre-commit hook) follow [docs/setup.md](docs/setup.md) or the
 [README](README.md#setup). Install steps are kept there only, so the two cannot drift apart.
 
 ```bash
@@ -66,7 +66,7 @@ export JOBOMATIC_LIBREOFFICE=flatpak                    # use the Flatpak build 
 
 It needs `pdfinfo` and one working LibreOffice: the Flatpak, or `sudo apt install libreoffice-writer`
 (the `libreoffice-common` package alone cannot open a DOCX). Setup and troubleshooting are in
-[docs/new-laptop-setup.md](docs/new-laptop-setup.md#9-optional-page-counts---check-pages).
+[docs/setup.md](docs/setup.md#9-optional-page-counts---check-pages).
 
 ### The gate
 
@@ -140,7 +140,7 @@ Copy `templates/roles/_example.json` to start a role config.
 | `skills/` | The Claude Code workflows that run these commands ([skills/README.md](skills/README.md)) |
 | `docs/architecture.md` | How the modules fit together |
 | `docs/adr/` | Why each decision was made |
-| `docs/new-laptop-setup.md` | Step-by-step setup |
+| `docs/setup.md` | Step-by-step setup |
 
 Run `jobo <command> --help` for every option.
 

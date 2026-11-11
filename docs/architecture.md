@@ -8,7 +8,7 @@ posting and the rule files. The optional exceptions are listed in [LIMITS.md](LI
 The reasoning behind each decision is in [docs/adr/](adr/) and
 [quality-attributes.md](quality-attributes.md); what the tool guarantees and where it stops are in
 [TRUTHFULNESS.md](TRUTHFULNESS.md) and [LIMITS.md](LIMITS.md). This page shows how the pieces fit. To install it,
-see [new-laptop-setup.md](new-laptop-setup.md) and the [README](../README.md).
+see [setup.md](setup.md) and the [README](../README.md).
 
 ## Two repositories
 

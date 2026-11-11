@@ -79,7 +79,7 @@ The profile is edited by hand (or by Claude, then checked) as YAML in the vault'
 
 ## Fresh OS install
 
-The full, tested checklist is [docs/new-laptop-setup.md](docs/new-laptop-setup.md): system tools,
+The full, tested checklist is [docs/setup.md](docs/setup.md): system tools,
 clone, install, the demo vault, your own vault, the commit hook, Claude Code and Desktop, page checks
 with LibreOffice, evidence search with Ollama, and keeping two machines in step. The short version
 is below.
