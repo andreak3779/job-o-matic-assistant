@@ -17,9 +17,14 @@ concurrency:
 # (ADR 0013). Every test runs against a throwaway vault built from fictional fixtures, and
 # the identifier scan in scripts/check_private_values.py skips itself when it finds no vault.
 
+# Two jobs (ADR 0033). The checks that cannot differ by interpreter run once, on the oldest supported
+# Python: ruff and mypy have a fixed target version and the contracts read the source. The tests run
+# on every supported Python, and `fail-fast: false` lets one red version show next to the others.
+# The versions here, the classifiers and `requires-python` in pyproject.toml must agree
+# (tests/test_python_support.py).
 jobs:
-  python:
-    name: Lint and tests (Python 3.11)
+  lint:
+    name: Lint, contracts and types (Python 3.11)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +49,25 @@ jobs:
 
       - name: Types (new modules)
         run: mypy src
+
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+
+      - name: Install
+        run: pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
 
       - name: Tests
         run: pytest -q -p no:cacheprovider
