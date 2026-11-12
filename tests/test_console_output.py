@@ -1,4 +1,4 @@
-"""Printing a command's result on the command line (ADR 0028): text, streams and exit status."""
+"""The text of a command's result, as the command line prints it (ADR 0028)."""
 
 from __future__ import annotations
 
@@ -7,8 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from jobomatic.interfaces.cli.output import emit
-from jobomatic.results import Message, failure, ok, refusal
+from jobomatic.results import Message, console, emit, failure, ok, refusal
 
 
 def _emit(result, render=None) -> tuple[int, str, str]:
@@ -85,3 +84,22 @@ def test_what_was_said_before_a_failure_is_still_said() -> None:
 def test_the_default_streams_are_looked_up_when_called(capsys: pytest.CaptureFixture[str]) -> None:
     assert emit(failure("nope")) == 1
     assert capsys.readouterr().err == "ERROR: nope\n"
+
+
+def test_the_text_is_the_same_whether_it_is_printed_or_returned() -> None:
+    """The MCP server returns ``console`` where the command line prints it."""
+    result = ok(
+        {"x": 1},
+        messages=(Message("note", "n"), Message("warning", "w")),
+        written=(Path("/out/a.docx"),),
+    )
+    text = console(result, lambda data: "payload")
+    assert (text.stdout, text.stderr) == ("payload\nNote: n\nWrote /out/a.docx\n", "WARNING: w\n")
+    _, out, err = _emit(result, lambda data: "payload")
+    assert (out, err) == (text.stdout, text.stderr)
+
+
+def test_what_a_failure_made_before_it_failed_is_shown_first() -> None:
+    result = failure("then it broke", data={"rating": "Strong"})
+    code, out, err = _emit(result, lambda data: f"Fit Rating: {data['rating']}")
+    assert (code, out, err) == (1, "Fit Rating: Strong\n", "ERROR: then it broke\n")

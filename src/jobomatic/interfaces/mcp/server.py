@@ -38,7 +38,8 @@ from mcp.types import (
 )
 
 from jobomatic import applications as applications_log
-from jobomatic import paths
+from jobomatic import paths, results
+from jobomatic.commands import fit_check as fit_check_command
 from jobomatic.interfaces.cli.main import main as cli_main
 from jobomatic.interfaces.mcp import access, skill_prompts
 
@@ -295,6 +296,33 @@ def _jd_path(jd: str):
         Path(tmp_path).unlink(missing_ok=True)
 
 
+def _posting_text(jd: str) -> str:
+    """The posting a tool was given: the text itself, or a file this server may read.
+
+    A path-shaped string must be a real file the server may read (a clear error otherwise, e.g. a
+    typo); anything else is the job description text, as a client that pastes it in chat sends it.
+    """
+    if not _looks_like_path(jd):
+        return jd
+    path = Path(_checked_path(jd, write=False, label="job description path"))
+    if not path.is_file():
+        raise ToolError(f"job description file not found: {path}")
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ToolError(f"could not read the job description {path}: {exc}") from exc
+
+
+def _tool_text(result: results.CommandResult[Any], render: Callable[[Any], str]) -> str:
+    """A command's result as the text a tool returns: what the command line prints, or a tool
+    error when the command did not succeed."""
+    text = results.console(result, render)
+    combined = (text.stdout + (f"\n{text.stderr}" if text.stderr else "")).strip()
+    if result.status != "ok":
+        raise ToolError(combined or f"the command failed ({result.status})")
+    return combined
+
+
 @mcp.tool(description="Validate the candidate profile and run its consistency checks")
 def validate_profile() -> str:
     return _run_cli(["profile", "validate"])
@@ -304,8 +332,7 @@ def validate_profile() -> str:
 def fit_check(jd: str) -> str:
     """jd: path to a job description markdown file, or the job description
     text itself (e.g. pasted or attached in the chat)."""
-    with _jd_path(jd) as jd_path:
-        return _run_cli(["fit-check", jd_path])
+    return _tool_text(fit_check_command.run(_posting_text(jd)), fit_check_command.render)
 
 
 @mcp.tool(description="Generate a markdown gap analysis report", structured_output=False)

@@ -19,10 +19,11 @@ why the refusal exception is defined here and the gate's ``GateRefusal`` extends
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, TextIO, TypeVar
 
 from jobomatic.documents.service import DocumentError
 from jobomatic.learning.service import LearningError
@@ -72,9 +73,14 @@ def ok(
     return CommandResult("ok", data, messages, written)
 
 
-def failure(text: str, *, messages: tuple[Message, ...] = ()) -> CommandResult[Any]:
-    """The command could not do what was asked (a missing file, a bad profile, bad input)."""
-    return CommandResult("error", messages=(*messages, Message("error", text)))
+def failure(
+    text: str, *, data: T | None = None, messages: tuple[Message, ...] = ()
+) -> CommandResult[T]:
+    """The command could not do what was asked (a missing file, a bad profile, bad input).
+
+    ``data`` is whatever it had produced before it failed, which a renderer still shows first.
+    """
+    return CommandResult("error", data, (*messages, Message("error", text)))
 
 
 def refusal(reason: str, *, override: str | None = None) -> CommandResult[Any]:
@@ -135,3 +141,61 @@ def guarded(command: Callable[[], CommandResult[T]]) -> CommandResult[T]:
         return refusal(exc.reason, override=exc.override)
     except _EXPECTED as exc:
         return failure(str(exc))
+
+
+@dataclass(frozen=True)
+class Console:
+    """What the command line prints for a result: the text for stdout and the text for stderr."""
+
+    stdout: str
+    stderr: str
+
+
+def console(result: CommandResult[Any], render: Callable[[Any], str] | None = None) -> Console:
+    """The text of a result, the way the command line has always printed it.
+
+    - the payload, rendered by ``render`` (a renderer per payload type, next to the payload), goes
+      to stdout;
+    - an ``info`` message goes to stdout as it is, a ``note`` after ``Note: ``, a ``warning`` to
+      stderr after ``WARNING: ``, and an ``error`` to stderr after ``ERROR: `` (``REFUSED: `` for a
+      refusal, followed by how to confirm past it when something can);
+    - each file the run wrote is listed last as ``Wrote <path>``.
+
+    The command line prints this, and the MCP server returns it, so the two cannot differ.
+    """
+    out: list[str] = []
+    err: list[str] = []
+    if render is not None and result.data is not None:
+        out.append(render(result.data))
+    last_error = max((i for i, m in enumerate(result.messages) if m.level == "error"), default=None)
+    for index, message in enumerate(result.messages):
+        if message.level == "info":
+            out.append(message.text)
+        elif message.level == "note":
+            out.append(f"Note: {message.text}")
+        elif message.level == "warning":
+            err.append(f"WARNING: {message.text}")
+        else:
+            label = "REFUSED" if result.status == "refused" else "ERROR"
+            line = f"{label}: {message.text}"
+            if index == last_error and result.override is not None:
+                line += f"\n{override_hint(result.override)}"
+            err.append(line)
+    out.extend(f"Wrote {path}" for path in result.written)
+    return Console("".join(f"{line}\n" for line in out), "".join(f"{line}\n" for line in err))
+
+
+def emit(
+    result: CommandResult[Any],
+    render: Callable[[Any], str] | None = None,
+    *,
+    stdout: TextIO | None = None,
+    stderr: TextIO | None = None,
+) -> int:
+    """Print ``result`` (see ``console``) and return the exit status: 0, 1 or 2."""
+    text = console(result, render)
+    out = stdout if stdout is not None else sys.stdout
+    err = stderr if stderr is not None else sys.stderr
+    out.write(text.stdout)
+    err.write(text.stderr)
+    return result.exit_code
