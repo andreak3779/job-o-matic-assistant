@@ -120,7 +120,7 @@ _STEP5_SKILL_TEXT = (
 
 def test_step5_certifications_rewrites_wait_language_once_ai200_is_certified() -> None:
     """The exact regression class that has already bitten this project twice
-    per Project 1's CLAUDE.md (stale AZ-900/course-count claims outliving the
+    per the repo's CLAUDE.md (stale AZ-900/course-count claims outliving the
     facts they described): if the profile says AI-200 is certified but
     SKILL.md's template still tells the user to wait, the generator must both
     rewrite the section and surface a loud warning, not silently keep telling

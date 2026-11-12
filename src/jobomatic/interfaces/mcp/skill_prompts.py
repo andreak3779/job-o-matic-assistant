@@ -56,7 +56,7 @@ COMMAND_TO_TOOL: dict[str, str] = {
 
 _PREAMBLE = """\
 You are in Claude Desktop, connected to the job-o-matic tools. You cannot run shell commands here.
-Where the workflow below tells you to run a `claude-jobs` / `python -m jobomatic` command,
+Where the workflow below tells you to run a `jobo` / `python -m jobomatic` command,
 call the tool that does the same job (its parameters mirror the command's options):
 
 {mapping}

@@ -63,9 +63,12 @@ def test_curated_skills_only_need_commands_that_have_a_tool():
         used = {
             m.strip()
             for m in re.findall(
-                r"(?:cli\.claude_jobs|claude-jobs) +([a-z][a-z-]*(?: +[a-z][a-z-]*)?)", body
+                r"(?:python -m jobomatic|\bjobo) +([a-z][a-z-]*(?: +[a-z][a-z-]*)?)", body
             )
         }
+        # The pattern matched nothing for a long time (it looked for the old command name), so
+        # a test that checks nothing passed. Every curated skill names at least one command.
+        assert used, folder
         for command in used:
             known = command in skill_prompts.COMMAND_TO_TOOL or command.split(" ")[0] in {
                 c.split(" ")[0] for c in skill_prompts.COMMAND_TO_TOOL

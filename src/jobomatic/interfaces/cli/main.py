@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI entry point for the claude-jobs monorepo tooling."""
+"""``jobo``: the command line entry point and dispatcher."""
 
 from __future__ import annotations
 

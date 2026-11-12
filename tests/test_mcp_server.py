@@ -580,7 +580,7 @@ def test_protected_vault_locations_are_refused_even_inside_an_allowed_dir(
 def test_wrote_line_for_a_file_outside_write_roots_is_not_attached(tmp_path: Path) -> None:
     from jobomatic.interfaces.mcp import server
 
-    secret = Path.home() / ".claude-jobs-test-secret.txt"
+    secret = Path.home() / ".jobomatic-test-secret.txt"
     # The file does not need to exist: the allow-list check runs first and must reject it.
     blocks = server._attachment_blocks([secret])
     assert blocks == []

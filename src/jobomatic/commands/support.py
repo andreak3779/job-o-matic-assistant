@@ -1,4 +1,4 @@
-"""Shared CLI helpers for project-1 generator scripts."""
+"""Shared helpers for the commands (ADR 0028): the gates, the document skeleton, the write lock."""
 
 from __future__ import annotations
 
