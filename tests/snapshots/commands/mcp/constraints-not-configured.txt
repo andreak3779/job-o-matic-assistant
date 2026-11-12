@@ -1,0 +1,3 @@
+status: ok
+--- text
+No private/search-constraints.json found — the salary screen is skipped. Copy it from your other machine, or create it from private/search-constraints.example.json.

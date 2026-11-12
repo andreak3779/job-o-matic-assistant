@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+## Applications check — Senior Full-Stack .NET Developer at Northgate Insurance Group
+
+NEW — no application to this posting in the log.
+--- stderr
+

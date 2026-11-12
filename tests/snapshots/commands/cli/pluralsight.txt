@@ -1,0 +1,6 @@
+exit: 0
+--- stdout
+Wrote <TMP>/out/ps.md
+Wrote <TMP>/out/ps.md.meta.json
+--- stderr
+

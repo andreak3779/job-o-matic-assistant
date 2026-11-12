@@ -1,0 +1,5 @@
+status: ok
+--- text
+| id | company | role | status | applied | next step |
+|---|---|---|---|---|---|
+| <TODAY>_northgate-insurance-group_senior-full-stack-net-developer | Northgate Insurance Group | Senior Full-Stack .NET Developer | phone_screen | <TODAY> | call |

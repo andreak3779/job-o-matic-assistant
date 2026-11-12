@@ -1,0 +1,29 @@
+status: ok
+--- text
+Wrote <TMP>/out/gh.md
+Wrote <TMP>/out/gh.md.meta.json
+--- resource name=gh.md mime=text/markdown kind=text
+<!-- GENERATED DRAFT — regenerate via the generate_github MCP tool / update_github_profile skill.
+     Reflects the public profile data (hash 33ac30321d87). -->
+
+# GitHub Profile Update Draft
+
+## Character Limits
+| Field | Limit |
+|---|---|
+| Bio | 160 chars |
+| Status | 80 chars (emoji + text) |
+... (84 lines in all)
+--- resource name=gh.md.meta.json mime=application/json kind=text
+{
+  "generated_at": "<NOW>",
+  "script": "generate_github.py",
+  "profile_hash": "<HASH>",
+  "inputs": [],
+  "fit_rating": null,
+  "command": "<COMMAND>",
+  "evidence_sources": [
+    "CookingTime"
+  ],
+  "warnings": []
+}

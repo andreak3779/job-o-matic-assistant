@@ -1,0 +1,10 @@
+status: ok
+--- text
+Source: pluralsight_import_2026-11-10.json (pluralsight), 1 completed item(s) read
+
+New (1):
+  + Learn Azure Things  [course, 2026-11-08, Microsoft Azure]
+
+1 new, 0 changed, 0 re-keyed, 0 unchanged, 23 stored but not in this export
+
+Dry run: nothing was saved. Run again with --apply to save.

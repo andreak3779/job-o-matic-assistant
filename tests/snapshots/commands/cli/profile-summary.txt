@@ -1,0 +1,105 @@
+exit: 0
+--- stdout
+## Copy Fragments
+course_count_sentence: "10 Pluralsight courses completed and 2 more in progress, plus 1 hands-on labs (1 completed, 0 in progress) — 13 total"
+cert_status_short: "AZ-900 Certified · AI-200 in progress"
+azure_course_lab_sentence: "10 Pluralsight courses and 2 hands-on labs across Azure"
+github_copilot_course_count: "5"
+leadership_course_count: "3"
+
+---
+## Professional Headline
+**Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years**
+
+---
+## Summary / About
+Full-stack .NET developer with a track record of modernizing legacy enterprise systems into service-oriented, cloud-hosted applications. Comfortable owning a feature from database schema through Angular UI through CI/CD pipeline, with particular depth in insurance and manufacturing domains.
+
+---
+## Cert Status + Badge URLs
+| Cert | Status |
+|---|---|
+| AZ-900 | **Certified April 18, 2026** — [Credential](https://learn.microsoft.com/api/credentials/share/en-ca/x/1?sharingId=2) |
+| AI-200 | **Active target** —  |
+
+---
+## Technical Skills
+### Backend Development
+C#, ASP.NET Core, .NET Framework, Entity Framework Core, LINQ, Web API, REST, dependency injection, event-driven architecture, microservices, distributed systems, OOP, design patterns, SOLID principles, secure development, async/await, service-oriented architecture
+
+### Frontend & UI
+Angular (v12+), React frontend development, TypeScript, RxJS, Angular Material, HTML, CSS/SASS, Jest
+
+### Database & SQL
+SQL Server, relational databases, T-SQL, DB2, query optimization, Entity Framework migrations
+
+### Cloud & Azure
+Azure App Service, Azure Functions, Azure Monitor, monitoring and observability, infrastructure as code, Bicep, Terraform, PowerShell and Python scripting for automation, Azure DevOps Pipelines, Azure Application Insights, Azure AD
+
+### DevOps & CI/CD
+Docker, GitLab CI, Azure Pipelines, SonarQube, code review process ownership
+
+### Testing
+xUnit, Moq, xUnit testing, integration testing, Jest, integration testing, test coverage improvement initiatives
+
+### Project Management & Agile
+GitHub Copilot, prompt engineering, Terraform on Azure, Scrum, sprint planning, story pointing, cross-functional stakeholder coordination
+
+---
+## Professional Experience
+### Senior Full-Stack Developer
+**Meridian Benefits Group | Springfield, MD (Hybrid) | October 2022 – Present**
+
+- Led migration of a legacy ASP.NET Web Forms quote engine to Angular 14 with a layered C#/Entity Framework Core service architecture, reducing quote turnaround time and cutting reported defects by roughly a third
+- Introduced JWT-based authentication and a controller-service-repository pattern across the claims module, replacing session-based auth
+- Built RESTful APIs in ASP.NET Core Web API against SQL Server, optimizing slow claims-lookup queries with targeted indexing and query rewrites
+- Owned GitLab CI/CD pipeline for the claims platform, adding automated test gates that caught regressions before they reached staging
+- Raised unit and integration test coverage on the claims module from under 40% to over 75% using xUnit and Moq, as a department-wide quality initiative
+
+### Software Developer
+**Aerotech Industries Ltd. | Springfield, MD (Hybrid) | September 2019 – October 2022**
+
+- Built a real-time integration service in C#/ASP.NET Core reconciling sales lead data between the CRM and an ERP system, eliminating a recurring manual data-entry reconciliation process
+- Developed a desktop-application plugin (C#, WPF) to import and validate vendor takeoff files against a custom XML schema
+- Automated quality-control issue tracking with Power Apps and Power Automate, replacing a spreadsheet-based process
+- Coordinated release management across environments using Azure DevOps Pipelines and a ticket-driven change process
+
+### Programmer / Systems Analyst
+**Prairie Transport Co. | Springfield, MD (Onsite) | May 2019 – August 2019**
+
+- Modernized a legacy reporting application by migrating business logic into SQL Server stored procedures, improving report generation speed
+- Gathered requirements and built SSRS reports for dispatch and billing teams
+
+### .NET Developer
+**Riverside Pharmacy Ltd. | Springfield, MD (Onsite) | November 2015 – April 2019**
+
+- Built SSIS packages to automate a drug-data transformation process, cutting processing time from hours to well under an hour
+- Owned the organization's Git source-control server (Ubuntu, SSH-administered) and led the transition off ad hoc file-share-based version control
+- Migrated a legacy MS Access order-management tool to a centralized ASP.NET Web Forms application backed by SQL Server
+
+### Software Developer
+**Vantage Technology Solutions | Springfield, MD (Onsite) | October 2011 – March 2015**
+
+- Developed and maintained VB.NET/C# applications against Sybase SQL Server to meet evolving client business rules
+- Provided on-call production support, investigating and remediating failed overnight batch jobs under documented escalation procedures
+- Built and enhanced custom reports in C# and Entity Framework against a DB2 database, working from an Agile backlog with a geographically dispersed team
+
+---
+## Portfolio Projects
+| Project | Stack | Description | URL |
+|---|---|---|---|
+| CookingTime | C# · .NET 10 | Legacy modernization demo. | https://github.com/example-user/CookingTime |
+
+---
+## Key Differentiators
+- Full-stack depth: ASP.NET Core + Angular
+- Legacy modernization: one migration
+- SQL Server: 10+ years
+- TDD: xUnit
+- GitHub Copilot: 5 courses
+- Prompt Engineering: 1 course
+- AI/LLM depth: none
+- Communication: 3 leadership/communication Pluralsight courses
+- Pace of learning: 10 courses completed + 2 in progress + 1 labs (1 completed, 0 in progress) = **13 total**
+--- stderr
+

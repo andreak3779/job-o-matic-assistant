@@ -1,0 +1,5 @@
+exit: 0
+--- stdout
+Northgate Insurance Group — Senior Full-Stack .NET Developer (id <TODAY>_northgate-insurance-group_senior-full-stack-net-developer) is now technical
+--- stderr
+

@@ -1,0 +1,27 @@
+status: ok
+--- text
+STAR story 'Example pipeline ownership (Example Co)': last_used -> <MONTH-YEAR>; used for Northgate Insurance Group — Senior Full-Stack .NET Developer
+STAR story 'Example cloud migration (Example Co)': last_used -> <MONTH-YEAR>; used for Northgate Insurance Group — Senior Full-Stack .NET Developer
+Wrote <TMP>/out/prep.docx
+Wrote <TMP>/out/prep.docx.meta.json
+--- resource name=prep.docx mime=application/vnd.openxmlformats-officedocument.wordprocessingml.document kind=blob
+non-empty
+--- text
+### prep.docx.meta.json
+
+{
+  "generated_at": "<NOW>",
+  "script": "interview_prep.py",
+  "profile_hash": "<HASH>",
+  "inputs": [
+    "<REPO>/tests/fixtures/strong-fit-jd.md"
+  ],
+  "fit_rating": "Strong",
+  "command": "<COMMAND>",
+  "evidence_sources": [
+    "Aerotech Industries Ltd.",
+    "Meridian Benefits Group",
+    "Vantage Technology Solutions"
+  ],
+  "warnings": []
+}

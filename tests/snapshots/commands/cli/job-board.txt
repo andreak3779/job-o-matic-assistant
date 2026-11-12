@@ -1,0 +1,6 @@
+exit: 0
+--- stdout
+Wrote <TMP>/out/jb.md
+Wrote <TMP>/out/jb.md.meta.json
+--- stderr
+

@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+Logged as drafted (not applied): application <TODAY>_northgate-insurance-group_senior-full-stack-net-developer
+Wrote <TMP>/out/site.txt
+Wrote <TMP>/out/site.txt.meta.json
+--- stderr
+

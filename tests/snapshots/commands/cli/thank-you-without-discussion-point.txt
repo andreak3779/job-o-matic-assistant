@@ -1,0 +1,5 @@
+exit: 1
+--- stdout
+
+--- stderr
+ERROR: discussion_points is required: at least one specific detail from the actual interview conversation. Ask the user what was discussed — do not substitute generic differentiators.

@@ -1,0 +1,6 @@
+exit: 0
+--- stdout
+Wrote <TMP>/out/cold.docx
+Wrote <TMP>/out/cold.docx.meta.json
+--- stderr
+

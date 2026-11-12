@@ -1,0 +1,3 @@
+status: ok
+--- text
+Minimums (search-constraints.json): permanent base $90,000, contract $65/hr

@@ -1,0 +1,5 @@
+exit: 0
+--- stdout
+Marked applied on 2026-01-05: Northgate Insurance Group — Senior Full-Stack .NET Developer (id <TODAY>_northgate-insurance-group_senior-full-stack-net-developer)
+--- stderr
+

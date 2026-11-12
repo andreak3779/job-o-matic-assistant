@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+## Applications check — Senior Full-Stack .NET Developer at Northgate Insurance Group
+
+DRAFTED — documents were already generated for this posting but it is not marked applied (id <TODAY>_northgate-insurance-group_senior-full-stack-net-developer).
+--- stderr
+

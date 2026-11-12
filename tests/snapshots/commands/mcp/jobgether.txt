@@ -1,0 +1,27 @@
+status: ok
+--- text
+Wrote <TMP>/out/jg.md
+Wrote <TMP>/out/jg.md.meta.json
+--- resource name=jg.md mime=text/markdown kind=text
+<!-- GENERATED DRAFT — regenerate via the generate_jobgether MCP tool / update_jobgether_profile skill.
+     Reflects the public profile data (hash 33ac30321d87). -->
+
+# Jobgether Profile Update Draft
+
+## Character Limits
+| Field | Limit | Notes |
+|---|---|---|
+| Title / Headline | ~100 chars (practical target) | No published hard limit — keep it scannable in a match-results card. |
+| About / Bio | ~1,000–1,500 chars (practical target) | No published cap; matches the Indeed/ZipRecruiter summary target. |
+... (53 lines in all)
+--- resource name=jg.md.meta.json mime=application/json kind=text
+{
+  "generated_at": "<NOW>",
+  "script": "generate_jobgether.py",
+  "profile_hash": "<HASH>",
+  "inputs": [],
+  "fit_rating": null,
+  "command": "<COMMAND>",
+  "evidence_sources": [],
+  "warnings": []
+}

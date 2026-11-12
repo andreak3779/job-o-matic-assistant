@@ -1,0 +1,5 @@
+status: ok
+--- text
+Wrote <TMP>/out/plan.pdf
+--- resource name=plan.pdf mime=application/pdf kind=blob
+non-empty

@@ -1,0 +1,5 @@
+status: error
+--- message
+REFUSED: Fit rating is Pass — refusing to generate resume/cover letter.
+2 core requirements have no evidence; coverage 71% of 7 required skills. Core gap(s): rust, kotlin.
+A Pass on skills cannot be confirmed past: run fit-check for the full breakdown, or supply a stronger-fit posting.

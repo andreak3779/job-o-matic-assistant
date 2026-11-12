@@ -1,0 +1,31 @@
+status: ok
+--- text
+## Fit Check — Senior Full-Stack .NET Developer at Northgate Insurance Group
+
+**Required Skills**
+| Skill | Status | Evidence |
+|---|---|---|
+| c# | ✅ | Meridian Benefits Group, production |
+| asp.net core | ✅ | Meridian Benefits Group, production |
+| angular | ✅ | Meridian Benefits Group, production |
+| sql server | ✅ | Meridian Benefits Group, production |
+| entity framework core | ✅ | Meridian Benefits Group, production |
+| rest api design | ✅ | Meridian Benefits Group, production |
+| azure | ✅ | Aerotech Industries Ltd., production |
+| ci/cd | ✅ | Meridian Benefits Group, production |
+| agile / scrum | ✅ | Vantage Technology Solutions, production |
+
+**Nice-to-Haves**
+| Skill | Status | Evidence |
+|---|---|---|
+| docker | ✅ | Meridian Benefits Group, production |
+| xunit | ✅ | Meridian Benefits Group, production |
+| typescript | 🟡 | coursework or self-study |
+| graphql | 🔴 | no evidence |
+| kubernetes | 🟡 | tracked gap — partial coursework |
+
+**Soft requirements** (education, years, title level and soft skills; listed for you to read, never scored)
+- Level — senior title — check this yourself: Senior Full-Stack .NET Developer
+
+**Fit Rating: Strong**
+All 9 required skills covered (0 course/portfolio-only); 4 nice-to-have(s) present.

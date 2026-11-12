@@ -1,0 +1,25 @@
+status: ok
+--- text
+Wrote <TMP>/out/thanks.docx
+Wrote <TMP>/out/thanks.docx.meta.json
+--- resource name=thanks.docx mime=application/vnd.openxmlformats-officedocument.wordprocessingml.document kind=blob
+non-empty
+--- text
+### thanks.docx.meta.json
+
+{
+  "generated_at": "<NOW>",
+  "script": "generate_thank_you_letter.py",
+  "profile_hash": "<HASH>",
+  "inputs": [
+    "<REPO>/tests/fixtures/strong-fit-jd.md"
+  ],
+  "fit_rating": "Strong",
+  "command": "<COMMAND>",
+  "evidence_sources": [
+    "Aerotech Industries Ltd.",
+    "Meridian Benefits Group",
+    "Vantage Technology Solutions"
+  ],
+  "warnings": []
+}
