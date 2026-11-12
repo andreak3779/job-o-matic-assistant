@@ -4,52 +4,72 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Job-o-matic-assistant · Pluralsight History Import</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU2IDI1NiIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJqb2Itby1tYXRpYy1hc3Npc3RhbnQgaWNvbiI+Cjx0aXRsZT5qb2Itby1tYXRpYy1hc3Npc3RhbnQ8L3RpdGxlPgo8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMjQ2IiBoZWlnaHQ9IjI0NiIgcng9IjU0IiBmaWxsPSIjMTlDM0M5IiBzdHJva2U9IiMxQjFGNEIiIHN0cm9rZS13aWR0aD0iMTAiLz4KPHJlY3QgeD0iMzAiIHk9IjMwIiB3aWR0aD0iMTk2IiBoZWlnaHQ9IjE2IiByeD0iOCIgZmlsbD0iIzhDRUZGMSIvPgo8Y2lyY2xlIGN4PSIxMjgiIGN5PSIxMzQiIHI9Ijg2IiBmaWxsPSIjRkZGOEUxIiBzdHJva2U9IiMxQjFGNEIiIHN0cm9rZS13aWR0aD0iOSIvPgo8ZyBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIyIj4KPHBhdGggZD0iTTc0LjAzLDE0NC4xMiBBIDU0IDU0IDAgMCAxIDgzLjIzLDExNS44IiBzdHJva2U9IiNGRjRGM0YiLz4KPHBhdGggZD0iTTg1LjQ1LDExMi43NSBBIDU0IDU0IDAgMCAxIDEwOS41Myw5NS4yNiIgc3Ryb2tlPSIjRkY5RjFDIi8+CjxwYXRoIGQ9Ik0xMTMuMTEsOTQuMDkgQSA1NCA1NCAwIDAgMSAxNDIuODksOTQuMDkiIHN0cm9rZT0iI0ZGRDIzRiIvPgo8cGF0aCBkPSJNMTQ2LjQ3LDk1LjI2IEEgNTQgNTQgMCAwIDEgMTcwLjU1LDExMi43NSIgc3Ryb2tlPSIjQzZFODRBIi8+CjxwYXRoIGQ9Ik0xNzIuNzcsMTE1LjggQSA1NCA1NCAwIDAgMSAxODEuOTcsMTQ0LjEyIiBzdHJva2U9IiMyRkJGNEYiLz4KPC9nPgo8bGluZSB4MT0iMTI4IiB5MT0iMTQ2IiB4Mj0iMTg1LjEiIHkyPSIxMjcuNSIgc3Ryb2tlPSIjMUIxRjRCIiBzdHJva2Utd2lkdGg9IjExIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPGNpcmNsZSBjeD0iMTI4IiBjeT0iMTQ2IiByPSIxNSIgZmlsbD0iI0ZGNEYzRiIgc3Ryb2tlPSIjMUIxRjRCIiBzdHJva2Utd2lkdGg9IjYiLz4KPHBvbHlnb24gcG9pbnRzPSIxMjgsMTc2IDEzMiwxODYgMTQzLDE4Ni41IDEzNC41LDE5My41IDEzNy41LDIwNCAxMjgsMTk4IDExOC41LDIwNCAxMjEuNSwxOTMuNSAxMTMsMTg2LjUgMTI0LDE4NiIgZmlsbD0iI0U2Mzk5QiIgc3Ryb2tlPSIjMUIxRjRCIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==">
 <style>
-  :root {
-    --bg: #f6f7fb; --card: #fff; --text: #1c1f2a; --muted: #5d6275; --line: #dfe2ec;
-    --accent: #2f5bea; --ok: #1a7f4b; --warn: #b26a00; --err: #c0392b; --new: #e8f0ff;
+/* tokens:start */
+:root {
+  --bg: #fdf6e3; --surface: #ffffff; --text: #1b1f4b; --muted: #4a4f7a; --line: #e4d9b8;
+  --accent: #0e8f96; --accent-ink: #ffffff; --accent-text: #0a6e74;
+  --pink: #c4207f; --pink-ink: #ffffff; --sun: #ffd23f; --navy: #1b1f4b; --cream: #fdf6e3;
+  --ok: #17703a; --warn: #8a5300; --err: #b3261e; --new: #d9f3f4;
+  --fit-pass: #ff4f3f; --fit-stretch: #ff9f1c; --fit-worth: #ffd23f;
+  --fit-good: #c6e84a; --fit-strong: #2fbf4f; --fit-ink: #1b1f4b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11143a; --surface: #1b1f4b; --text: #fdf6e3; --muted: #b4b9e6; --line: #333873;
+    --accent: #38c9d0; --accent-ink: #11143a; --accent-text: #38c9d0;
+    --pink: #ff7cc0; --pink-ink: #11143a;
+    --ok: #7ee08a; --warn: #ffd23f; --err: #ff8a7a; --new: #1f3a6e;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #14161d; --card: #1d2029; --text: #e8eaf2; --muted: #9aa0b4; --line: #2e3242;
-      --accent: #7c9bff; --ok: #4cc38a; --warn: #f0a843; --err: #ff7a6b; --new: #22305a;
-    }
-  }
+}
+:root[data-theme="dark"] {
+  --bg: #11143a; --surface: #1b1f4b; --text: #fdf6e3; --muted: #b4b9e6; --line: #333873;
+  --accent: #38c9d0; --accent-ink: #11143a; --accent-text: #38c9d0;
+  --pink: #ff7cc0; --pink-ink: #11143a;
+  --ok: #7ee08a; --warn: #ffd23f; --err: #ff8a7a; --new: #1f3a6e;
+}
+/* tokens:end */
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
-  header.brand { background: var(--card); border-bottom: 1px solid var(--line); }
-  header.brand .inner { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-  header.brand .name { font-weight: 700; font-size: 1.05rem; color: var(--accent); }
-  header.brand .tool { color: var(--muted); font-size: .9rem; }
-  footer.page { max-width: 1100px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .85rem; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+  a { color: var(--accent-text); }
+  header.brand { background: var(--sun); color: var(--navy); border-bottom: 5px solid var(--navy); }
+  header.brand .inner { max-width: 1100px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+  header.brand img { width: 44px; height: 44px; display: block; }
+  header.brand .name { font-weight: 800; font-size: 1.1rem; letter-spacing: .01em; }
+  header.brand .tool { font-size: .95rem; }
+  footer.page { max-width: 1100px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .9rem; }
   main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; line-height: 1.2; }
   p.sub { color: var(--muted); margin: 0 0 20px; }
-  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  h2 { font-size: 1rem; margin: 0 0 8px; }
-  textarea { width: 100%; min-height: 160px; font: 12px/1.4 ui-monospace, monospace; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; }
+  section { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  h2 { font-size: 1.05rem; margin: 0 0 8px; }
+  textarea { width: 100%; min-height: 160px; font: 13px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--bg); color: var(--text); border: 2px solid var(--muted); border-radius: 10px; padding: 8px; resize: vertical; }
+  ::placeholder { color: var(--muted); opacity: 1; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-  button, label.btn { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font: inherit; cursor: pointer; }
-  button.secondary, label.btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  input[type=file] { display: none; }
-  input[type=search], select { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font: inherit; }
-  .msg { margin-top: 10px; font-size: .9rem; }
+  button, label.btn { background: var(--accent-text); color: var(--accent-ink); border: 2px solid var(--accent-text); border-radius: 10px; padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+  button.secondary, label.btn.secondary { background: transparent; color: var(--accent-text); border: 2px solid var(--accent-text); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  button:focus-visible, label.btn:focus-within, label.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  input[type=search], select { background: var(--bg); color: var(--text); border: 2px solid var(--muted); border-radius: 10px; padding: 7px 10px; font: inherit; }
+  .msg { margin-top: 10px; font-size: .95rem; }
   .msg.ok { color: var(--ok); } .msg.warn { color: var(--warn); } .msg.err { color: var(--err); white-space: pre-wrap; }
-  .stats { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: .9rem; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: .95rem; }
   .stats b { color: var(--text); }
   .tablewrap { overflow-x: auto; margin-top: 10px; }
-  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 700; white-space: nowrap; }
   tr.new td { background: var(--new); }
-  a { color: var(--accent); }
   details summary { cursor: pointer; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
 <header class="brand">
   <div class="inner">
+    <img alt="" width="44" height="44" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU2IDI1NiIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJqb2Itby1tYXRpYy1hc3Npc3RhbnQgaWNvbiI+Cjx0aXRsZT5qb2Itby1tYXRpYy1hc3Npc3RhbnQ8L3RpdGxlPgo8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMjQ2IiBoZWlnaHQ9IjI0NiIgcng9IjU0IiBmaWxsPSIjMTlDM0M5IiBzdHJva2U9IiMxQjFGNEIiIHN0cm9rZS13aWR0aD0iMTAiLz4KPHJlY3QgeD0iMzAiIHk9IjMwIiB3aWR0aD0iMTk2IiBoZWlnaHQ9IjE2IiByeD0iOCIgZmlsbD0iIzhDRUZGMSIvPgo8Y2lyY2xlIGN4PSIxMjgiIGN5PSIxMzQiIHI9Ijg2IiBmaWxsPSIjRkZGOEUxIiBzdHJva2U9IiMxQjFGNEIiIHN0cm9rZS13aWR0aD0iOSIvPgo8ZyBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIyIj4KPHBhdGggZD0iTTc0LjAzLDE0NC4xMiBBIDU0IDU0IDAgMCAxIDgzLjIzLDExNS44IiBzdHJva2U9IiNGRjRGM0YiLz4KPHBhdGggZD0iTTg1LjQ1LDExMi43NSBBIDU0IDU0IDAgMCAxIDEwOS41Myw5NS4yNiIgc3Ryb2tlPSIjRkY5RjFDIi8+CjxwYXRoIGQ9Ik0xMTMuMTEsOTQuMDkgQSA1NCA1NCAwIDAgMSAxNDIuODksOTQuMDkiIHN0cm9rZT0iI0ZGRDIzRiIvPgo8cGF0aCBkPSJNMTQ2LjQ3LDk1LjI2IEEgNTQgNTQgMCAwIDEgMTcwLjU1LDExMi43NSIgc3Ryb2tlPSIjQzZFODRBIi8+CjxwYXRoIGQ9Ik0xNzIuNzcsMTE1LjggQSA1NCA1NCAwIDAgMSAxODEuOTcsMTQ0LjEyIiBzdHJva2U9IiMyRkJGNEYiLz4KPC9nPgo8bGluZSB4MT0iMTI4IiB5MT0iMTQ2IiB4Mj0iMTg1LjEiIHkyPSIxMjcuNSIgc3Ryb2tlPSIjMUIxRjRCIiBzdHJva2Utd2lkdGg9IjExIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPGNpcmNsZSBjeD0iMTI4IiBjeT0iMTQ2IiByPSIxNSIgZmlsbD0iI0ZGNEYzRiIgc3Ryb2tlPSIjMUIxRjRCIiBzdHJva2Utd2lkdGg9IjYiLz4KPHBvbHlnb24gcG9pbnRzPSIxMjgsMTc2IDEzMiwxODYgMTQzLDE4Ni41IDEzNC41LDE5My41IDEzNy41LDIwNCAxMjgsMTk4IDExOC41LDIwNCAxMjEuNSwxOTMuNSAxMTMsMTg2LjUgMTI0LDE4NiIgZmlsbD0iI0U2Mzk5QiIgc3Ryb2tlPSIjMUIxRjRCIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==">
     <span class="name">Job-o-matic-assistant</span>
     <span class="tool">Learning history · Pluralsight import</span>
   </div>
@@ -60,7 +80,7 @@
 
   <section>
     <h2>1. Paste Pluralsight course history HTML</h2>
-    <textarea id="paste" placeholder="Paste the table HTML here (copy the &lt;table role=&quot;grid&quot;&gt; element from the browser dev tools, or the whole saved page)…" spellcheck="false"></textarea>
+    <textarea id="paste" aria-label="Pluralsight course history HTML" placeholder="Paste the table HTML here (copy the &lt;table role=&quot;grid&quot;&gt; element from the browser dev tools, or the whole saved page)…" spellcheck="false"></textarea>
     <div class="row">
       <button id="parseBtn">Parse</button>
       <label class="btn secondary" for="htmlFile">Or open .html file…</label>
@@ -72,7 +92,7 @@
 
   <section>
     <h2>2. Compare with a previous import file (optional)</h2>
-    <div class="sub" style="color:var(--muted);margin:0">Load an earlier import file (or the older bare-list JSON) to highlight entries that are new since then. The importer itself compares against the vault, so this is only a preview.</div>
+    <div class="sub" style="margin:0">Load an earlier import file (or the older bare-list JSON) to highlight entries that are new since then. The importer itself compares against the vault, so this is only a preview.</div>
     <div class="row">
       <label class="btn secondary" for="jsonFile">Load previous import file…</label>
       <input type="file" id="jsonFile" accept=".json,application/json">
@@ -84,10 +104,10 @@
     <h2>3. Results</h2>
     <div class="stats" id="stats"></div>
     <div class="row">
-      <input type="search" id="filter" placeholder="Filter by title…">
-      <select id="typeSel"><option value="">All types</option><option>Course</option><option>Lab</option></select>
-      <select id="pctSel"><option value="">All progress</option><option value="done">Completed (100%)</option><option value="inprog">In progress</option></select>
-      <select id="newSel"><option value="">New + existing</option><option value="new">New only</option></select>
+      <input type="search" id="filter" aria-label="Filter by title" placeholder="Filter by title…">
+      <select id="typeSel" aria-label="Type"><option value="">All types</option><option>Course</option><option>Lab</option></select>
+      <select id="pctSel" aria-label="Progress"><option value="">All progress</option><option value="done">Completed (100%)</option><option value="inprog">In progress</option></select>
+      <select id="newSel" aria-label="New or existing"><option value="">New + existing</option><option value="new">New only</option></select>
     </div>
     <div class="row">
       <button id="dlJson">Download import file (completed only)</button>

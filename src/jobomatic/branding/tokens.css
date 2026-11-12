@@ -1,0 +1,28 @@
+/* The job-o-matic colour tokens (ADR 0025). This file is the one source.
+   The web UI serves it. A standalone page opens from disk and cannot link it, so it embeds a
+   verbatim copy of everything between the two markers, and tests/test_look.py fails if a copy
+   differs or a text pair falls below its contrast ratio. */
+/* tokens:start */
+:root {
+  --bg: #fdf6e3; --surface: #ffffff; --text: #1b1f4b; --muted: #4a4f7a; --line: #e4d9b8;
+  --accent: #0e8f96; --accent-ink: #ffffff; --accent-text: #0a6e74;
+  --pink: #c4207f; --pink-ink: #ffffff; --sun: #ffd23f; --navy: #1b1f4b; --cream: #fdf6e3;
+  --ok: #17703a; --warn: #8a5300; --err: #b3261e; --new: #d9f3f4;
+  --fit-pass: #ff4f3f; --fit-stretch: #ff9f1c; --fit-worth: #ffd23f;
+  --fit-good: #c6e84a; --fit-strong: #2fbf4f; --fit-ink: #1b1f4b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11143a; --surface: #1b1f4b; --text: #fdf6e3; --muted: #b4b9e6; --line: #333873;
+    --accent: #38c9d0; --accent-ink: #11143a; --accent-text: #38c9d0;
+    --pink: #ff7cc0; --pink-ink: #11143a;
+    --ok: #7ee08a; --warn: #ffd23f; --err: #ff8a7a; --new: #1f3a6e;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11143a; --surface: #1b1f4b; --text: #fdf6e3; --muted: #b4b9e6; --line: #333873;
+  --accent: #38c9d0; --accent-ink: #11143a; --accent-text: #38c9d0;
+  --pink: #ff7cc0; --pink-ink: #11143a;
+  --ok: #7ee08a; --warn: #ffd23f; --err: #ff8a7a; --new: #1f3a6e;
+}
+/* tokens:end */
