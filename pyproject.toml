@@ -62,12 +62,11 @@ lint = [
     "import-linter>=2.0,<3",
 ]
 
-# `jobo` is the command. `claude-jobs` is the old name, kept for one release (it prints a notice).
+# `jobo` is the command.
 # `python -m jobomatic` does the same as `jobo` without the virtualenv on PATH.
 [project.scripts]
 jobo = "jobomatic.interfaces.cli.main:main"
 jobo-mcp = "jobomatic.interfaces.mcp.server:main"
-claude-jobs = "jobomatic.interfaces.cli.main:deprecated"
 
 # The packages are listed explicitly (new subpackages must be added here).
 [tool.setuptools]

@@ -1,4 +1,4 @@
-"""The commands: ``jobo``, ``python -m jobomatic``, the deprecated ``claude-jobs`` and the MCP server."""
+"""The commands: ``jobo``, ``python -m jobomatic`` and the MCP server."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def test_the_project_is_named_job_o_matic_assistant() -> None:
     assert _project()["name"] == "job-o-matic-assistant"
 
 
-@pytest.mark.parametrize("script", ["jobo", "jobo-mcp", "claude-jobs"])
+@pytest.mark.parametrize("script", ["jobo", "jobo-mcp"])
 def test_every_declared_command_points_at_a_real_function(script: str) -> None:
     target = _project()["scripts"][script]
     module, _, attr = target.partition(":")
@@ -36,14 +36,8 @@ def test_python_dash_m_jobomatic_runs_the_same_cli() -> None:
     assert "usage: jobo" in result.stdout
 
 
-def test_the_old_command_name_prints_a_notice_and_does_the_same_thing(
-    monkeypatch: pytest.MonkeyPatch, capsys
-) -> None:
-    from jobomatic.interfaces.cli import main as cli
-
-    monkeypatch.setattr(cli, "main", lambda argv=None: 7)
-    assert cli.deprecated(["x"]) == 7
-    assert "now called jobo" in capsys.readouterr().err
+def test_the_old_command_is_not_declared() -> None:
+    assert set(_project()["scripts"]) == {"jobo", "jobo-mcp"}  # ADR 0030 removed the alias
 
 
 def test_the_old_forwarding_packages_are_gone() -> None:
