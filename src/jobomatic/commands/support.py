@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import threading
 from collections.abc import Callable
+from contextlib import AbstractContextManager
 from pathlib import Path
 from typing import Any
 
@@ -69,6 +71,19 @@ _CONFIRMATIONS = {
         "Generate despite stated pay below the minimum (only after the user says so)",
     ),
 }
+
+
+# Commands that read the vault and then write it (the applications log, the learning items, the
+# story bank, a draft recorded for a posting) hold this while they do, so two callers in one
+# process never interleave (the MCP server and the web UI run commands on several threads). It is
+# re-entrant because one command may call another. It does not protect against a second
+# *process* (the command line while the MCP server runs); nothing ever did (ADR 0028).
+_VAULT_WRITE_LOCK = threading.RLock()
+
+
+def vault_write_lock() -> AbstractContextManager[Any]:
+    """``with vault_write_lock():`` around a read-modify-write of the vault."""
+    return _VAULT_WRITE_LOCK
 
 
 def add_confirmation_flags(parser: argparse.ArgumentParser, *names: str) -> None:
