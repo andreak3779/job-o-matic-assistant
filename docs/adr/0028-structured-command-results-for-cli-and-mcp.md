@@ -1,6 +1,6 @@
 # 0028 — Commands return structured results that the CLI and the MCP server render
 
-**Status:** Proposed. The decision below is drafted for review; nothing is built yet.
+**Status:** Accepted. Built; see "As built" for where the implementation differs from the draft.
 
 ## Context
 
@@ -203,3 +203,46 @@ Strangler style: both paths exist while commands move, and each step leaves the 
   not a surprise.
 - **ADR 0002's text is not rewritten**, per the ADR README; it gets a status line when this is
   built.
+
+## As built
+
+The decision above held. What the implementation changed or added:
+
+- **Where the code is.** `jobomatic/results.py` has `CommandResult`, `Message`, `ok`, `failure`,
+  `refusal`, `Refusal`, `guarded`, and `console()`/`emit()`, which turn a result into the text the
+  command line prints. The MCP server calls `console()` too, which is why the two cannot differ.
+  There is no `interfaces/cli/output.py`: `commands` may not import `interfaces`.
+- **Message levels** are `info`, `note`, `log`, `warning` and `error`. `log` is a plain line on stderr
+  (how the run went, for example the index being synced). A failed result must carry a message of any
+  level, not only `error`, so the profile and learning commands keep printing `[ERROR] ...` and
+  `Profile has N error(s).` on stdout exactly as before. `failure()` can carry the data produced
+  before the failure.
+- **Every command is `run()` plus a thin `main()`.** `generate_*()` functions keep their path-taking
+  signatures and tuple returns (many tests and scripts use them) and delegate to `*_from_text()`
+  cores; an optional `notes` list collects what they would print (see `commands.support.say`), and a
+  caller that passes none still sees it printed.
+- **One skeleton for documents.** `commands.support.produce_document()` runs the gate, makes the
+  document, and holds the vault write lock for the run. `presence/draft.py` does the same for the five
+  profile-update generators.
+- **The write lock** is `commands.support.vault_write_lock()`, a re-entrant in-process lock. The
+  document commands, `applications applied` and `status`, and an applying `learning import` hold it. A
+  test shows two threads marking one new posting applied make one entry, and fails without the lock.
+  Protection between processes and atomic YAML writes are still not done.
+- **The gates** run inside the commands. The import contracts changed to allow it: the gate moved to
+  the layer below `commands` and `presence`.
+- **The posting is text**, with a `source` path for the sidecar. A pasted posting records no input in
+  the sidecar; before, it recorded a temporary file that no longer existed.
+- **Guards.** The MCP server and the command line import neither the other. A test fails if a command
+  or presence module prints outside its own `main()`, if anything in `src` uses `redirect_stdout`, or if
+  the MCP server mentions the old machinery. The snapshot tests also fail if an MCP tool writes to
+  stdout, the protocol channel.
+- **Behaviour changes**, all on paths nothing was recording before: a missing posting on a gated
+  command gets the ADR 0027 message; an unknown status or stage is an error result; a broken profile or
+  vault is a clean error in the profile-update generators (it was a traceback); `search`'s stopped
+  embedding service is the same two-line message.
+
+**Left as it was.** `main.py` in the command line still rebuilds an argv list and calls each command's
+`main(argv)`, so a command parses its arguments twice there. Removing that needs the dispatcher to call
+`run()` with the parsed values, which no interface needs yet. The commands only the command line offers
+(`render`, `index build`, `evidence`, the other `learning` subcommands, `applications add` and
+`import-csv`, `profile schema`, the platform resume and cover letter) still print directly.

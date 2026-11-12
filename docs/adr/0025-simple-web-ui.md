@@ -5,9 +5,10 @@
 works today, but does not yet use the brand. The local web UI for the MCP tools and the shared
 look are decisions, not built.
 
-**Build order:** [ADR 0028](0028-structured-command-results-for-cli-and-mcp.md) comes first. The
-local web UI is not started until the commands return structured results, so that it never reads
-printed text.
+**Build order:** [ADR 0028](0028-structured-command-results-for-cli-and-mcp.md) is built: every
+command the MCP server offers returns a `CommandResult` (`jobomatic.results`), and the command
+line and the MCP server both render it. The local web UI is built on `jobomatic.commands.*.run()`
+and those results, so it never reads printed text.
 
 ## Context
 
@@ -60,7 +61,7 @@ authentication". A web UI for the MCP tools has to open a port, so this is that 
   gate ([ADR 0003](0003-fit-gate-enforced-at-mcp-boundary.md)) and the file access policy
   (ADR 0020) apply to it exactly as they do to the MCP server. **It is built on the structured
   results of [ADR 0028](0028-structured-command-results-for-cli-and-mcp.md)**, not on the MCP
-  tool functions: those return captured text, and a web page needs the rating, the status and the
+  tool functions: those return finished text, and a web page needs the rating, the status and the
   list of written files as data. It must not copy the output-capture code in
   `interfaces/mcp/server.py` or read printed text. So 0028 is decided and built first, and this
   command is started after it.
@@ -260,8 +261,8 @@ home page that links to these two.
 
 In this order:
 
-1. **ADR 0028**: move it from a problem statement to a decision and build it. Nothing below the
-   web command starts before this.
+1. **ADR 0028**: done. The commands return structured results; the web UI calls `run()` and
+   renders the result (the console renderer in `jobomatic.results` is the model for a page).
 2. **Restyle the Pluralsight import page** to the shared tokens, the inline gauge icon and the
    tests in section 4. It is blue today and has no mark, so it contradicts this record until it
    is changed. The change is cosmetic: layout, parsing and the import file are untouched.

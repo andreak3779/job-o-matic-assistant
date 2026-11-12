@@ -47,8 +47,9 @@ The import rules are enforced on every commit and in CI (see [Rules that are che
 ```mermaid
 graph TD
   IF["interfaces\ncli · mcp"]
-  CMD["commands\nthe document generators"]
+  CMD["commands\nthe commands: documents, applications,\nprofile, search, learning"]
   GATE["gate\nwhen documents may be made"]
+  RES["results\nwhat a command returns"]
   PRES["presence\nLinkedIn · GitHub · Jobgether\nIndeed/Zip · Pluralsight"]
   BOOT["bootstrap\nwires the real adapters"]
   CORP["corpus\nevidence for the index"]
@@ -61,8 +62,9 @@ graph TD
   RET["retrieval\nevidence search"]
   BASE["paths · provenance · yamlio"]
 
-  IF --> CMD & GATE & PRES
-  CMD --> BOOT
+  IF --> CMD & PRES
+  CMD --> GATE & BOOT
+  CMD & PRES & GATE & IF --> RES
   PRES --> BOOT
   BOOT --> CORP --> APP & PRIV
   GATE --> APP & FIT
@@ -77,9 +79,10 @@ graph TD
 | Module | Job | Notes |
 | --- | --- | --- |
 | `interfaces.cli` | The `jobo` command line | One file per command group, `main.py` dispatches |
-| `interfaces.mcp` | The MCP server for Claude Desktop | One tool per command; each builds the same arguments the CLI takes, so both hit the same code ([ADR 0002](adr/0002-mcp-thin-adapter-over-cli.md), [0020](adr/0020-mcp-server-for-claude-desktop.md)) |
-| `commands` | One generator per document: resume, cover letter, cold outreach, job-site letter, thank-you, interview prep, gap analysis, fit check | Each is independent and shares only `commands.support` |
-| `gate` | Decides whether documents may be generated: location, fit rating, duplicate, pay | Used by both interfaces, so a rule holds whoever asks |
+| `interfaces.mcp` | The MCP server for Claude Desktop | One tool per command; each calls the command's `run()` and returns its text and the files it wrote, so both interfaces hit the same code and neither uses the other ([ADR 0002](adr/0002-mcp-thin-adapter-over-cli.md), [0020](adr/0020-mcp-server-for-claude-desktop.md), [0028](adr/0028-structured-command-results-for-cli-and-mcp.md)) |
+| `commands` | One command each for the documents (resume, cover letter, cold outreach, job-site letter, thank-you, interview prep), gap analysis, fit check, the applications log, constraints, the profile, evidence search, learning import and learning plans | Each has a `run()` that returns a `CommandResult` and a thin `main()`; each is independent and shares only `commands.support` |
+| `results` | What a command returns: a status, a typed payload, messages and the files written; the single boundary that turns a failure a user can cause into a result; the text a result prints as | Used by the commands, the gate, the presence generators and both interfaces |
+| `gate` | Decides whether documents may be generated: location, fit rating, duplicate, pay | Run inside the commands, before anything is written, so a rule holds whoever asks |
 | `presence` | The five profile-text generators | Read only the public view of the profile |
 | `bootstrap` | Builds the real adapters (YAML store, learning store, index) and hands them to callers | The only place that knows which adapter goes with which port |
 | `corpus` | Turns the profile and learning history into evidence chunks for the index | |

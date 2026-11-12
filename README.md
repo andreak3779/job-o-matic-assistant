@@ -66,7 +66,7 @@ flowchart TB
     CORE <--> VAULT
 ```
 
-Two ways in: a terminal runs `jobo` (`jobomatic.interfaces.cli.main`); an MCP client like Claude Desktop calls `jobomatic.interfaces.mcp.server`, a thin adapter that builds the same arguments the CLI takes, so both reach identical code. See [src/jobomatic/interfaces/mcp/README.md](src/jobomatic/interfaces/mcp/README.md) and [docs/architecture.md](docs/architecture.md) for the module map and the import rules that CI enforces.
+Two ways in: a terminal runs `jobo` (`jobomatic.interfaces.cli.main`); an MCP client like Claude Desktop calls `jobomatic.interfaces.mcp.server`. Both are thin adapters over the same commands in `jobomatic.commands`, which return a structured result that each one prints or returns, so they reach identical code and cannot say different things. See [src/jobomatic/interfaces/mcp/README.md](src/jobomatic/interfaces/mcp/README.md) and [docs/architecture.md](docs/architecture.md) for the module map and the import rules that CI enforces.
 
 **Profile model:** the candidate's facts live in the private vault as typed YAML (`profile/*.yaml`), validated on every load (`jobo profile validate`). Generators read the typed profile; the LinkedIn/GitHub/job-board generators read only its public view. See [ADR 0014](docs/adr/0014-typed-profile-store-and-rag-index-replace-bundles.md) and [ADR 0018](docs/adr/0018-visibility-declared-in-the-model.md).
 
