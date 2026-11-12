@@ -14,6 +14,11 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
+    # The versions CI tests (ADR 0033); tests/test_python_support.py keeps these and ci.yml in step.
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 authors = [
     {name = "job-o-matic contributors"}
@@ -114,8 +119,8 @@ select = ["E", "F", "W", "I", "UP", "B"]
 # - E501: line-length handled by formatter, not linter.
 # - B008: function-call defaults in test fixtures are intentional.
 # - B023: loop variables in test fixtures are intentional closures.
-# - UP042: codebase keeps the (str, Enum) pattern for 3.10 compat in tests;
-#   migrate to StrEnum (3.11+) in a separate sweep.
+# - UP042: the codebase keeps the (str, Enum) pattern; migrating to StrEnum (3.11+) is a
+#   separate sweep.
 ignore = ["E501", "E402", "B008", "B023", "UP042"]
 
 [tool.mypy]
