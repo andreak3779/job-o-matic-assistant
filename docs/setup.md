@@ -333,9 +333,12 @@ bash scripts/setup.sh --hooks          # or, later: bash scripts/install-hooks.s
 .venv/bin/python -m pytest -q          # about a minute; uses a throwaway copy of the demo vault
 ```
 
-The hook runs on every commit: it blocks generated or private files, scans for your private values,
-and runs ruff, the import contracts, mypy and the tests. It works without a vault (it skips the two
-checks that need one). `git commit --no-verify` skips it; use that only on purpose. Pinned versions
+Two hooks are turned on. The commit hook (about 6 seconds) blocks generated or private files, scans
+for your private values, and runs ruff, the import contracts and mypy. The push hook (about as long
+as the tests) audits the commits you are pushing for personal identifiers and then runs the tests.
+Both work without a vault (they skip the checks that need one). `git commit --no-verify` and
+`git push --no-verify` skip them; use that only on purpose, and know that skipping the push hook
+skips the only check on what becomes public. Pinned versions
 are in `requirements-lock.txt`; the header of that file says how to regenerate it.
 
 ---

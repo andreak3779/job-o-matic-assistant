@@ -23,7 +23,7 @@ usage() {
 Usage: bash scripts/setup.sh [options]
 
   --no-dev           skip the test and lint tools (a smaller install)
-  --hooks            turn on the git commit hook (only for people changing the code)
+  --hooks            turn on the git hooks, commit and push (only for people changing the code)
   --recreate         delete .venv and build it again (use after upgrading Python)
   --python PATH      use this Python, which must be 3.11 or newer (for example python3.12)
   --vault-url URL    clone your private vault next to this folder (a second laptop)
@@ -262,12 +262,12 @@ else
     stop "jobo generate-resume should have been refused (exit 2) but returned $rc."
 fi
 
-# ── Optional: the commit hook ────────────────────────────────────────────────
+# ── Optional: the git hooks ──────────────────────────────────────────────────
 if [ "$DO_HOOKS" = 1 ]; then
-    step "Turning on the git commit hook"
+    step "Turning on the git hooks"
     if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         if bash "$ROOT/scripts/install-hooks.sh" >"$LOG" 2>&1; then
-            ok "hook on. It checks every commit, and takes about a minute."
+            ok "hooks on: a quick check on every commit (about 6 seconds), the tests and a leak audit on every push."
         else
             tail -n 4 "$LOG" | while IFS= read -r text; do line "$text"; done
             warn "Could not turn the hook on."

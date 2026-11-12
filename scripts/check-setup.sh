@@ -235,9 +235,9 @@ fi
 # ── For people changing the code ─────────────────────────────────────────────
 heading "Only if you change the code"
 if [ "$(git -C "$ROOT" config core.hooksPath 2>/dev/null)" = "scripts/hooks" ]; then
-    info "the commit hook is on (it checks every commit and takes about a minute)"
+    info "the git hooks are on (a quick check on every commit, the tests and a leak audit on every push)"
 else
-    info "the commit hook is off. Turn it on with:  bash scripts/install-hooks.sh"
+    info "the git hooks are off. Turn them on with:  bash scripts/install-hooks.sh"
 fi
 
 # ── Result ───────────────────────────────────────────────────────────────────

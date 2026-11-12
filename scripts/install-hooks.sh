@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup: points git at this repo's tracked hooks directory.
+# One-time setup: points git at this repo's tracked hooks directory (pre-commit and pre-push, ADR 0032).
 #
 # Hooks under .git/hooks/ are not version controlled, so a copied hook silently
 # goes stale. Pointing core.hooksPath at scripts/hooks means the tracked hook IS
