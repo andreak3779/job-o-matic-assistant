@@ -38,7 +38,7 @@ status below says so.
 | [0022](0022-umbrella-skills-scored-by-their-parts.md) | Umbrella skills such as AI are scored by evidence in their parts | Accepted |
 | [0023](0023-soft-skills-are-a-separate-unscored-block.md) | Soft skills are a separate block that is listed but not scored | Accepted |
 | [0024](0024-resume-page-budget.md) | The deterministic resume is trimmed to a page budget, and real pages are measured on request | Accepted |
-| [0025](0025-simple-web-ui.md) | Simple web UI: standalone pages plus a local, loopback-only web UI for the MCP tools, all in the job-o-matic look | Proposed (the Pluralsight import page exists; the brand pass and the local UI are not built; [0028](0028-structured-command-results-for-cli-and-mcp.md) is built, so the UI can start) |
+| [0025](0025-simple-web-ui.md) | Simple web UI: standalone pages plus a local, loopback-only web UI for the MCP tools, all in the job-o-matic look | Accepted (being built; the page and the local UI follow the order in its follow-ups) |
 | [0026](0026-guided-setup-and-pre-1-0-status.md) | Setup is one guided path with scripts, and the project says it is pre-1.0 | Accepted |
 | [0027](0027-relative-paths-resolve-against-the-current-folder.md) | Relative paths resolve against the current folder, and the error says where it looked | Accepted |
 | [0028](0028-structured-command-results-for-cli-and-mcp.md) | Commands return structured results that the CLI and the MCP server render, instead of the MCP server reading printed output | Accepted |
