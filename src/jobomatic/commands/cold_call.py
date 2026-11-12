@@ -14,10 +14,11 @@ from docx.shared import Pt
 
 from jobomatic import bootstrap, paths
 from jobomatic.commands.support import (
-    check_gate,
-    load_profile_or_none,
+    DocumentData,
+    gate_location,
+    produce_document,
     require_path,
-    run_and_report,
+    say,
 )
 from jobomatic.documents.adapters.docx_layout import (
     BODY_SIZE,
@@ -32,26 +33,31 @@ from jobomatic.documents.adapters.docx_layout import (
 from jobomatic.fit.engine import FitResult, rate_parsed_jd
 from jobomatic.fit.parser import looks_unknown, parse_jd
 from jobomatic.provenance import write_sidecar
+from jobomatic.results import CommandResult, Message, emit
 
 
 def _read_target_description(jd_path: Path | None) -> tuple[str, str]:
-    """Return (company, description) from a target file if one is supplied.
-
-    ``jd_path`` is optional — cold outreach is usually conversational, with no
-    JD in hand (see ``--recruiter-name``/``--role-type`` on ``main()``). If
-    ``jd_path`` points at a markdown file with a real company/title, parse it
-    like a JD to get those fields. Otherwise the description is empty (or the
-    raw file text, if one was given) and the company defaults to
-    ``"Your Company"``.
-    """
+    """Return (company, description) from a target file if one is supplied (see ``_describe``)."""
     if jd_path is None:
+        return _describe(None, None)
+    return _describe(jd_path.read_text(encoding="utf-8"), jd_path)
+
+
+def _describe(text: str | None, source: Path | None) -> tuple[str, str]:
+    """Return (company, description) from a target posting if one is supplied.
+
+    The posting is optional: cold outreach is usually conversational, with no JD in hand (see
+    ``--recruiter-name``/``--role-type`` on ``main()``). If it is markdown (a ``.md`` file, or text
+    that was pasted in, which has no file name) with a real company and title, parse it like a JD
+    to get those fields. Otherwise the description is empty (or the raw text, if one was given) and
+    the company defaults to ``"Your Company"``.
+    """
+    if text is None:
         return "Your Company", ""
-    text = jd_path.read_text(encoding="utf-8")
-    if jd_path.suffix.lower() in (".md", ".markdown"):
+    if source is None or source.suffix.lower() in (".md", ".markdown"):
         parsed = parse_jd(text)
-        # If parse_jd found a real company AND a real title, treat the file as
-        # a proper JD. A blank ``**Company:**`` line parses to "" which we
-        # treat the same as "Unknown Company".
+        # If parse_jd found a real company AND a real title, treat it as a proper JD. A blank
+        # ``**Company:**`` line parses to "" which we treat the same as "Unknown Company".
         if not looks_unknown(parsed.company) and not looks_unknown(parsed.title):
             return parsed.company, text
     return "Your Company", text
@@ -162,18 +168,45 @@ def generate_cold_call_letter(
     recruiter_name: str | None = None,
     role_type: str | None = None,
     out_path: Path | None = None,
+    notes: list[Message] | None = None,
+) -> tuple[Path, Path, FitResult]:
+    """Build and write a cold-call cover-letter DOCX plus provenance sidecar, from a target file.
+
+    ``jd_path`` is optional; see ``generate_cold_call_letter_from_text``.
+    """
+    return generate_cold_call_letter_from_text(
+        jd_path.read_text(encoding="utf-8") if jd_path is not None else None,
+        source=jd_path,
+        profile=profile,
+        company=company,
+        recruiter_name=recruiter_name,
+        role_type=role_type,
+        out_path=out_path,
+        notes=notes,
+    )
+
+
+def generate_cold_call_letter_from_text(
+    jd_text: str | None = None,
+    *,
+    source: Path | None = None,
+    profile: Any | None = None,
+    company: str | None = None,
+    recruiter_name: str | None = None,
+    role_type: str | None = None,
+    out_path: Path | None = None,
+    notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a cold-call cover-letter DOCX plus provenance sidecar.
 
-    ``jd_path`` is optional — cold outreach is normally conversational, with
-    no JD in hand. If a file is given and contains a company description, we
-    use it; otherwise (the common case) supply ``recruiter_name``/
-    ``role_type`` directly instead of synthesizing a throwaway JD file just to
-    invoke this function.
+    The posting is optional — cold outreach is normally conversational, with no JD in hand. If one
+    is given and contains a company description, we use it; otherwise (the common case) supply
+    ``recruiter_name``/``role_type`` directly instead of synthesizing a throwaway JD just to invoke
+    this function. ``source`` is where it came from, recorded in the sidecar (``None`` if pasted).
     """
     profile = profile or bootstrap.load_profile()
 
-    target_company, description = _read_target_description(jd_path)
+    target_company, description = _describe(jd_text, source)
     company = company or target_company
 
     # Compute a fit rating against the description so the sidecar is meaningful.
@@ -181,7 +214,7 @@ def generate_cold_call_letter(
     parsed = parse_jd(description)
     if parsed.required:
         result = rate_parsed_jd(parsed, profile)
-        sidecar_inputs = [str(jd_path)]
+        sidecar_inputs = [str(source)] if source else []
     else:
         # No parseable JD skills — don't rate the candidate against themselves.
         result = _empty_fit_result()
@@ -225,10 +258,11 @@ def generate_cold_call_letter(
     doc.save(str(out_path))
 
     if evidence["low_confidence"]:
-        print(
-            "WARNING: cold-call letter has no differentiators or portfolio projects; "
+        say(
+            notes,
+            "warning",
+            "cold-call letter has no differentiators or portfolio projects; "
             "draft is generic — manually review before sending.",
-            file=sys.stderr,
         )
 
     sidecar = write_sidecar(
@@ -243,6 +277,31 @@ def generate_cold_call_letter(
         else [],
     )
     return out_path, sidecar, result
+
+
+def run(
+    jd_text: str | None = None,
+    *,
+    source: Path | None = None,
+    company: str | None = None,
+    recruiter_name: str | None = None,
+    role_type: str | None = None,
+    out: Path | None = None,
+) -> CommandResult[DocumentData]:
+    """Write the cold-call letter. Given a posting, a location Pass refuses it (skill fit does
+    not: this letter is not an application)."""
+    return produce_document(
+        gate_without_profile=(lambda notes: gate_location(jd_text, notes)) if jd_text else None,
+        make=lambda profile, notes: generate_cold_call_letter_from_text(
+            jd_text,
+            source=source,
+            company=company,
+            recruiter_name=recruiter_name,
+            role_type=role_type,
+            out_path=out,
+            notes=notes,
+        ),
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -274,22 +333,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
 
-    refused = check_gate("location", args.jd, None, args)
-    if refused is not None:
-        return refused
-
-    profile = load_profile_or_none()
-    if profile is None:
-        return 1
-
-    return run_and_report(
-        generate_cold_call_letter,
-        args.jd,
-        profile=profile,
-        company=args.company,
-        recruiter_name=args.recruiter_name,
-        role_type=args.role_type,
-        out_path=args.out,
+    return emit(
+        run(
+            args.jd.read_text(encoding="utf-8") if args.jd is not None else None,
+            source=args.jd,
+            company=args.company,
+            recruiter_name=args.recruiter_name,
+            role_type=args.role_type,
+            out=args.out,
+        )
     )
 
 

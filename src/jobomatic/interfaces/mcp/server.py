@@ -40,13 +40,17 @@ from mcp.types import (
 from jobomatic import applications as applications_log
 from jobomatic import paths, results
 from jobomatic.commands import applications as applications_commands
+from jobomatic.commands import cold_call as cold_call_command
 from jobomatic.commands import constraints as constraints_command
 from jobomatic.commands import cover_letter as cover_letter_command
 from jobomatic.commands import fit_check as fit_check_command
 from jobomatic.commands import gap_analysis as gap_analysis_command
+from jobomatic.commands import interview_prep as interview_prep_command
+from jobomatic.commands import job_site_letter as job_site_command
 from jobomatic.commands import profile as profile_commands
 from jobomatic.commands import resume as resume_command
 from jobomatic.commands import search as search_command
+from jobomatic.commands import thank_you as thank_you_command
 from jobomatic.commands.support import Confirmations, vault_write_lock
 from jobomatic.interfaces.cli.main import main as cli_main
 from jobomatic.interfaces.mcp import access, skill_prompts
@@ -303,30 +307,6 @@ def _looks_like_path(jd: str) -> bool:
     return "\n" not in jd and " " not in jd and len(jd) < 400
 
 
-@contextlib.contextmanager
-def _jd_path(jd: str):
-    """Yield a filesystem path for ``jd``. A path-shaped string must resolve
-    to a real file (raising a clear error otherwise, e.g. a typo'd path) —
-    everything else is treated as raw job-description text and written to a
-    temp file for the duration of the call (every CLI command this
-    dispatches to expects a path, not inline text), cleaned up on exit."""
-    if _looks_like_path(jd):
-        jd = _checked_path(jd, write=False, label="job description path")
-        if not Path(jd).is_file():
-            raise ToolError(f"job description file not found: {jd}")
-        yield jd
-        return
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".md", prefix="jd-", delete=False, encoding="utf-8"
-    ) as handle:
-        handle.write(jd)
-        tmp_path = handle.name
-    try:
-        yield tmp_path
-    finally:
-        Path(tmp_path).unlink(missing_ok=True)
-
-
 class _Posting(NamedTuple):
     text: str
     source: Path | None  # the file it was read from, or None when it was pasted in
@@ -423,6 +403,21 @@ def generate_pluralsight(out: str | None = None) -> list[ContentBlock]:
     return _tool_blocks(pluralsight.run(_checked_out(out)), embed_text_as_resource=True)
 
 
+def _supplied_text(value: str | None, label: str) -> str | None:
+    """The text of an optional input file a tool was given a path to, or None if it was not given.
+
+    The path must be one this server may read, and a file."""
+    if not value:
+        return None
+    path = Path(_checked_path(value, write=False, label=label))
+    if not path.is_file():
+        raise ToolError(f"{label} not found: {path}")
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ToolError(f"could not read {label} {path}: {exc}") from exc
+
+
 def _document_tool(
     command: Callable[..., results.CommandResult[Any]],
     jd: str,
@@ -443,54 +438,6 @@ def _document_tool(
         confirm=Confirmations(confirm_gaps, confirm_reapply, confirm_below_minimum),
     )
     return _tool_blocks(result)
-
-
-def _letter_argv(
-    command: str,
-    jd: str,
-    company: str | None,
-    out: str | None,
-    *,
-    confirm_gaps: bool = False,
-    confirm_reapply: bool = False,
-    confirm_below_minimum: bool = False,
-) -> list[str]:
-    argv = [command, jd]
-    if company:
-        argv.extend(["--company", company])
-    if out:
-        argv.extend(["--out", _checked_path(out, write=True, label="out")])
-    if confirm_gaps:
-        argv.append("--confirm-gaps")
-    if confirm_reapply:
-        argv.append("--confirm-reapply")
-    if confirm_below_minimum:
-        argv.append("--confirm-below-minimum")
-    return argv
-
-
-def _letter_tool(
-    command: str,
-    jd: str,
-    company: str | None,
-    out: str | None,
-    confirm_reapply: bool = False,
-    confirm_gaps: bool = False,
-    confirm_below_minimum: bool = False,
-) -> list[ContentBlock]:
-    """Run a letter command; its gates (``jobomatic.gate``) run inside the command."""
-    with _jd_path(jd) as jd_path:
-        return _run_cli_with_artifacts(
-            _letter_argv(
-                command,
-                jd_path,
-                company,
-                out,
-                confirm_gaps=confirm_gaps,
-                confirm_reapply=confirm_reapply,
-                confirm_below_minimum=confirm_below_minimum,
-            )
-        )
 
 
 @mcp.tool(
@@ -620,24 +567,17 @@ def generate_cold_call(
     "Hiring Team"). role_type: target role type, e.g. "Senior .NET Developer
     roles". out: optional output DOCX path."""
 
-    def _build_and_run(jd_path: str | None) -> list[ContentBlock]:
-        argv = ["generate-cold-call"]
-        if jd_path:
-            argv.append(jd_path)
-        if company:
-            argv.extend(["--company", company])
-        if recruiter_name:
-            argv.extend(["--recruiter-name", recruiter_name])
-        if role_type:
-            argv.extend(["--role-type", role_type])
-        if out:
-            argv.extend(["--out", _checked_path(out, write=True, label="out")])
-        return _run_cli_with_artifacts(argv)
-
-    if jd:
-        with _jd_path(jd) as jd_path:
-            return _build_and_run(jd_path)
-    return _build_and_run(None)
+    posting = _posting(jd) if jd else None
+    return _tool_blocks(
+        cold_call_command.run(
+            posting.text if posting else None,
+            source=posting.source if posting else None,
+            company=company or None,
+            recruiter_name=recruiter_name or None,
+            role_type=role_type or None,
+            out=_checked_out(out),
+        )
+    )
 
 
 @mcp.tool(
@@ -651,7 +591,7 @@ def generate_job_site_letter(
     text itself (e.g. pasted or attached in the chat). company: optional
     filename override. out: optional output path (.txt default, .docx for
     DOCX)."""
-    return _letter_tool("generate-job-site", jd, company, out, confirm_reapply=confirm_reapply)
+    return _document_tool(job_site_command.run, jd, company, out, confirm_reapply=confirm_reapply)
 
 
 @mcp.tool(description="Generate a post-interview thank-you letter DOCX", structured_output=False)
@@ -673,28 +613,19 @@ def generate_thank_you(
     (required — at least one; generation refuses without it). out: optional
     output DOCX path."""
 
-    def _build_and_run(jd_path: str | None) -> list[ContentBlock]:
-        argv = ["generate-thank-you"]
-        if jd_path:
-            argv.append(jd_path)
-        if company:
-            argv.extend(["--company", company])
-        if role:
-            argv.extend(["--role", role])
-        for interviewer in interviewers or []:
-            argv.extend(["--interviewer", interviewer])
-        if date:
-            argv.extend(["--date", date])
-        for point in discussion_points or []:
-            argv.extend(["--discussion-point", point])
-        if out:
-            argv.extend(["--out", _checked_path(out, write=True, label="out")])
-        return _run_cli_with_artifacts(argv)
-
-    if jd:
-        with _jd_path(jd) as jd_path:
-            return _build_and_run(jd_path)
-    return _build_and_run(None)
+    posting = _posting(jd) if jd else None
+    return _tool_blocks(
+        thank_you_command.run(
+            posting.text if posting else None,
+            source=posting.source if posting else None,
+            company=company or None,
+            role=role or None,
+            interviewers=interviewers or None,
+            date=date or None,
+            discussion_points=discussion_points or None,
+            out=_checked_out(out),
+        )
+    )
 
 
 @mcp.tool(description="Generate an interview prep DOCX for a JD", structured_output=False)
@@ -723,44 +654,20 @@ def interview_prep(
     cards. salary_section_path: optional path to a text file of
     salary/negotiation prose; only rendered when stage is final_round,
     otherwise a warning is printed and it's omitted."""
-    with _jd_path(jd) as jd_path:
-        argv = ["interview-prep", jd_path]
-        if stage:
-            argv.extend(["--stage", stage])
-        if out:
-            argv.extend(["--out", _checked_path(out, write=True, label="out")])
-        if update_star_bank:
-            argv.append("--update-star-bank")
-        if company_research_path:
-            argv.extend(
-                [
-                    "--company-research",
-                    _checked_path(
-                        company_research_path, write=False, label="company_research_path"
-                    ),
-                ]
-            )
-        if recruiter_briefing_path:
-            argv.extend(
-                [
-                    "--recruiter-briefing",
-                    _checked_path(
-                        recruiter_briefing_path, write=False, label="recruiter_briefing_path"
-                    ),
-                ]
-            )
-        if qa_cards_path:
-            argv.extend(
-                ["--qa-cards", _checked_path(qa_cards_path, write=False, label="qa_cards_path")]
-            )
-        if salary_section_path:
-            argv.extend(
-                [
-                    "--salary-section",
-                    _checked_path(salary_section_path, write=False, label="salary_section_path"),
-                ]
-            )
-        return _run_cli_with_artifacts(argv)
+    posting = _posting(jd)
+    return _tool_blocks(
+        interview_prep_command.run(
+            posting.text,
+            source=posting.source,
+            out=_checked_out(out),
+            stage=stage or "technical_screen",
+            update_star_bank=update_star_bank,
+            company_research=_supplied_text(company_research_path, "company_research_path"),
+            recruiter_briefing=_supplied_text(recruiter_briefing_path, "recruiter_briefing_path"),
+            qa_cards_json=_supplied_text(qa_cards_path, "qa_cards_path"),
+            salary_section=_supplied_text(salary_section_path, "salary_section_path"),
+        )
+    )
 
 
 @mcp.tool(description="Check whether a job description was already applied to (duplicate check)")

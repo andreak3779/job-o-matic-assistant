@@ -14,9 +14,11 @@ from docx.shared import Pt
 from jobomatic import bootstrap
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
-    load_profile_or_none,
+    DocumentData,
+    note_logged,
+    produce_document,
     require_path,
-    run_and_report,
+    say,
     story_mentions,
 )
 from jobomatic.documents.adapters.docx_layout import (
@@ -29,6 +31,7 @@ from jobomatic.documents.adapters.docx_layout import (
 from jobomatic.fit.engine import FitResult, rate_parsed_jd
 from jobomatic.fit.parser import looks_unknown, parse_jd
 from jobomatic.provenance import write_sidecar
+from jobomatic.results import CommandResult, Message, emit
 
 
 def _legacy_employer_names(profile: Any) -> set[str]:
@@ -131,6 +134,36 @@ def generate_thank_you_letter(
     interview_date: str | None = None,
     discussion_points: list[str] | None = None,
     out_path: Path | None = None,
+    notes: list[Message] | None = None,
+) -> tuple[Path, Path, FitResult]:
+    """Build and write a thank-you letter DOCX plus provenance sidecar, from an optional posting
+    file. See ``generate_thank_you_letter_from_text``."""
+    return generate_thank_you_letter_from_text(
+        jd_path.read_text(encoding="utf-8") if jd_path is not None else None,
+        source=jd_path,
+        profile=profile,
+        company=company,
+        role=role,
+        interviewer_names=interviewer_names,
+        interview_date=interview_date,
+        discussion_points=discussion_points,
+        out_path=out_path,
+        notes=notes,
+    )
+
+
+def generate_thank_you_letter_from_text(
+    jd_text: str | None = None,
+    *,
+    source: Path | None = None,
+    profile: Any | None = None,
+    company: str | None = None,
+    role: str | None = None,
+    interviewer_names: list[str] | None = None,
+    interview_date: str | None = None,
+    discussion_points: list[str] | None = None,
+    out_path: Path | None = None,
+    notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a thank-you letter DOCX plus provenance sidecar.
 
@@ -141,9 +174,9 @@ def generate_thank_you_letter(
     absent, there's no honest generic substitute for "what did you actually
     discuss," so this fails closed instead.
 
-    ``jd_path`` is optional and, when given, only supplies company/role/
-    skills-fit context as a convenience — it never substitutes for real
-    discussion points.
+    The posting is optional and, when given, only supplies company/role/skills-fit context as a
+    convenience — it never substitutes for real discussion points. ``source`` is where it came
+    from, recorded in the sidecar (``None`` if pasted).
     """
     if not discussion_points:
         raise ValueError(
@@ -153,7 +186,7 @@ def generate_thank_you_letter(
         )
 
     profile = profile or bootstrap.load_profile()
-    jd_text = jd_path.read_text(encoding="utf-8") if jd_path is not None else ""
+    jd_text = jd_text or ""
     parsed = parse_jd(jd_text)
     if parsed.required:
         result = rate_parsed_jd(parsed, profile)
@@ -178,7 +211,7 @@ def generate_thank_you_letter(
     if out_path is None:
         out_path = located.folder / "thank-you.docx"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    outputs.report(located)
+    note_logged(notes, located)
 
     letter = _build_letter(
         company, role, interviewer_names, interview_date, discussion_points, result, profile, parsed
@@ -215,31 +248,61 @@ def generate_thank_you_letter(
 
     low_confidence = not result.grounded_required
     if low_confidence:
-        print(
-            "WARNING: thank-you letter has no grounded required-skill evidence; "
+        say(
+            notes,
+            "warning",
+            "thank-you letter has no grounded required-skill evidence; "
             "the reinforcing clause is omitted — the letter still rests on the real "
             "discussion points supplied, but manually review before sending.",
-            file=sys.stderr,
         )
     legacy_required = [m.skill for m in result.required if m.status == "legacy"]
     if legacy_required:
-        print(
+        say(
+            notes,
+            "log",
             f"NOTE: {', '.join(legacy_required)} only evidenced by legacy experience — "
             "deliberately left out of the letter. Add it by hand only if you've decided "
             "to surface that experience for this application.",
-            file=sys.stderr,
         )
 
     sidecar = write_sidecar(
         out_path,
         script="generate_thank_you_letter.py",
         profile=profile,
-        inputs=[str(jd_path)] if jd_path is not None else [],
+        inputs=[str(source)] if source else [],
         fit_rating=result.rating,
         evidence_sources=result.evidence_sources(),
         warnings=["low evidence — manually review before sending"] if low_confidence else [],
     )
     return out_path, sidecar, result
+
+
+def run(
+    jd_text: str | None = None,
+    *,
+    source: Path | None = None,
+    company: str | None = None,
+    role: str | None = None,
+    interviewers: list[str] | None = None,
+    date: str | None = None,
+    discussion_points: list[str] | None = None,
+    out: Path | None = None,
+) -> CommandResult[DocumentData]:
+    """Write the post-interview thank-you letter. It fails without at least one real discussion
+    point: there is no honest generic stand-in for what was said in the interview."""
+    return produce_document(
+        make=lambda profile, notes: generate_thank_you_letter_from_text(
+            jd_text,
+            source=source,
+            company=company,
+            role=role,
+            interviewer_names=interviewers,
+            interview_date=date,
+            discussion_points=discussion_points,
+            out_path=out,
+            notes=notes,
+        ),
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -281,20 +344,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
 
-    profile = load_profile_or_none()
-    if profile is None:
-        return 1
-
-    return run_and_report(
-        generate_thank_you_letter,
-        args.jd,
-        profile=profile,
-        company=args.company,
-        role=args.role,
-        interviewer_names=args.interviewers,
-        interview_date=args.date,
-        discussion_points=args.discussion_points,
-        out_path=args.out,
+    return emit(
+        run(
+            args.jd.read_text(encoding="utf-8") if args.jd is not None else None,
+            source=args.jd,
+            company=args.company,
+            role=args.role,
+            interviewers=args.interviewers,
+            date=args.date,
+            discussion_points=args.discussion_points,
+            out=args.out,
+        )
     )
 
 

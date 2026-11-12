@@ -19,11 +19,13 @@ from docx.shared import Pt
 from jobomatic import bootstrap
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
+    Confirmations,
+    DocumentData,
     add_confirmation_flags,
-    check_gate,
-    load_profile_or_none,
+    gate_letter,
+    note_logged,
+    produce_document,
     require_path,
-    run_and_report,
 )
 from jobomatic.documents.adapters.docx_layout import (
     BODY_SIZE,
@@ -35,6 +37,7 @@ from jobomatic.documents.adapters.docx_layout import (
 from jobomatic.fit.engine import FitResult, humanize_evidence, rate_parsed_jd
 from jobomatic.fit.parser import parse_jd
 from jobomatic.provenance import write_sidecar
+from jobomatic.results import CommandResult, Message, emit
 
 
 def _build_plain_text(
@@ -101,7 +104,7 @@ def _build_docx(
     profile: Any,
     result: FitResult,
     out_path: Path,
-    jd_path: Path,
+    source: Path | None,
 ) -> tuple[Path, Path, FitResult]:
     """Build a DOCX when the caller explicitly requests ``.docx``.
 
@@ -130,7 +133,7 @@ def _build_docx(
         out_path,
         script="generate_job_site_letter.py",
         profile=profile,
-        inputs=[str(jd_path)],
+        inputs=[str(source)] if source else [],
         fit_rating=result.rating,
     )
     return out_path, sidecar, result
@@ -142,10 +145,33 @@ def generate_job_site_letter(
     profile: Any | None = None,
     company: str | None = None,
     out_path: Path | None = None,
+    notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
-    """Build and write a short job-site cover letter plus provenance sidecar."""
+    """Build and write a short job-site cover letter plus provenance sidecar, from a posting file."""
+    return generate_job_site_letter_from_text(
+        jd_path.read_text(encoding="utf-8"),
+        source=jd_path,
+        profile=profile,
+        company=company,
+        out_path=out_path,
+        notes=notes,
+    )
+
+
+def generate_job_site_letter_from_text(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    profile: Any | None = None,
+    company: str | None = None,
+    out_path: Path | None = None,
+    notes: list[Message] | None = None,
+) -> tuple[Path, Path, FitResult]:
+    """Build and write a short job-site cover letter plus provenance sidecar.
+
+    ``source`` is where the posting came from, recorded in the sidecar (``None`` for pasted text).
+    """
     profile = profile or bootstrap.load_profile()
-    jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
     located = outputs.locate_application(
@@ -160,12 +186,12 @@ def generate_job_site_letter(
     if out_path is None:
         out_path = located.folder / "job-site-letter.txt"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    outputs.report(located)
+    note_logged(notes, located)
 
     plain_text = _build_plain_text(company, parsed.title, result, profile)
 
     if out_path.suffix.lower() == ".docx":
-        return _build_docx(company, parsed.title, plain_text, profile, result, out_path, jd_path)
+        return _build_docx(company, parsed.title, plain_text, profile, result, out_path, source)
 
     out_path.write_text(plain_text, encoding="utf-8")
 
@@ -173,10 +199,27 @@ def generate_job_site_letter(
         out_path,
         script="generate_job_site_letter.py",
         profile=profile,
-        inputs=[str(jd_path)],
+        inputs=[str(source)] if source else [],
         fit_rating=result.rating,
     )
     return out_path, sidecar, result
+
+
+def run(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    company: str | None = None,
+    out: Path | None = None,
+    confirm: Confirmations = Confirmations(),
+) -> CommandResult[DocumentData]:
+    """Gate the posting (location, duplicate) and then write the job-site letter."""
+    return produce_document(
+        gate_without_profile=lambda notes: gate_letter(jd_text, confirm, notes),
+        make=lambda profile, notes: generate_job_site_letter_from_text(
+            jd_text, source=source, company=company, out_path=out, notes=notes
+        ),
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -196,20 +239,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    refused = check_gate("letter", args.jd, None, args)
-    if refused is not None:
-        return refused
-
-    profile = load_profile_or_none()
-    if profile is None:
-        return 1
-
-    return run_and_report(
-        generate_job_site_letter,
-        args.jd,
-        profile=profile,
-        company=args.company,
-        out_path=args.out,
+    return emit(
+        run(
+            args.jd.read_text(encoding="utf-8"),
+            source=args.jd,
+            company=args.company,
+            out=args.out,
+            confirm=Confirmations.from_args(args),
+        )
     )
 
 
