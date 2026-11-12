@@ -1,6 +1,8 @@
 # 0020 — The MCP server for Claude Desktop: a written access policy, evidence without private prose, skills as prompts
 
-**Status:** Accepted
+**Status:** Accepted. Amended by [0031](0031-one-canonical-skills-location.md): the skills are read from
+`skills/`, not from `.claude/skills`, which now exists only for Claude Code. The text below is the
+decision as it was made.
 
 ## Context
 
