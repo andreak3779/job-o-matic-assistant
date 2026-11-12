@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
-"""The job-o-matic MCP server: the claude-jobs CLI as MCP tools, plus prompts, for Claude Desktop.
+"""The job-o-matic MCP server: the job-o-matic commands as MCP tools, plus prompts, for Claude Desktop.
 
-Each tool is a thin adapter: it builds the same argv list the CLI itself would build, calls
-``jobomatic.interfaces.cli.main.main(argv)`` with stdout/stderr captured, and returns the captured text plus
-(for document-producing tools) the generated artifact's content, read back off disk. No
-generation logic and no gate logic lives here: the rules for when documents may be generated
-(fit rating, location, duplicate application, pay) are in ``jobomatic.gate``, which the CLI runs
-before it writes anything, so they hold for every caller. The tools only pass the user's
-confirmations (``confirm_gaps``, ``confirm_reapply``, ``confirm_below_minimum``) through.
+Each tool is a thin adapter. It checks the paths it was given against the access policy
+(``jobomatic.interfaces.mcp.access``), calls the command's ``run()`` from ``jobomatic.commands``
+(or the presence generators) with plain values, and returns the text of the result and the content
+of the files it lists as written (ADR 0028). No generation logic and no gate logic lives here: the
+rules for when documents may be generated (fit rating, location, duplicate application, pay) are
+in ``jobomatic.gate``, which the commands run before they write anything, so they hold for every
+caller. The tools only pass the user's confirmations (``confirm_gaps``, ``confirm_reapply``,
+``confirm_below_minimum``) through. Nothing here reads printed text, and nothing may print to
+stdout, which is the protocol channel.
 """
 
 from __future__ import annotations
 
 import base64
 import contextlib
-import io
 import json
 import os
-import re
 import tempfile
-import threading
 from collections.abc import Callable, Iterable
 from datetime import date
 from importlib import resources
@@ -53,8 +52,7 @@ from jobomatic.commands import profile as profile_commands
 from jobomatic.commands import resume as resume_command
 from jobomatic.commands import search as search_command
 from jobomatic.commands import thank_you as thank_you_command
-from jobomatic.commands.support import Confirmations, vault_write_lock
-from jobomatic.interfaces.cli.main import main as cli_main
+from jobomatic.commands.support import Confirmations
 from jobomatic.interfaces.mcp import access, skill_prompts
 from jobomatic.presence import github, job_board, jobgether, linkedin, pluralsight
 
@@ -85,15 +83,6 @@ def server_icons() -> list[Icon]:
 
 
 mcp = MCPServer("job-o-matic", title="Job-O-Matic Assistant", icons=server_icons())
-
-# contextlib.redirect_stdout/stderr mutate process-global sys.stdout/sys.stderr
-# for the duration of the `with` block — not thread-safe. The mcp SDK dispatches
-# each tool call as its own task and runs sync tool functions (all of ours) via
-# anyio.to_thread.run_sync, so two tool calls issued without waiting on each
-# other genuinely execute on different threads. Without this lock, concurrent
-# calls can corrupt each other's captured output. These are one-shot document
-# generation calls, not a hot path, so serializing them costs nothing that matters.
-_CLI_LOCK = threading.Lock()
 
 # Every path an MCP client hands us is untrusted: a prompt-injected job posting can
 # steer a tool call at any file the server process can reach. The rules live in
@@ -166,28 +155,6 @@ def _checked_path(value: str, *, write: bool, label: str) -> str:
     return str(resolved)
 
 
-def _run_cli(argv: list[str]) -> str:
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-    with _CLI_LOCK, vault_write_lock():
-        try:
-            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-                exit_code = cli_main(argv)
-        except SystemExit as exc:
-            # argparse calls sys.exit() on bad arguments (e.g. --help, missing
-            # required positional) instead of returning a code.
-            exit_code = exc.code if isinstance(exc.code, int) else 1
-
-    output = stdout.getvalue()
-    errors = stderr.getvalue()
-    combined = output + (f"\n{errors}" if errors else "")
-
-    if exit_code != 0:
-        raise ToolError(combined.strip() or f"'{' '.join(argv)}' failed (exit {exit_code})")
-    return combined.strip()
-
-
-_WROTE_RE = re.compile(r"^Wrote (.+)$", re.MULTILINE)
 _TEXT_SUFFIXES = {".md", ".txt", ".json"}
 _TEXT_MIME_TYPES = {
     ".md": "text/markdown",
@@ -200,37 +167,22 @@ _MIME_TYPES = {
 }
 
 
-def _artifact_content_blocks(
-    stdout_text: str, embed_text_as_resource: bool = False
-) -> list[ContentBlock]:
-    """Read back every artifact a CLI command just wrote (per its ``Wrote
-    <path>`` stdout lines — the convention every generator script already
-    follows) and return its content: a base64 ``EmbeddedResource`` for
-    DOCX/PDF, and for markdown/text/JSON either inline text or (when
-    ``embed_text_as_resource`` is set) a text ``EmbeddedResource`` too. This
-    is what actually makes generated documents retrievable through the MCP
-    interface, rather than leaving the client with a local filesystem path
-    it can't read.
-
-    ``embed_text_as_resource`` is for the profile-update tools
-    (generate_linkedin, generate_github): their markdown draft is the whole
-    deliverable, not a status message, so it comes back as an attachment in
-    MCP clients like Claude Desktop the same way DOCX/PDF documents do,
-    instead of dumping the full draft into the chat transcript as plain
-    text. Other markdown-producing tools (e.g. gap_analysis) keep the
-    inline-text behavior, since their content is meant to be read/discussed
-    in the conversation itself.
-    """
-    return _attachment_blocks(
-        (Path(match.group(1).strip()) for match in _WROTE_RE.finditer(stdout_text)),
-        embed_text_as_resource=embed_text_as_resource,
-    )
-
-
 def _attachment_blocks(
     files: Iterable[Path], embed_text_as_resource: bool = False
 ) -> list[ContentBlock]:
-    """The content of each file a command wrote, as blocks (see ``_artifact_content_blocks``)."""
+    """Return the content of each file a command wrote (``CommandResult.written``): a base64
+    ``EmbeddedResource`` for DOCX/PDF, and for markdown/text/JSON either inline text or (when
+    ``embed_text_as_resource`` is set) a text ``EmbeddedResource`` too. This is what makes
+    generated documents retrievable through the MCP interface, rather than leaving the client
+    with a local filesystem path it can't read.
+
+    ``embed_text_as_resource`` is for the profile-update tools (generate_linkedin,
+    generate_github, ...): their markdown draft is the whole deliverable, not a status message,
+    so it comes back as an attachment in MCP clients like Claude Desktop the same way DOCX/PDF
+    documents do, instead of dumping the full draft into the chat transcript as plain text. Other
+    markdown-producing tools (e.g. gap_analysis) keep the inline-text behavior, since their
+    content is meant to be read and discussed in the conversation itself.
+    """
     blocks: list[ContentBlock] = []
     for path in files:
         # Only attach files this server was allowed to write: whatever names a file (a printed
@@ -240,8 +192,7 @@ def _attachment_blocks(
         if access.resolve(path, policy.write_roots, policy.denied) is None:
             continue
         if not path.is_file():
-            # Defensive: e.g. `build`'s "Wrote X (v29)" trailer doesn't
-            # resolve to a real path — skip rather than crash.
+            # Defensive: a listed file that is gone by now is skipped, not a crash.
             continue
         suffix = path.suffix.lower()
         try:
@@ -288,15 +239,6 @@ def _tool_blocks(
     (``result.written``), or a tool error when the command did not succeed."""
     blocks: list[ContentBlock] = [TextContent(type="text", text=_tool_text(result, render))]
     blocks.extend(_attachment_blocks(result.written, embed_text_as_resource=embed_text_as_resource))
-    return blocks
-
-
-def _run_cli_with_artifacts(
-    argv: list[str], embed_text_as_resource: bool = False
-) -> list[ContentBlock]:
-    combined = _run_cli(argv)
-    blocks: list[ContentBlock] = [TextContent(type="text", text=combined)]
-    blocks.extend(_artifact_content_blocks(combined, embed_text_as_resource=embed_text_as_resource))
     return blocks
 
 

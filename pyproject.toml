@@ -426,10 +426,21 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Interfaces: the MCP server may use the command line, never the reverse; the CLI main is the top"
+name = "The MCP server and the command line are independent: neither uses the other (ADR 0028)"
+type = "forbidden"
+source_modules = ["jobomatic.interfaces.mcp"]
+forbidden_modules = ["jobomatic.interfaces.cli"]
+
+[[tool.importlinter.contracts]]
+name = "The command line does not use the MCP server"
+type = "forbidden"
+source_modules = ["jobomatic.interfaces.cli"]
+forbidden_modules = ["jobomatic.interfaces.mcp"]
+
+[[tool.importlinter.contracts]]
+name = "Command line: main is the top, the subcommand modules are independent"
 type = "layers"
 layers = [
-    "jobomatic.interfaces.mcp",
     "jobomatic.interfaces.cli.main",
     "jobomatic.interfaces.cli.applications_cli | jobomatic.interfaces.cli.learning_cli | jobomatic.interfaces.cli.profile_cli | jobomatic.interfaces.cli.render_cli | jobomatic.interfaces.cli.retrieval_cli",
 ]

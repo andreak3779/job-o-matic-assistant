@@ -18,7 +18,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ContentBlock, EmbeddedResource, TextContent
 
 from jobomatic.interfaces.mcp.server import (
-    _artifact_content_blocks,
+    _attachment_blocks,
     fit_check,
     gap_analysis,
     generate_application_documents,
@@ -347,10 +347,8 @@ def test_interview_prep_stage_flag_accepted(tmp_path: Path) -> None:
 
 
 def test_interview_prep_invalid_stage_raises_tool_error(tmp_path: Path) -> None:
-    """An out-of-choices --stage value makes the underlying CLI's argparse
-    call sys.exit(2) — `_run_cli`'s `except SystemExit` branch must convert
-    that into a client-facing ToolError instead of an uncaught SystemExit
-    reaching (and crashing) the long-running MCP server process."""
+    """An unknown stage is an error result from the command, which the tool reports as a
+    client-facing ToolError (there is no ``argparse`` to exit and crash the long-running server)."""
     out_file = tmp_path / "InterviewPrep.docx"
     with pytest.raises(ToolError):
         interview_prep(str(FIXTURE_JD), stage="not-a-real-stage", out=str(out_file))
@@ -418,17 +416,17 @@ def test_generate_learning_plan_returns_pdf_bytes(tmp_path: Path) -> None:
     assert base64.b64decode(resources[0].resource.blob).startswith(b"%PDF")
 
 
-def test_artifact_content_blocks_skips_wrote_line_with_no_real_file(tmp_path: Path) -> None:
+def test_attachment_blocks_skips_a_listed_file_that_is_not_there(tmp_path: Path) -> None:
     """A "Wrote <path>" line whose path doesn't resolve to a real file (e.g.
     a status trailer like `build`'s "Wrote outputs/the profile (v29)"
     that isn't itself a "Wrote <artifact>" convention line) must be skipped,
     not raise."""
     missing = tmp_path / "does-not-exist.docx"
-    blocks = _artifact_content_blocks(f"Wrote {missing}\n")
+    blocks = _attachment_blocks([missing])
     assert _embedded_resources(blocks) == []
 
 
-def test_artifact_content_blocks_handles_unreadable_file_gracefully(
+def test_attachment_blocks_handles_unreadable_file_gracefully(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """An OSError while reading back a just-written artifact (permissions,
@@ -441,7 +439,7 @@ def test_artifact_content_blocks_handles_unreadable_file_gracefully(
         raise OSError("simulated read failure")
 
     monkeypatch.setattr(Path, "read_bytes", _raise_oserror)
-    blocks = _artifact_content_blocks(f"Wrote {doc}\n")
+    blocks = _attachment_blocks([doc])
     assert _embedded_resources(blocks) == []
     assert any("could not attach" in b.text for b in _text_blocks(blocks))
 
@@ -584,7 +582,7 @@ def test_wrote_line_for_a_file_outside_write_roots_is_not_attached(tmp_path: Pat
 
     secret = Path.home() / ".claude-jobs-test-secret.txt"
     # The file does not need to exist: the allow-list check runs first and must reject it.
-    blocks = server._artifact_content_blocks(f"Wrote {secret}")
+    blocks = server._attachment_blocks([secret])
     assert blocks == []
 
 
