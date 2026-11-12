@@ -243,8 +243,6 @@ the vault's `profile/star-bank.md` for every story the script actually selected 
 this is the only way stories get written back now; there's no more manual
 "append this to star-bank.md" step for an existing story. It prints a diff
 of the change to stdout — relay that in your inline delivery summary.
-(`--star-bank-path` overrides the target file; use it only for a test/tmp
-copy, never for a real run.)
 
 **If the JD needs a story type not in the bank:** the script never invents
 S/T/A/R prose — a genuinely new story still needs you to write it. Author

@@ -35,17 +35,17 @@ def require_path(path: Path, label: str = "File") -> Path:
     return path
 
 
-def load_profile_or_none(root: Path | None = None) -> Profile | None:
+def load_profile_or_none() -> Profile | None:
     """Load the profile, printing a clean ERROR and returning ``None`` on failure.
 
     A missing or malformed profile is an ordinary, expected failure (a fresh clone has no vault;
     a hand edit can break a YAML file), not a bug, so every CLI script's ``main()`` handles it
-    the same way: ``profile = load_profile_or_none(root); if profile is None: return 1``.
+    the same way: ``profile = load_profile_or_none(); if profile is None: return 1``.
     """
     from jobomatic import bootstrap
 
     try:
-        return bootstrap.load_profile(root)
+        return bootstrap.load_profile()
     except (ProfileError, VaultError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return None

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from jobomatic import corpus, paths, yamlio
@@ -27,22 +26,19 @@ from jobomatic.retrieval.adapters.sqlite_index import SqliteIndex
 from jobomatic.retrieval.model import Chunk
 
 
-def profile_repository(root: Path | None = None) -> ProfileRepository:
-    """The profile stored in the vault's ``profile/`` folder (see ``jobomatic.paths``).
-
-    ``root`` is for tests that build a profile folder somewhere else; ``None`` means the vault.
-    """
-    return YamlVaultProfile(paths.profile_dir(root))
+def profile_repository() -> ProfileRepository:
+    """The profile stored in the vault's ``profile/`` folder (see ``jobomatic.paths``)."""
+    return YamlVaultProfile(paths.profile_dir())
 
 
-def load_presence_view(root: Path | None = None) -> PresenceView:
+def load_presence_view() -> PresenceView:
     """The public part of the profile, for the LinkedIn/GitHub/job-board generators."""
-    return service.presence_view(load_profile(root))
+    return service.presence_view(load_profile())
 
 
-def load_profile(root: Path | None = None) -> Profile:
+def load_profile() -> Profile:
     """Load and check the whole profile. Raises ``ProfileError`` if it cannot be used."""
-    return service.load_profile(profile_repository(root))
+    return service.load_profile(profile_repository())
 
 
 def learning_store() -> YamlLearningStore:
@@ -107,6 +103,6 @@ def retrieval_embedder(model: str | None = None) -> OllamaEmbedder:
     return OllamaEmbedder(model) if model else OllamaEmbedder()
 
 
-def retrieval_chunks(root: Path | None = None) -> list[Chunk]:
+def retrieval_chunks() -> list[Chunk]:
     """Everything the evidence index should hold, from the profile and the learning history."""
-    return corpus.chunks_for(load_profile(root), learning_store().load())
+    return corpus.chunks_for(load_profile(), learning_store().load())

@@ -13,8 +13,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[3]
-
 from docx import Document
 from docx.shared import Pt
 
@@ -142,10 +140,9 @@ def generate_job_site_letter(
     profile: Any | None = None,
     company: str | None = None,
     out_path: Path | None = None,
-    root: Path = ROOT,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a short job-site cover letter plus provenance sidecar."""
-    profile = profile or bootstrap.load_profile(root)
+    profile = profile or bootstrap.load_profile()
     jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
@@ -155,7 +152,6 @@ def generate_job_site_letter(
         documents=("job_site_letter",),
         fit_rating=result.rating,
         company=company,
-        root=root,
         create_folder=out_path is None,
     )
     company = company or parsed.company
@@ -189,11 +185,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("jd", type=Path, help="Path to job description markdown file")
     parser.add_argument("--company", help="Override company name used in filename")
     parser.add_argument("--out", type=Path, help="Output path (default .txt; use .docx for DOCX)")
-    parser.add_argument(
-        "--root",
-        type=Path,
-        help="Repository root to read the profile from (default: the vault)",
-    )
     args = parser.parse_args(argv)
 
     try:
@@ -202,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none(args.root or ROOT)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
 

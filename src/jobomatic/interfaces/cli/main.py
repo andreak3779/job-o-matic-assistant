@@ -301,7 +301,6 @@ def _interview_prep(
     out_path: Path | None,
     stage: str | None,
     update_star_bank: bool = False,
-    star_bank_path: Path | None = None,
     company_research_path: Path | None = None,
     recruiter_briefing_path: Path | None = None,
     qa_cards_path: Path | None = None,
@@ -318,8 +317,6 @@ def _interview_prep(
         args.extend(["--out", str(out_path)])
     if update_star_bank:
         args.append("--update-star-bank")
-    if star_bank_path is not None:
-        args.extend(["--star-bank-path", str(star_bank_path)])
     if company_research_path is not None:
         args.extend(["--company-research", str(company_research_path)])
     if recruiter_briefing_path is not None:
@@ -515,13 +512,8 @@ def _run(argv: list[str] | None = None) -> int:
     interview_parser.add_argument(
         "--update-star-bank",
         action="store_true",
-        help="Write updated last_used/used_for metadata back to star-bank.md "
+        help="Write updated last_used/used_for metadata back to the vault's stories.yaml "
         "for every STAR story selected in this run",
-    )
-    interview_parser.add_argument(
-        "--star-bank-path",
-        type=Path,
-        help="Override path to star-bank.md (test-only; defaults to the real reference file)",
     )
     interview_parser.add_argument(
         "--company-research",
@@ -649,7 +641,6 @@ def _run(argv: list[str] | None = None) -> int:
             getattr(args, "out", None),
             getattr(args, "stage", None),
             getattr(args, "update_star_bank", False),
-            getattr(args, "star_bank_path", None),
             getattr(args, "company_research", None),
             getattr(args, "recruiter_briefing", None),
             getattr(args, "qa_cards", None),

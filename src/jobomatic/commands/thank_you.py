@@ -8,8 +8,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[3]
-
 from docx import Document
 from docx.shared import Pt
 
@@ -133,7 +131,6 @@ def generate_thank_you_letter(
     interview_date: str | None = None,
     discussion_points: list[str] | None = None,
     out_path: Path | None = None,
-    root: Path = ROOT,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a thank-you letter DOCX plus provenance sidecar.
 
@@ -155,7 +152,7 @@ def generate_thank_you_letter(
             "generic differentiators."
         )
 
-    profile = profile or bootstrap.load_profile(root)
+    profile = profile or bootstrap.load_profile()
     jd_text = jd_path.read_text(encoding="utf-8") if jd_path is not None else ""
     parsed = parse_jd(jd_text)
     if parsed.required:
@@ -176,7 +173,6 @@ def generate_thank_you_letter(
         log=False,
         documents=("thank_you",),
         company=company,
-        root=root,
         create_folder=out_path is None,
     )
     if out_path is None:
@@ -276,11 +272,6 @@ def main(argv: list[str] | None = None) -> int:
         "required — 1-2 points). This letter refuses to generate without at least one.",
     )
     parser.add_argument("--out", type=Path, help="Output DOCX path")
-    parser.add_argument(
-        "--root",
-        type=Path,
-        help="Repository root to read the profile from (default: the vault)",
-    )
     args = parser.parse_args(argv)
 
     if args.jd is not None:
@@ -290,7 +281,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
 
-    profile = load_profile_or_none(args.root or ROOT)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
 

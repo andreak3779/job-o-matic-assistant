@@ -153,7 +153,7 @@ def test_cover_letter_angle_uses_matched_skill_and_evidence_sources_not_fixed_te
 
 
 def test_main_missing_profile_returns_clean_error_not_crash(
-    g, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
+    g, tmp_path: Path, tmp_vault: Path, capsys
 ):
     """bootstrap.load_profile(ROOT) used to run unguarded — a missing/unbuilt
     outputs/the profile (e.g. a fresh checkout before "generate profiles" has ever been run) raised an uncaught FileNotFoundError instead
@@ -161,7 +161,6 @@ def test_main_missing_profile_returns_clean_error_not_crash(
     already uses."""
     jd_path = tmp_path / "jd.md"
     jd_path.write_text("# Some Role\n", encoding="utf-8")
-    monkeypatch.setattr(g, "ROOT", tmp_path / "no-such-root")
 
     rc = g.main([str(jd_path), "--out", str(tmp_path / "out.md")])
 

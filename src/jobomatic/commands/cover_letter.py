@@ -9,9 +9,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[3]
-
-
 from jobomatic import bootstrap, paths
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
@@ -194,7 +191,6 @@ def generate_cover_letter(
     profile: Any | None = None,
     company: str | None = None,
     out_path: Path | None = None,
-    root: Path = ROOT,
     record: bool = True,
     check_pages: bool = False,
 ) -> tuple[Path, Path, FitResult]:
@@ -203,7 +199,7 @@ def generate_cover_letter(
     ``record=False`` skips the applications log and needs an explicit ``out_path``.
     ``check_pages`` measures the real page count with LibreOffice and raises unless it is one.
     """
-    profile = profile or bootstrap.load_profile(root)
+    profile = profile or bootstrap.load_profile()
     jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
@@ -217,7 +213,6 @@ def generate_cover_letter(
             documents=("cover_letter",),
             fit_rating=result.rating,
             company=company,
-            root=root,
             create_folder=out_path is None,
         )
         if out_path is None:
@@ -262,7 +257,6 @@ def generate_profile_cover_letter(
     *,
     profile: Any | None = None,
     out_path: Path | None = None,
-    root: Path = ROOT,
     check_pages: bool = False,
 ) -> tuple[Path, Path]:
     """A reusable cover-letter template: not tailored, with ``[Company Name]`` and ``[Role Title]``
@@ -272,8 +266,8 @@ def generate_profile_cover_letter(
     WHAT I BRING comes from the differentiators, and the highlights are the most recent
     employers. Returns ``(docx_path, sidecar_path)``.
     """
-    profile = profile or bootstrap.load_profile(root)
-    out_path = out_path or paths.output_dir("templates", root=root) / "cover-letter.docx"
+    profile = profile or bootstrap.load_profile()
+    out_path = out_path or paths.output_dir("templates") / "cover-letter.docx"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     summary = " ".join(profile.identity.summary.split())
@@ -322,11 +316,6 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Count the real pages with LibreOffice and fail unless it is 1 (slow; needs LibreOffice)",
     )
-    parser.add_argument(
-        "--root",
-        type=Path,
-        help="Repository root to read the profile from (default: the vault)",
-    )
     args = parser.parse_args(argv)
 
     try:
@@ -335,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none(args.root or ROOT)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
 

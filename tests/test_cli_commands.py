@@ -44,7 +44,7 @@ from jobomatic.presence.pluralsight import (
     main as pluralsight_main,
 )
 
-# Every script here calls load_profile_or_none(args.root or ROOT) somewhere
+# Every script here calls load_profile_or_none() somewhere
 # in main() — a missing/unbuilt outputs/the profile (e.g. a fresh
 # checkout before "generate profiles" has ever run) used to crash all of them
 # except gap_analysis.py with an uncaught FileNotFoundError, instead of the
@@ -71,9 +71,9 @@ _MISSING_PROFILE_CASES = [
     "module,argv", _MISSING_PROFILE_CASES, ids=[m.__name__ for m, _ in _MISSING_PROFILE_CASES]
 )
 def test_main_missing_profile_returns_clean_error_not_crash(
-    module, argv, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
+    module, argv, tmp_path: Path, tmp_vault: Path, capsys
 ) -> None:
-    monkeypatch.setattr(module, "ROOT", tmp_path / "no-such-root")
+    # ``tmp_vault`` is a vault with no profile in it.
     out_file = tmp_path / "out"
     argv = [a.replace("@OUT@", str(out_file)) for a in argv]
 
@@ -82,6 +82,27 @@ def test_main_missing_profile_returns_clean_error_not_crash(
     assert rc == 1
     assert "ERROR" in capsys.readouterr().err
     assert not any(tmp_path.glob("out.*"))
+
+
+@pytest.mark.parametrize(
+    "module",
+    [m for m, _ in _MISSING_PROFILE_CASES],
+    ids=[m.__name__ for m, _ in _MISSING_PROFILE_CASES],
+)
+def test_no_command_takes_a_root_option(module, capsys) -> None:
+    """There is one way to locate data: the vault (ADR 0029)."""
+    with pytest.raises(SystemExit) as excinfo:
+        module.main([str(FIXTURE_JD), "--root", "somewhere"])
+    assert excinfo.value.code == 2
+    assert "--root" in capsys.readouterr().err
+
+
+def test_interview_prep_has_no_star_bank_path_option(capsys) -> None:
+    """The story bank is the vault's stories.yaml; it cannot be redirected (ADR 0029)."""
+    with pytest.raises(SystemExit) as excinfo:
+        cli_main(["interview-prep", str(FIXTURE_JD), "--star-bank-path", "somewhere"])
+    assert excinfo.value.code == 2
+    assert "--star-bank-path" in capsys.readouterr().err
 
 
 def test_fit_check_runs_on_sample_jd(capsys) -> None:

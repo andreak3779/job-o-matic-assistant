@@ -9,8 +9,6 @@ import sys
 from datetime import date
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
     load_profile_or_none,
@@ -367,7 +365,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none(ROOT)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
 
@@ -380,7 +378,6 @@ def main(argv: list[str] | None = None) -> int:
         log=False,
         documents=("gap_analysis",),
         fit_rating=result.rating,
-        root=ROOT,
         create_folder=args.out is None,
     )
     out_file = args.out or located.folder / "gap-analysis.md"

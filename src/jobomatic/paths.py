@@ -12,12 +12,10 @@ Everything outside this module asks it for a path instead of building one from
 If none of them yields a directory holding the marker, every path lookup raises
 ``VaultError`` (ADR 0007): there is no silent fallback to files inside this repo.
 
-The older per-file overrides (``CLAUDE_JOBS_PRIVATE_DIR``, ``CLAUDE_JOBS_APPLICATIONS_LOG``)
-still win, because tests and the container rely on them.
-
-Some callers take an explicit ``root`` (tests build a temporary tree). A root that is ``None``
-or this checkout means "use the vault"; any other root is used as given, in the old project-2
-layout.
+The per-file overrides (``CLAUDE_JOBS_PRIVATE_DIR``, ``CLAUDE_JOBS_APPLICATIONS_LOG``) move one
+folder or file and still win, because the test fixture and the container rely on them. They are
+not a second layout. There is no other way to locate data (ADR 0029): tests select a throwaway
+vault with ``JOBOMATIC_VAULT``.
 """
 
 from __future__ import annotations
@@ -33,9 +31,6 @@ PRIVATE_DIR_ENV = "CLAUDE_JOBS_PRIVATE_DIR"
 APPLICATIONS_LOG_ENV = "CLAUDE_JOBS_APPLICATIONS_LOG"
 VAULT_MARKER = ".jobomatic.toml"
 SIBLING_VAULT_NAME = "job-o-matic-vault"
-
-# Directory name the old per-project layout used for the profile sources.
-_LEGACY_PROFILE_DIR = "project-2-profile-learning-hub"
 
 
 class VaultError(RuntimeError):
@@ -114,10 +109,6 @@ def vault_root() -> Path:
     return path.resolve()
 
 
-def _is_default_root(root: Path | None) -> bool:
-    return root is None or root.resolve() == code_root()
-
-
 def private_dir() -> Path:
     """Personal constraint files such as salary minimums."""
     override = os.environ.get(PRIVATE_DIR_ENV)
@@ -134,12 +125,9 @@ def applications_log() -> Path:
     return vault_root() / "applications" / "applications.jsonl"
 
 
-def outputs_dir(root: Path | None = None) -> Path:
+def outputs_dir() -> Path:
     """Generated files, one hierarchy (see ``output_dir``)."""
-    if _is_default_root(root):
-        return vault_root() / "outputs"
-    assert root is not None
-    return root / "outputs"
+    return vault_root() / "outputs"
 
 
 def imports_dir() -> Path:
@@ -152,23 +140,9 @@ def evidence_index_path() -> Path:
     return vault_root() / "index" / "evidence.sqlite"
 
 
-def profile_dir(root: Path | None = None) -> Path:
-    """Directory holding the profile sources (resume snapshot, profile facts, learning data...).
-
-    It mirrors the old project-2 layout until the profile becomes YAML (Sessions 5 and 5b).
-    """
-    if _is_default_root(root):
-        return vault_root() / "profile"
-    assert root is not None
-    return root / _LEGACY_PROFILE_DIR
-
-
-def star_bank_path(root: Path | None = None) -> Path:
-    """The STAR story bank that interview prep can write back to."""
-    if _is_default_root(root):
-        return vault_root() / "profile" / "star-bank.md"
-    assert root is not None
-    return root / "project-1-application-engine" / "reference" / "star-bank.md"
+def profile_dir() -> Path:
+    """Directory holding the profile sources (the typed YAML profile, learning data...)."""
+    return vault_root() / "profile"
 
 
 def gap_coaching_path() -> Path:
@@ -241,7 +215,6 @@ def output_dir(
     role: str | None = None,
     platform: str | None = None,
     name: str | None = None,
-    root: Path | None = None,
 ) -> Path:
     """Where generated files of ``kind`` go. Builds the path only; the caller creates it.
 
@@ -252,7 +225,7 @@ def output_dir(
     """
     if kind not in OUTPUT_KINDS:
         raise ValueError(f"unknown output kind {kind!r}; expected one of {list(OUTPUT_KINDS)}")
-    base = outputs_dir(root)
+    base = outputs_dir()
     if kind in _FIXED_KINDS:
         return base / _FIXED_KINDS[kind]
     if kind == "profiles":

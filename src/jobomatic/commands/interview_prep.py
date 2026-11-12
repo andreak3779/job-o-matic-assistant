@@ -11,8 +11,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
-ROOT = Path(__file__).resolve().parents[3]
-
 from docx import Document
 from docx.shared import Pt
 
@@ -265,7 +263,6 @@ def generate_interview_prep(
     profile: Any | None = None,
     out_path: Path | None = None,
     stage: Stage = "technical_screen",
-    root: Path = ROOT,
     gap_coaching_path: Path | None = None,
     write_star_bank: bool = False,
     profile_repository: ProfileRepository | None = None,
@@ -283,9 +280,8 @@ def generate_interview_prep(
     Phase 5) — this deterministic core covers only what the profile and fit
     engine can verify without inventing content.
 
-    ``gap_coaching_path`` defaults to ``profile/gap-coaching.md`` under
-    ``root``; a test-only override keeps tests from depending on the real
-    reference file. Missing the file entirely is not
+    ``gap_coaching_path`` defaults to ``profile/gap-coaching.md`` in the vault; a
+    test-only override keeps tests from depending on the real reference file. Missing the file entirely is not
     an error — coaching notes are optional enrichment, not required input.
 
     ``write_star_bank`` (opt-in, default ``False``, per the plan's Phase 4
@@ -311,7 +307,7 @@ def generate_interview_prep(
     if qa_cards:
         _validate_qa_cards(qa_cards)
 
-    profile = profile or bootstrap.load_profile(root)
+    profile = profile or bootstrap.load_profile()
     jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
@@ -329,7 +325,6 @@ def generate_interview_prep(
         log=False,
         documents=("interview_prep",),
         fit_rating=result.rating,
-        root=root,
         create_folder=out_path is None,
     )
     if out_path is None:
@@ -422,7 +417,7 @@ def generate_interview_prep(
         updated = mark_stories_used(
             profile, titles, last_used=last_used_value, used_for=used_for_entry
         )
-        repository = profile_repository or bootstrap.profile_repository(root)
+        repository = profile_repository or bootstrap.profile_repository()
         repository.save_stories(updated)
         for title in titles:
             print(
@@ -456,11 +451,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Interview stage — gates document scope (default: technical_screen)",
     )
     parser.add_argument("--out", type=Path, help="Output DOCX file path")
-    parser.add_argument(
-        "--root",
-        type=Path,
-        help="Repository root to read the profile from (default: the vault)",
-    )
     parser.add_argument(
         "--update-star-bank",
         action="store_true",
@@ -522,7 +512,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: invalid JSON in --qa-cards file: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none(args.root or ROOT)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
 

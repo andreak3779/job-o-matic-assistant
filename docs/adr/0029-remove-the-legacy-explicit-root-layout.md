@@ -1,6 +1,6 @@
 # 0029 — Remove the legacy explicit-root layout from the path module and the commands
 
-**Status:** Proposed. The decision below is drafted for review; nothing is built yet.
+**Status:** Accepted.
 
 ## Context
 
@@ -87,8 +87,8 @@ that they are overrides, not a second layout.
 
 ## Follow-ups
 
-- `interfaces/cli/main.py` defines a `--star-bank-path` option for `interview-prep` and forwards it
-  to the command, but the command has no such option (the story bank is `stories.yaml`), so using
-  it would be rejected by the second parser. It is the same kind of leftover as `star_bank_path()`
-  in `paths.py`; remove it in this change.
+- `--star-bank-path` on `interview-prep` and `star_bank_path()` in `paths.py` were removed in the
+  same change, and the `interview_prep` skill no longer mentions the option. That skill still names
+  `profile/star-bank.md` in several places although the story bank is `stories.yaml`; correcting
+  the skill text is separate work.
 - [ADR 0030](0030-finish-the-claude-jobs-rename.md) renames the per-file override variables.
