@@ -7,11 +7,8 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Any
-
-ROOT = Path(__file__).resolve().parents[3]
-
 from types import SimpleNamespace
+from typing import Any
 
 from docx.shared import Pt
 
@@ -162,7 +159,6 @@ def generate_resume(
     profile: Any | None = None,
     company: str | None = None,
     out_path: Path | None = None,
-    root: Path = ROOT,
     check_pages: bool = False,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a tailored resume DOCX plus provenance sidecar.
@@ -172,7 +168,7 @@ def generate_resume(
     two pages first (or refused), before anything is logged. ``check_pages`` then measures the
     real page count with LibreOffice and raises if it is over.
     """
-    profile = profile or bootstrap.load_profile(root)
+    profile = profile or bootstrap.load_profile()
     jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
@@ -184,7 +180,6 @@ def generate_resume(
         documents=("resume",),
         fit_rating=result.rating,
         company=company,
-        root=root,
         create_folder=out_path is None,
     )
     if out_path is None:
@@ -210,7 +205,6 @@ def generate_profile_resume(
     *,
     profile: Any | None = None,
     out_path: Path | None = None,
-    root: Path = ROOT,
     check_pages: bool = False,
 ) -> tuple[Path, Path]:
     """The platform-ready resume: no job description, the profile's own order and headline.
@@ -218,8 +212,8 @@ def generate_profile_resume(
     For uploading to job boards. Nothing is tailored and nothing is logged. Returns
     ``(docx_path, sidecar_path)``.
     """
-    profile = profile or bootstrap.load_profile(root)
-    out_path = out_path or paths.output_dir("templates", root=root) / "resume.docx"
+    profile = profile or bootstrap.load_profile()
+    out_path = out_path or paths.output_dir("templates") / "resume.docx"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     no_posting = SimpleNamespace(required=[], nice_to_have=[])
     content = _resume_content(profile, no_posting, profile.identity.headline)
@@ -244,11 +238,6 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Count the real pages with LibreOffice and fail if over 2 (slow; needs LibreOffice)",
     )
-    parser.add_argument(
-        "--root",
-        type=Path,
-        help="Repository root to read the profile from (default: the vault)",
-    )
     args = parser.parse_args(argv)
 
     try:
@@ -257,8 +246,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    root = ROOT
-    profile = load_profile_or_none(args.root or root)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
     return run_and_report(
@@ -267,7 +255,6 @@ def main(argv: list[str] | None = None) -> int:
         profile=profile,
         company=args.company,
         out_path=args.out,
-        root=root,
         check_pages=args.check_pages,
     )
 

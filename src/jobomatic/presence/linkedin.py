@@ -383,7 +383,7 @@ def _step7_featured(portfolio: list[Project]) -> str:
     return "\n".join(lines)
 
 
-def _build_rich_draft(root: Path, view: PresenceView, skill_text: str) -> tuple[str, list[str]]:
+def _build_rich_draft(view: PresenceView, skill_text: str) -> tuple[str, list[str]]:
     warnings: list[str] = []
     char_limits = _section_text(skill_text, "Character Limits") or ""
     fragments = compute_copy_fragments(
@@ -486,7 +486,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     skill_text = SKILL_PATH.read_text(encoding="utf-8")
-    content, warnings = _build_rich_draft(ROOT, view, skill_text)
+    content, warnings = _build_rich_draft(view, skill_text)
     out_file = (
         args.out
         or paths.output_dir("profiles", platform="linkedin") / f"{date.today().isoformat()}.md"

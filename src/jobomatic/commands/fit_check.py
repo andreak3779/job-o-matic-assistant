@@ -7,8 +7,6 @@ import argparse
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-
 from jobomatic.commands.support import load_profile_or_none, require_path
 from jobomatic.fit.constraints import MISSING_MESSAGE, load_constraints
 from jobomatic.fit.engine import rate_parsed_jd, render_fit_table
@@ -21,11 +19,6 @@ def main(argv: list[str] | None = None) -> int:
         prog="fit-check", description="Inline fit check for a job description"
     )
     parser.add_argument("jd", type=Path, help="Path to job description markdown file")
-    parser.add_argument(
-        "--root",
-        type=Path,
-        help="Repository root to read the profile from (default: the vault)",
-    )
     args = parser.parse_args(argv)
 
     try:
@@ -34,7 +27,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none(args.root or ROOT)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
     jd_text = args.jd.read_text(encoding="utf-8")

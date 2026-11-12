@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from docx import Document
 
+from jobomatic import paths
 from jobomatic.commands.interview_prep import (
     generate_interview_prep,
 )
@@ -117,7 +118,7 @@ def _write_gap_coaching(tmp_path: Path) -> Path:
 def test_banner_shows_title_company_and_stage(tmp_path: Path) -> None:
     profile = _make_profile()
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "Senior .NET Developer" in text
@@ -130,7 +131,7 @@ def test_experience_match_table_has_a_row_per_required_and_nice_to_have_skill(
 ) -> None:
     profile = _make_profile()
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "Strong Match" in text
@@ -142,7 +143,7 @@ def test_experience_match_table_has_a_row_per_required_and_nice_to_have_skill(
 def test_grounded_skill_gets_a_qa_card_with_evidence_answer(tmp_path: Path) -> None:
     profile = _make_profile()
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "walk me through how you used c#" in text.lower()
@@ -154,7 +155,7 @@ def test_ungrounded_skill_gets_an_honesty_reminder_not_a_fabricated_answer(
 ) -> None:
     profile = _make_profile()
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "if kubernetes comes up, answer honestly" in text.lower()
@@ -168,7 +169,6 @@ def test_gap_coaching_entry_replaces_honesty_reminder_with_a_real_qa_card(
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         gap_coaching_path=_write_gap_coaching(tmp_path),
     )
     text = _docx_text(out_path)
@@ -185,7 +185,6 @@ def test_gap_coaching_entry_overrides_grounded_evidence_stub_answer(tmp_path: Pa
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         gap_coaching_path=_write_gap_coaching(tmp_path),
     )
     text = _docx_text(out_path)
@@ -200,7 +199,6 @@ def test_missing_gap_coaching_file_falls_back_cleanly(tmp_path: Path) -> None:
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         gap_coaching_path=missing_path,
     )
     text = _docx_text(out_path)
@@ -227,7 +225,6 @@ def test_star_card_count_gated_by_stage(tmp_path: Path) -> None:
         profile=profile,
         out_path=tmp_path / "phone.docx",
         stage="phone_screen",
-        root=tmp_path,
     )
     phone_text = _docx_text(phone_out)
     assert (
@@ -239,7 +236,6 @@ def test_star_card_count_gated_by_stage(tmp_path: Path) -> None:
         profile=profile,
         out_path=tmp_path / "final.docx",
         stage="final_round",
-        root=tmp_path,
     )
     final_text = _docx_text(final_out)
     assert "Story 0" in final_text
@@ -261,7 +257,7 @@ def test_star_card_shows_adapt_when_as_reference_text(tmp_path: Path) -> None:
     ]
     profile = _make_profile(star_stories=stories)
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "Adapt when:" in text
@@ -271,7 +267,7 @@ def test_star_card_shows_adapt_when_as_reference_text(tmp_path: Path) -> None:
 def test_no_star_stories_shows_honest_placeholder(tmp_path: Path) -> None:
     profile = _make_profile(star_stories=[])
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "No tagged STAR stories found" in text
@@ -280,7 +276,7 @@ def test_no_star_stories_shows_honest_placeholder(tmp_path: Path) -> None:
 def test_fit_rating_section_present(tmp_path: Path) -> None:
     profile = _make_profile()
     out_path, _, result = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert result.rating in text
@@ -289,10 +285,10 @@ def test_fit_rating_section_present(tmp_path: Path) -> None:
 
 def test_output_is_docx_not_markdown(tmp_path: Path) -> None:
     profile = _make_profile()
-    out_path, _, _ = generate_interview_prep(_write_jd(tmp_path), profile=profile, root=tmp_path)
+    out_path, _, _ = generate_interview_prep(_write_jd(tmp_path), profile=profile)
     assert out_path.suffix == ".docx"
     assert out_path.name == "interview-prep.docx"
-    assert out_path.parent.parent == tmp_path / "outputs" / "applications"
+    assert out_path.parent.parent == paths.outputs_dir() / "applications"
     assert out_path.parent.name.endswith("_acme_senior-net-developer")
     assert (out_path.parent / "jd.md").is_file()
 
@@ -300,7 +296,7 @@ def test_output_is_docx_not_markdown(tmp_path: Path) -> None:
 def test_writes_sidecar_with_fit_rating_and_evidence(tmp_path: Path) -> None:
     profile = _make_profile()
     out_path, sidecar_path, result = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     assert out_path.exists()
     assert sidecar_path.exists()
@@ -342,7 +338,6 @@ def test_write_star_bank_true_updates_selected_story(tmp_path: Path) -> None:
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         write_star_bank=True,
         profile_repository=repository,
     )
@@ -359,7 +354,6 @@ def test_write_star_bank_false_leaves_the_stories_untouched(tmp_path: Path) -> N
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         profile_repository=repository,
     )
     assert (tmp_path / "saved-profile" / "stories.yaml").read_text(encoding="utf-8") == before
@@ -375,7 +369,6 @@ def test_recording_story_use_touches_only_stories_yaml(tmp_path: Path) -> None:
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         write_star_bank=True,
         profile_repository=repository,
     )
@@ -388,7 +381,6 @@ def test_company_research_renders_verbatim_when_given(tmp_path: Path) -> None:
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         company_research="Acme just raised a Series C and is expanding the platform team.",
     )
     text = _docx_text(out_path)
@@ -399,7 +391,7 @@ def test_company_research_renders_verbatim_when_given(tmp_path: Path) -> None:
 def test_company_research_section_omitted_when_absent(tmp_path: Path) -> None:
     profile = _make_profile()
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "COMPANY RESEARCH" not in text
@@ -411,7 +403,6 @@ def test_company_research_section_omitted_when_blank(tmp_path: Path) -> None:
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         company_research="   \n  ",
     )
     text = _docx_text(out_path)
@@ -424,7 +415,6 @@ def test_recruiter_briefing_renders_as_callout_when_given(tmp_path: Path) -> Non
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         recruiter_briefing="Panel format, three interviewers, focus on system design.",
     )
     text = _docx_text(out_path)
@@ -435,7 +425,7 @@ def test_recruiter_briefing_renders_as_callout_when_given(tmp_path: Path) -> Non
 def test_recruiter_briefing_omitted_when_absent(tmp_path: Path) -> None:
     profile = _make_profile()
     out_path, _, _ = generate_interview_prep(
-        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx", root=tmp_path
+        _write_jd(tmp_path), profile=profile, out_path=tmp_path / "prep.docx"
     )
     text = _docx_text(out_path)
     assert "Recruiter Briefing" not in text
@@ -447,7 +437,6 @@ def test_qa_cards_appear_after_scripts_own_grounded_cards(tmp_path: Path) -> Non
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         qa_cards=[
             {
                 "question": "Walk me through your resume.",
@@ -473,7 +462,6 @@ def test_qa_cards_none_or_empty_renders_only_scripts_own_cards(tmp_path: Path) -
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         qa_cards=[],
     )
     text = _docx_text(out_path)
@@ -487,7 +475,6 @@ def test_qa_cards_entry_missing_answer_raises_value_error(tmp_path: Path) -> Non
             _write_jd(tmp_path),
             profile=profile,
             out_path=tmp_path / "prep.docx",
-            root=tmp_path,
             qa_cards=[{"question": "What is your greatest weakness?"}],
         )
         raise AssertionError("expected ValueError")
@@ -502,7 +489,6 @@ def test_qa_cards_entry_missing_question_raises_value_error(tmp_path: Path) -> N
             _write_jd(tmp_path),
             profile=profile,
             out_path=tmp_path / "prep.docx",
-            root=tmp_path,
             qa_cards=[{"answer": "I'd say attention to detail."}],
         )
         raise AssertionError("expected ValueError")
@@ -518,7 +504,6 @@ def test_qa_cards_validation_error_prevents_file_write(tmp_path: Path) -> None:
             _write_jd(tmp_path),
             profile=profile,
             out_path=out_path,
-            root=tmp_path,
             qa_cards=[{"question": "Missing an answer"}],
         )
     except ValueError:
@@ -532,7 +517,6 @@ def test_salary_section_renders_for_final_round(tmp_path: Path) -> None:
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         stage="final_round",
         salary_section="Target range: $120K-$140K CAD based on market research.",
     )
@@ -549,7 +533,6 @@ def test_salary_section_omitted_when_stage_not_final_round(
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         stage="technical_screen",
         salary_section="Target range: $120K-$140K CAD based on market research.",
     )
@@ -566,7 +549,6 @@ def test_salary_section_omitted_when_not_given_even_at_final_round(tmp_path: Pat
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         stage="final_round",
     )
     text = _docx_text(out_path)
@@ -579,7 +561,6 @@ def test_all_four_hybrid_params_together_end_to_end(tmp_path: Path) -> None:
         _write_jd(tmp_path),
         profile=profile,
         out_path=tmp_path / "prep.docx",
-        root=tmp_path,
         stage="final_round",
         company_research="Acme is scaling its platform team after a Series C.",
         recruiter_briefing="Panel format, focus on system design.",

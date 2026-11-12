@@ -87,13 +87,13 @@ def _differentiator_count(profile: Any, label_pattern: str) -> int | None:
     return None
 
 
-def _azure_functions_course_count(root: Path) -> int | None:
+def _azure_functions_course_count() -> int | None:
     """Completed items with 'Azure Functions' in the title, from the learning store."""
     from jobomatic.learning.adapters.yaml_store import YamlLearningStore
     from jobomatic.learning.service import LearningError
 
     try:
-        items = YamlLearningStore(paths.profile_dir(root)).load()
+        items = YamlLearningStore(paths.profile_dir()).load()
     except LearningError:
         return None
     if not items:
@@ -101,13 +101,13 @@ def _azure_functions_course_count(root: Path) -> int | None:
     return sum(1 for i in items if "azure functions" in i.title.lower())
 
 
-def _expected_counts(root: Path, profile: Any) -> dict[str, int | None]:
+def _expected_counts(profile: Any) -> dict[str, int | None]:
     return {
         "github_copilot": _differentiator_count(profile, r"GitHub Copilot:\s*(\d+)\s*courses"),
         "leadership": _differentiator_count(
             profile, r"Communication:\s*(\d+)\s*leadership/communication"
         ),
-        "azure_functions": _azure_functions_course_count(root),
+        "azure_functions": _azure_functions_course_count(),
     }
 
 
@@ -218,9 +218,9 @@ def check_course_count_claims(
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     root = Path(argv[0]).resolve() if argv else ROOT
-    profile = bootstrap.load_profile(root)
+    profile = bootstrap.load_profile()
     cert_statuses = _cert_statuses(profile)
-    expected_counts = _expected_counts(root, profile)
+    expected_counts = _expected_counts(profile)
 
     all_findings: list[Finding] = []
     for path in _skill_files(root):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
 import pytest
@@ -51,13 +52,10 @@ def test_sibling_without_marker_is_ignored(legacy: Path) -> None:
         paths.vault_root()
 
 
-def test_explicit_root_keeps_the_old_layout_for_tests(legacy: Path, tmp_path: Path) -> None:
-    root = tmp_path / "tree"
-    assert paths.outputs_dir(root) == root / "outputs"
-    assert paths.profile_dir(root) == root / "project-2-profile-learning-hub"
-    assert paths.star_bank_path(root) == (
-        root / "project-1-application-engine" / "reference" / "star-bank.md"
-    )
+def test_no_function_takes_an_explicit_root() -> None:
+    """There is one way to locate data: the vault (ADR 0029)."""
+    for name, function in inspect.getmembers(paths, inspect.isfunction):
+        assert "root" not in inspect.signature(function).parameters, name
 
 
 def test_vault_layout_when_env_var_names_a_valid_vault(tmp_vault: Path) -> None:
@@ -69,7 +67,6 @@ def test_vault_layout_when_env_var_names_a_valid_vault(tmp_vault: Path) -> None:
     assert paths.evidence_index_path() == vault / "index" / "evidence.sqlite"
     assert paths.profile_dir() == vault / "profile"
     assert paths.learning_plans_dir() == vault / "outputs" / "learning-plans"
-    assert paths.star_bank_path() == vault / "profile" / "star-bank.md"
 
 
 def test_vault_without_marker_fails_loudly(

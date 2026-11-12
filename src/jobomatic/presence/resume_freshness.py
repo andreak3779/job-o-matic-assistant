@@ -11,8 +11,6 @@ against a parsed date string.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from jobomatic import paths
 
 # The platform-ready (not job-specific) resume lives in the vault's ``outputs/templates/``.
@@ -20,13 +18,13 @@ RESUME_GLOB = "resume*.docx"
 _SOURCE_FILES = ["identity.yaml", "roles.yaml", "skills.yaml"]
 
 
-def resume_freshness_lines(root: Path) -> list[str]:
+def resume_freshness_lines() -> list[str]:
     """Human-readable report lines for a generated draft's "Resume File
     Dependency Check" section. Never raises if the resume or a source file
     is missing — the resume DOCX lives in a gitignored `outputs/` folder, so
     a fresh checkout legitimately won't have it yet.
     """
-    templates = paths.output_dir("templates", root=root)
+    templates = paths.output_dir("templates")
     candidates = sorted(templates.glob(RESUME_GLOB), key=lambda p: p.stat().st_mtime)
     resume_path = candidates[-1] if candidates else templates / RESUME_GLOB
     if not resume_path.is_file():
@@ -38,7 +36,7 @@ def resume_freshness_lines(root: Path) -> list[str]:
     resume_mtime = resume_path.stat().st_mtime
     stale: list[str] = []
     for name in _SOURCE_FILES:
-        source_path = paths.profile_dir(root) / name
+        source_path = paths.profile_dir() / name
         if not source_path.is_file():
             continue
         if source_path.stat().st_mtime > resume_mtime:

@@ -80,10 +80,10 @@ def _step4_job_preferences(skill_text: str) -> str:
     return (section_text(skill_text, "Step 4 — Job Preferences") or "").strip()
 
 
-def _build_draft(root: Path, view: PresenceView, skill_text: str) -> tuple[str, list[str]]:
+def _build_draft(view: PresenceView, skill_text: str) -> tuple[str, list[str]]:
     warnings: list[str] = []
     char_limits = section_text(skill_text, "Character Limits") or ""
-    resume_check = resume_freshness_lines(root)
+    resume_check = resume_freshness_lines()
     fragments = compute_copy_fragments(
         view.differentiators, view.certifications, view.coursework_summary
     )
@@ -153,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     skill_text = SKILL_PATH.read_text(encoding="utf-8")
-    content, warnings = _build_draft(ROOT, view, skill_text)
+    content, warnings = _build_draft(view, skill_text)
 
     out_file = (
         args.out

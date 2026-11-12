@@ -102,7 +102,6 @@ def test_generate_cold_call_letter_writes_sidecar(tmp_path: Path) -> None:
         profile=profile,
         company="Acme",
         out_path=tmp_path / "cold.docx",
-        root=tmp_path,
     )
 
     assert out_path.exists()
@@ -123,7 +122,6 @@ def test_generate_cold_call_letter_warns_when_low_confidence(capsys, tmp_path: P
         profile=profile,
         company="Acme",
         out_path=tmp_path / "cold.docx",
-        root=tmp_path,
     )
 
     captured = capsys.readouterr()
@@ -174,7 +172,6 @@ def test_generate_cold_call_letter_without_jd_uses_recruiter_and_role_type(
         recruiter_name="Jane Doe",
         role_type="Senior .NET Developer roles",
         out_path=tmp_path / "cold.docx",
-        root=tmp_path,
     )
 
     assert out_path.exists()
@@ -195,7 +192,6 @@ def test_generate_cold_call_letter_without_recruiter_name_defaults_to_hiring_tea
         profile=profile,
         company="Acme",
         out_path=tmp_path / "cold.docx",
-        root=tmp_path,
     )
     text = _docx_text(out_path)
     assert "Dear Hiring Team," in text

@@ -43,7 +43,6 @@ def locate_application(
     documents: tuple[str, ...] = (),
     fit_rating: str | None = None,
     company: str | None = None,
-    root: Path | None = None,
     create_folder: bool = True,
 ) -> Located:
     """Find the folder for this posting's documents, logging the posting if ``log`` is true.
@@ -55,7 +54,7 @@ def locate_application(
     """
     parsed = parse_jd(jd_text)
     known = company or (None if looks_unknown(parsed.company) else parsed.company)
-    adopted = _unlogged_folder(known, parsed.title, root)
+    adopted = _unlogged_folder(known, parsed.title)
 
     app_id: str | None = None
     logged = False
@@ -77,7 +76,7 @@ def locate_application(
 
     if app_id:
         name = applications.folder_name_for(applications.get_application(app_id))
-        folder = paths.output_dir("application", name=name, root=root)
+        folder = paths.output_dir("application", name=name)
     elif adopted is not None:
         folder = adopted
     else:
@@ -86,7 +85,6 @@ def locate_application(
             day=date.today(),
             company=known or "unknown-company",
             role=parsed.title,
-            root=root,
         )
     if create_folder:
         folder.mkdir(parents=True, exist_ok=True)
@@ -96,7 +94,7 @@ def locate_application(
     return Located(app_id, folder, logged)
 
 
-def _unlogged_folder(company: str | None, title: str, root: Path | None) -> Path | None:
+def _unlogged_folder(company: str | None, title: str) -> Path | None:
     """An earlier folder for the same company and role that has no log entry yet.
 
     A gap analysis creates its folder before any entry exists. When the resume later creates the
@@ -104,7 +102,7 @@ def _unlogged_folder(company: str | None, title: str, root: Path | None) -> Path
     """
     if not company:
         return None
-    base = paths.output_dir("application", name="x", root=root).parent
+    base = paths.output_dir("application", name="x").parent
     if not base.is_dir():
         return None
     tail = "_".join([paths.slug(company), paths.slug(title)])

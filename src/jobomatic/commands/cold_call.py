@@ -9,8 +9,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[3]
-
 from docx import Document
 from docx.shared import Pt
 
@@ -163,7 +161,6 @@ def generate_cold_call_letter(
     recruiter_name: str | None = None,
     role_type: str | None = None,
     out_path: Path | None = None,
-    root: Path = ROOT,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a cold-call cover-letter DOCX plus provenance sidecar.
 
@@ -173,7 +170,7 @@ def generate_cold_call_letter(
     ``role_type`` directly instead of synthesizing a throwaway JD file just to
     invoke this function.
     """
-    profile = profile or bootstrap.load_profile(root)
+    profile = profile or bootstrap.load_profile()
 
     target_company, description = _read_target_description(jd_path)
     company = company or target_company
@@ -193,8 +190,7 @@ def generate_cold_call_letter(
 
     if out_path is None:
         out_path = (
-            paths.output_dir("outreach", day=date.today(), company=company, root=root)
-            / "cold-outreach.docx"
+            paths.output_dir("outreach", day=date.today(), company=company) / "cold-outreach.docx"
         )
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -268,11 +264,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--role-type", help='Target role type, e.g. "Senior .NET Developer roles"')
     parser.add_argument("--out", type=Path, help="Output DOCX path")
-    parser.add_argument(
-        "--root",
-        type=Path,
-        help="Repository root to read the profile from (default: the vault)",
-    )
     args = parser.parse_args(argv)
 
     if args.jd is not None:
@@ -282,7 +273,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
 
-    profile = load_profile_or_none(args.root or ROOT)
+    profile = load_profile_or_none()
     if profile is None:
         return 1
 

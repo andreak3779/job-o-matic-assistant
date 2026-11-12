@@ -173,7 +173,6 @@ def test_generate_thank_you_letter_writes_sidecar(tmp_path: Path) -> None:
         company="Acme",
         discussion_points=["We discussed the team's roadmap."],
         out_path=tmp_path / "thanks.docx",
-        root=tmp_path,
     )
 
     assert out_path.exists()
@@ -195,7 +194,6 @@ def test_generate_thank_you_letter_raises_without_discussion_points(tmp_path: Pa
             company="Acme",
             discussion_points=None,
             out_path=tmp_path / "thanks.docx",
-            root=tmp_path,
         )
 
 
@@ -208,7 +206,6 @@ def test_generate_thank_you_letter_raises_with_empty_discussion_points_list(tmp_
             company="Acme",
             discussion_points=[],
             out_path=tmp_path / "thanks.docx",
-            root=tmp_path,
         )
 
 
@@ -240,7 +237,6 @@ def test_generate_thank_you_letter_without_jd_uses_real_inputs(tmp_path: Path) -
             "They asked about my CI/CD experience.",
         ],
         out_path=tmp_path / "thanks.docx",
-        root=tmp_path,
     )
 
     text = _docx_text(out_path)
@@ -262,7 +258,6 @@ def test_salutation_uses_interviewer_names_not_generic_hiring_team(tmp_path: Pat
         interviewer_names=["Jane Doe", "Bob Smith"],
         discussion_points=["A discussion point."],
         out_path=tmp_path / "thanks.docx",
-        root=tmp_path,
     )
     text = _docx_text(out_path)
     assert "Dear Jane Doe, Bob Smith," in text
@@ -277,7 +272,6 @@ def test_salutation_defaults_to_hiring_team_without_interviewer_names(tmp_path: 
         company="Acme",
         discussion_points=["A discussion point."],
         out_path=tmp_path / "thanks.docx",
-        root=tmp_path,
     )
     text = _docx_text(out_path)
     assert "Dear Acme Hiring Team," in text
