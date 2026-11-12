@@ -13,8 +13,10 @@ from typing import Any
 
 from jobomatic import applications as apps
 from jobomatic import paths
-from jobomatic.fit.constraints import MISSING_MESSAGE, constraints_path, load_constraints
+from jobomatic.commands import applications as app_commands
+from jobomatic.commands import constraints as constraints_command
 from jobomatic.fit.parser import looks_unknown, parse_jd
+from jobomatic.results import emit
 
 COMMANDS = ("applications", "constraints")
 
@@ -71,28 +73,35 @@ def _read_jd(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _table(rows: list[apps.Application]) -> str:
-    if not rows:
-        return "No applications."
-    lines = ["| id | company | role | status | applied | next step |", "|---|---|---|---|---|---|"]
-    for a in rows:
-        lines.append(
-            f"| {a.id} | {a.company} | {a.title} | {a.status} | {a.applied_on or ''} "
-            f"| {a.next_step or ''} |"
-        )
-    return "\n".join(lines)
-
-
 def _check(jd: Path, strict: bool) -> int:
-    parsed = parse_jd(_read_jd(jd))
-    check = apps.check_posting(parsed.company, parsed.title, parsed.job_id)
-    print(f"## Applications check — {parsed.title} at {parsed.company}\n")
-    print(check.summary())
-    for note in check.notes:
-        print(f"- ⚠️ {note}")
-    if check.verdict == "related":
-        print("\n" + _table(list(check.related)))
-    return 2 if strict and check.blocking else 0
+    result = app_commands.check(_read_jd(jd))
+    code = emit(result, app_commands.render_check)
+    blocking = result.data is not None and result.data.check.blocking
+    return 2 if strict and blocking else code
+
+
+def _applied(
+    app_id: str | None, jd: Path | None, date: str | None, platform: str | None, url: str | None
+) -> int:
+    jd_text = _read_jd(jd) if app_id is None and jd is not None else None
+    result = app_commands.applied(
+        application_id=app_id, jd_text=jd_text, date=date, platform=platform, url=url
+    )
+    return emit(result, app_commands.render_applied)
+
+
+def _status(app_id: str, status: str, next_step: str | None, note: str | None) -> int:
+    result = app_commands.set_status(app_id, status, next_step=next_step, note=note)
+    return emit(result, app_commands.render_status)
+
+
+def _list(status: str | None, company: str | None) -> int:
+    result = app_commands.list_applications(status=status, company=company)
+    return emit(result, app_commands.render_list)
+
+
+def _constraints_show() -> int:
+    return emit(constraints_command.show(), constraints_command.render)
 
 
 def _add(jd: Path, platform: str | None, url: str | None) -> int:
@@ -114,46 +123,6 @@ def _add(jd: Path, platform: str | None, url: str | None) -> int:
     return 0
 
 
-def _applied(
-    app_id: str | None, jd: Path | None, date: str | None, platform: str | None, url: str | None
-) -> int:
-    if app_id is None:
-        assert jd is not None
-        text = _read_jd(jd)
-        parsed = parse_jd(text)
-        existing = apps.find_for_jd(text)
-        if existing is None:
-            if looks_unknown(parsed.company):
-                raise ValueError("could not read a company name from the job description")
-            app_id = apps.create_application(
-                parsed.company, parsed.title, job_id=parsed.job_id, source="manual"
-            )
-        else:
-            app_id = existing.id
-    if platform or url:
-        extra: dict[str, Any] = {k: v for k, v in {"platform": platform, "url": url}.items() if v}
-        apps.update_application(app_id, **extra)
-    done = apps.mark_applied(app_id, date)
-    print(f"Marked applied on {done.applied_on}: {done.company} — {done.title} (id {done.id})")
-    return 0
-
-
-def _status(app_id: str, status: str, next_step: str | None, note: str | None) -> int:
-    done = apps.set_status(app_id, status, next_step=next_step, notes=note)
-    print(f"{done.company} — {done.title} (id {done.id}) is now {done.status}")
-    return 0
-
-
-def _list(status: str | None, company: str | None) -> int:
-    rows = apps.load_applications()
-    if status:
-        rows = [a for a in rows if a.status == status]
-    if company:
-        rows = [a for a in rows if apps.same_company(a.company, company)]
-    print(_table(rows))
-    return 0
-
-
 def _import(csv_path: Path, dry_run: bool) -> int:
     if not csv_path.is_file():
         raise ValueError(paths.not_found_message(csv_path, "CSV file"))
@@ -169,15 +138,6 @@ def _import(csv_path: Path, dry_run: bool) -> int:
     for line in report.errors:
         print(f"  ! {line}", file=sys.stderr)
     return 1 if report.errors else 0
-
-
-def _constraints_show() -> int:
-    constraints = load_constraints()
-    if constraints is None:
-        print(MISSING_MESSAGE)
-        return 0
-    print(f"Minimums ({constraints_path().name}): {constraints.describe()}")
-    return 0
 
 
 def run(args: argparse.Namespace) -> int:

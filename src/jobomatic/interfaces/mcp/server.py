@@ -39,7 +39,10 @@ from mcp.types import (
 
 from jobomatic import applications as applications_log
 from jobomatic import paths, results
+from jobomatic.commands import applications as applications_commands
+from jobomatic.commands import constraints as constraints_command
 from jobomatic.commands import fit_check as fit_check_command
+from jobomatic.commands.support import vault_write_lock
 from jobomatic.interfaces.cli.main import main as cli_main
 from jobomatic.interfaces.mcp import access, skill_prompts
 
@@ -154,7 +157,7 @@ def _checked_path(value: str, *, write: bool, label: str) -> str:
 def _run_cli(argv: list[str]) -> str:
     stdout = io.StringIO()
     stderr = io.StringIO()
-    with _CLI_LOCK:
+    with _CLI_LOCK, vault_write_lock():
         try:
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
                 exit_code = cli_main(argv)
@@ -717,19 +720,18 @@ def interview_prep(
 def applications_check(jd: str) -> str:
     """jd: path to a job description markdown file, or the job description text itself.
     Reports NEW / DRAFTED / RELATED / REPEAT / DUPLICATE against the applications log."""
-    with _jd_path(jd) as jd_path:
-        return _run_cli(["applications", "check", jd_path])
+    return _tool_text(
+        applications_commands.check(_posting_text(jd)), applications_commands.render_check
+    )
 
 
 @mcp.tool(description="List applications in the log, optionally filtered by status or company")
 def applications_list(status: str | None = None, company: str | None = None) -> str:
     """status: one of drafted, applied, phone_screen, technical, offer, rejected, withdrawn."""
-    argv = ["applications", "list"]
-    if status:
-        argv.extend(["--status", status])
-    if company:
-        argv.extend(["--company", company])
-    return _run_cli(argv)
+    return _tool_text(
+        applications_commands.list_applications(status=status or None, company=company or None),
+        applications_commands.render_list,
+    )
 
 
 @mcp.tool(
@@ -743,24 +745,26 @@ def applications_mark_applied(
     posting; the entry is created if it was never drafted). date: YYYY-MM-DD, default today."""
     if bool(application_id) == bool(jd):
         raise ToolError("provide exactly one of application_id or jd")
-    extra = ["--date", date] if date else []
-    if application_id:
-        return _run_cli(["applications", "applied", "--id", application_id, *extra])
-    assert jd is not None
-    with _jd_path(jd) as jd_path:
-        return _run_cli(["applications", "applied", "--jd", jd_path, *extra])
+    return _tool_text(
+        applications_commands.applied(
+            application_id=application_id or None,
+            jd_text=_posting_text(jd) if jd else None,
+            date=date or None,
+        ),
+        applications_commands.render_applied,
+    )
 
 
 @mcp.tool(description="Move an application to a new status (e.g. phone_screen, offer, rejected)")
 def applications_set_status(
     application_id: str, status: str, next_step: str | None = None, note: str | None = None
 ) -> str:
-    argv = ["applications", "status", application_id, status]
-    if next_step:
-        argv.extend(["--next-step", next_step])
-    if note:
-        argv.extend(["--note", note])
-    return _run_cli(argv)
+    return _tool_text(
+        applications_commands.set_status(
+            application_id, status, next_step=next_step or None, note=note or None
+        ),
+        applications_commands.render_status,
+    )
 
 
 # -- Pluralsight history import ---------------------------------------------------------------
@@ -844,7 +848,7 @@ def learning_import(
 
 @mcp.tool(description="Show the user's private salary minimums (or say they are not configured)")
 def search_constraints() -> str:
-    return _run_cli(["constraints", "show"])
+    return _tool_text(constraints_command.show(), constraints_command.render)
 
 
 # Evidence from private prose (resume bullets, interview stories) never leaves this machine
