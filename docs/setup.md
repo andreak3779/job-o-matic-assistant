@@ -81,13 +81,13 @@ sudo apt install -y git python3 python3-venv python3-pip
 python3 --version
 ```
 
-The last line must say **3.11 or newer**. If it says less, find your system below.
+The last line must say **3.11 or newer**. The tests run on 3.11, 3.12, 3.13 and 3.14. If it says less than 3.11, find your system below.
 
 | System | Python it ships | What to do |
 | --- | --- | --- |
 | Ubuntu 24.04, Linux Mint 22 (Ubuntu 24.04 base), Zorin OS 18 | 3.12 | Nothing |
 | Debian 12 | 3.11 | Nothing |
-| Debian 13 | 3.13 | Nothing. It has not been tested here; the script falls back if a package will not install. |
+| Debian 13 | 3.13 | Nothing. The tests pass on the official Python 3.13 image; Debian's own `python3` has not been run here, and the script falls back if a package will not install. |
 | Ubuntu 22.04, Linux Mint 21, Pop!_OS 22.04 | 3.10 | Too old. The script prints the fix (a newer Python from the deadsnakes package source), or move to a newer release. |
 | Debian 11 | 3.9 | Too old. Upgrade to Debian 12 or newer. |
 

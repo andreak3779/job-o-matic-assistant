@@ -1,6 +1,6 @@
 # 0033 — Which Python versions are supported, and what CI tests
 
-**Status:** Accepted.
+**Status:** Accepted. Built; see "As built".
 
 ## Context
 
@@ -103,3 +103,26 @@ What was found when this was investigated (2026-11-12):
 
 - Making CI a required check on `main` is a GitHub setting and is left to the repository owner.
 - Migrating `(str, Enum)` to `StrEnum`, which the ruff comment mentions, is separate.
+
+## As built
+
+- `requirements-lock.txt` gained `sqlite-vec==0.1.9`, the version already installed everywhere.
+  `tests/test_packaging.py` checks that every base and extra dependency in `pyproject.toml` has an
+  exact pin in the lock inside the declared range, that the package list equals the folders that
+  are packages, and that every data file (READMEs excepted) is under a `package-data` pattern. Four
+  mutations each fail it: the lock without `sqlite-vec`, a pin outside its range, an unlisted package
+  folder and an unmatched data file.
+- `_normalize` in `tests/test_command_snapshots.py` replaces the paths only as whole paths, and dates
+  as before; `tests/test_snapshot_normalisation.py` puts the repository at `/app` and fails against
+  the old substring replace.
+- `ci.yml` has a `lint` job on 3.11 and a `tests` job in a matrix of 3.11, 3.12, 3.13 and 3.14 with
+  `fail-fast: false`. `tests/test_python_support.py` requires the lowest tested version to be the
+  `requires-python` floor, the classifiers to be exactly the tested versions with no gap, the lint
+  job and the `Dockerfile` (`python:3.11-slim`), mypy and ruff to target the floor, and every CI
+  install to use the lock; four mutations (a version only in CI, the floor dropped, the image moved,
+  an unquoted version number) each fail it.
+- After the fixes, the official 3.11 and 3.14 images ran 1865 tests: no failures, 9 skipped; ruff, 34
+  contracts and mypy pass.
+- The first run of the matrix on GitHub's runners is the pull request that introduced it; its result
+  is recorded in that pull request.
+- Not done, as decided: the `main` ruleset was left alone in this change (see Follow-ups).
