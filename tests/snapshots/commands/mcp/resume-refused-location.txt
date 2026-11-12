@@ -1,0 +1,5 @@
+status: error
+--- message
+REFUSED: Fit rating is Pass — refusing to generate resume/cover letter.
+Outside job-search constraints — Quebec-based role (Montreal, QC) — Quebec is excluded. Skills alone would rate Strong: All 9 required skills covered (0 course/portfolio-only); 4 nice-to-have(s) present.
+This role is outside the job-search location rules (an excluded region, on-site or hybrid outside the home city, Atlantic-only remote, or French required). Skills are not the blocker, and this cannot be confirmed past.

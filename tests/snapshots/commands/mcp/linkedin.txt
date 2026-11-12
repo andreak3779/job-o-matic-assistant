@@ -1,0 +1,57 @@
+status: ok
+--- text
+Wrote <TMP>/out/li.raw-inputs.json
+Wrote <TMP>/out/li.md
+Wrote <TMP>/out/li.md.meta.json
+--- resource name=li.raw-inputs.json mime=application/json kind=text
+{
+  "note": "Pre-heuristic source data for the sections of the draft built with heuristics rather than real judgment: Step 3's portfolio-repo hooks and the full set of derived skill candidates (the draft's Step 4 uses the curated list in SKILL.md instead, since the derived set is several hundred terms). An LLM refining the draft should re-derive from this raw data directly rather than trusting the heuristic output.",
+  "portfolio_projects": [
+    {
+      "visibility": null,
+      "name": "CookingTime",
+      "url": "https://github.com/example-user/CookingTime",
+      "stack": [
+        "C#",
+        ".NET 10"
+      ],
+      "description": "Legacy modernization demo.",
+      "skills_evidence": [],
+      "repo_private": false
+    }
+  ],
+  "technical_skills_categories": {
+    "Backend Development": "C#, ASP.NET Core, .NET Framework, Entity Framework Core, LINQ, Web API, REST, dependency injection, event-driven architecture, microservices, distributed systems, OOP, design patterns, SOLID principles, secure development, async/await, service-oriented architecture",
+    "Frontend & UI": "Angular (v12+), React frontend development, TypeScript, RxJS, Angular Material, HTML, CSS/SASS, Jest",
+    "Database & SQL": "SQL Server, relational databases, T-SQL, DB2, query optimization, Entity Framework migrations",
+    "Cloud & Azure": "Azure App Service, Azure Functions, Azure Monitor, monitoring and observability, infrastructure as code, Bicep, Terraform, PowerShell and Python scripting for automation, Azure DevOps Pipelines, Azure Application Insights, Azure AD",
+    "DevOps & CI/CD": "Docker, GitLab CI, Azure Pipelines, SonarQube, code review process ownership",
+    "Testing": "xUnit, Moq, xUnit testing, integration testing, Jest, integration testing, test coverage improvement initiatives",
+    "Project Management & Agile": "GitHub Copilot, prompt engineering, Terraform on Azure, Scrum, sprint planning, story pointing, cross-functional stakeholder coordination"
+  }
+}
+--- resource name=li.md mime=text/markdown kind=text
+<!-- GENERATED DRAFT — regenerate via the generate_linkedin MCP tool / update_linkedin_profile skill.
+     Reflects the public profile data (hash 33ac30321d87). -->
+
+# LinkedIn Profile Update Draft
+
+## Character Limits
+| Field | Limit | Notes |
+|---|---|---|
+| Headline | 220 chars | Compute the actual length of the rendered headline at generation time — do not rely on a stored count, it drifts. |
+| About | 2,600 chars | Compute the actual length of the rendered About text (Step 1, after fragments are substituted) at generation time. |
+... (192 lines in all)
+--- resource name=li.md.meta.json mime=application/json kind=text
+{
+  "generated_at": "<NOW>",
+  "script": "generate_linkedin.py",
+  "profile_hash": "<HASH>",
+  "inputs": [],
+  "fit_rating": null,
+  "command": "<COMMAND>",
+  "evidence_sources": [
+    "CookingTime"
+  ],
+  "warnings": []
+}

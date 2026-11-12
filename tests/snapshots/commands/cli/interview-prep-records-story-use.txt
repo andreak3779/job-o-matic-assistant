@@ -1,0 +1,8 @@
+exit: 0
+--- stdout
+STAR story 'Example pipeline ownership (Example Co)': last_used -> <MONTH-YEAR>; used for Northgate Insurance Group — Senior Full-Stack .NET Developer
+STAR story 'Example cloud migration (Example Co)': last_used -> <MONTH-YEAR>; used for Northgate Insurance Group — Senior Full-Stack .NET Developer
+Wrote <TMP>/out/prep.docx
+Wrote <TMP>/out/prep.docx.meta.json
+--- stderr
+

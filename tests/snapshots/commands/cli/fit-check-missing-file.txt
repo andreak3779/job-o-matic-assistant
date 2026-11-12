@@ -1,0 +1,5 @@
+exit: 1
+--- stdout
+
+--- stderr
+ERROR: JD file not found: <TMP>/work/missing.md. Check the spelling of the path.

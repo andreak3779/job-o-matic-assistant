@@ -1,0 +1,27 @@
+status: ok
+--- text
+Wrote <TMP>/out/ps.md
+Wrote <TMP>/out/ps.md.meta.json
+--- resource name=ps.md mime=text/markdown kind=text
+<!-- GENERATED DRAFT — regenerate via the generate_pluralsight MCP tool / update_pluralsight_profile skill.
+     Reflects the public profile data (hash 33ac30321d87). -->
+
+# Pluralsight Profile Update Draft
+
+## Character Limits
+| Field | Limit | Notes |
+|---|---|---|
+| Bio / Tagline | ~150 chars (practical target) | Pluralsight doesn't publish a hard limit for this field — keep it to one sentence that reads well under the name. |
+
+... (35 lines in all)
+--- resource name=ps.md.meta.json mime=application/json kind=text
+{
+  "generated_at": "<NOW>",
+  "script": "generate_pluralsight.py",
+  "profile_hash": "<HASH>",
+  "inputs": [],
+  "fit_rating": null,
+  "command": "<COMMAND>",
+  "evidence_sources": [],
+  "warnings": []
+}

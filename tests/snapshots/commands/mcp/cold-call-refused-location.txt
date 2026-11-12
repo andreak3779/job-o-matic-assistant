@@ -1,0 +1,4 @@
+status: error
+--- message
+REFUSED: This role is outside the job-search location rules — refusing to generate: Quebec-based role (Montreal, QC) — Quebec is excluded.
+Skills are not the blocker. Run fit-check for the full breakdown.

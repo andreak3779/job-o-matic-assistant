@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+Wrote <TMP>/out/li.raw-inputs.json
+Wrote <TMP>/out/li.md
+Wrote <TMP>/out/li.md.meta.json
+--- stderr
+

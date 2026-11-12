@@ -1,0 +1,27 @@
+status: ok
+--- text
+Wrote <TMP>/out/jb.md
+Wrote <TMP>/out/jb.md.meta.json
+--- resource name=jb.md mime=text/markdown kind=text
+<!-- GENERATED DRAFT — regenerate via the generate_job_board MCP tool / update_job_board_profiles skill.
+     Reflects the public profile data (hash 33ac30321d87). -->
+
+# Indeed & ZipRecruiter Profile Update Draft
+
+## Character Limits
+| Field | Limit | Notes |
+|---|---|---|
+| Headline / Job title | ~100 chars (practical target) | Neither platform publishes a hard limit — keep it scannable in a search-results row. |
+| Summary / About | ~1,000–1,500 chars (practical target) | No published cap; shorter than LinkedIn's 2,600 since these surfaces show a preview in job-search contexts. |
+... (52 lines in all)
+--- resource name=jb.md.meta.json mime=application/json kind=text
+{
+  "generated_at": "<NOW>",
+  "script": "generate_job_board.py",
+  "profile_hash": "<HASH>",
+  "inputs": [],
+  "fit_rating": null,
+  "command": "<COMMAND>",
+  "evidence_sources": [],
+  "warnings": []
+}

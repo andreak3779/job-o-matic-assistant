@@ -1,0 +1,5 @@
+status: error
+--- message
+REFUSED: DUPLICATE — already applied to this posting 0 day(s) ago (Northgate Insurance Group, Senior Full-Stack .NET Developer; status applied; id <TODAY>_northgate-insurance-group_senior-full-stack-net-developer).
+Not generating: a cold re-application days or weeks after the first reads as a duplicate. Tell the user, and offer a warmer route (a referral or direct recruiter contact) or skipping it.
+Only if the user says so, run again with confirm_reapply (command line: --confirm-reapply; tool: confirm_reapply=true).

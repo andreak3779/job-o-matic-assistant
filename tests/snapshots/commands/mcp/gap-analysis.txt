@@ -1,0 +1,15 @@
+status: ok
+--- text
+Wrote <TMP>/out/gap.md
+--- text
+### gap.md
+
+# Gap Analysis: Senior Full-Stack .NET Developer
+**Northgate Insurance Group — Springfield, MD (Hybrid)** · <MONTH-YEAR>
+
+## Overall Fit: Strong
+All 9 required skills covered (0 course/portfolio-only); 4 nice-to-have(s) present.
+
+## Summary Table
+| Requirement | Status | Evidence |
+... (70 lines in all)

@@ -1,0 +1,6 @@
+exit: 0
+--- stdout
+Wrote <TMP>/out/gh.md
+Wrote <TMP>/out/gh.md.meta.json
+--- stderr
+

@@ -1,0 +1,5 @@
+exit: 0
+--- stdout
+<SCRATCH>/vault/outputs/applications/<TODAY>_northgate-insurance-group_senior-full-stack-net-developer
+--- stderr
+

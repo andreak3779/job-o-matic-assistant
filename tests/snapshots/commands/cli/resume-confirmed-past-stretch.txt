@@ -1,0 +1,8 @@
+exit: 0
+--- stdout
+Fit Rating: Stretch — A core requirement has no evidence; coverage 68% of 8 required skills. Core gap(s): rust. 1 other gap(s).
+Note: Proceeding past a Stretch rating at the user's request. A core requirement has no evidence; coverage 68% of 8 required skills. Core gap(s): rust. 1 other gap(s).
+Wrote <TMP>/out/resume.docx
+Wrote <TMP>/out/resume.docx.meta.json
+--- stderr
+

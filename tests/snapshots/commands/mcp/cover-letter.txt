@@ -1,0 +1,27 @@
+status: ok
+--- text
+Fit Rating: Strong — All 9 required skills covered (0 course/portfolio-only); 4 nice-to-have(s) present.
+Logged as drafted (not applied): application <TODAY>_northgate-insurance-group_senior-full-stack-net-developer
+Wrote <TMP>/out/cover.docx
+Wrote <TMP>/out/cover.docx.meta.json
+--- resource name=cover.docx mime=application/vnd.openxmlformats-officedocument.wordprocessingml.document kind=blob
+non-empty
+--- text
+### cover.docx.meta.json
+
+{
+  "generated_at": "<NOW>",
+  "script": "generate_cover_letter.py",
+  "profile_hash": "<HASH>",
+  "inputs": [
+    "<REPO>/tests/fixtures/strong-fit-jd.md"
+  ],
+  "fit_rating": "Strong",
+  "command": "<COMMAND>",
+  "evidence_sources": [
+    "Aerotech Industries Ltd.",
+    "Meridian Benefits Group",
+    "Vantage Technology Solutions"
+  ],
+  "warnings": []
+}

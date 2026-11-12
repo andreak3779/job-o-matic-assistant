@@ -1,0 +1,26 @@
+status: ok
+--- text
+Wrote <TMP>/out/cold.docx
+Wrote <TMP>/out/cold.docx.meta.json
+--- resource name=cold.docx mime=application/vnd.openxmlformats-officedocument.wordprocessingml.document kind=blob
+non-empty
+--- text
+### cold.docx.meta.json
+
+{
+  "generated_at": "<NOW>",
+  "script": "generate_cold_call_letter.py",
+  "profile_hash": "<HASH>",
+  "inputs": [
+    "<REPO>/tests/fixtures/strong-fit-jd.md"
+  ],
+  "fit_rating": "Strong",
+  "command": "<COMMAND>",
+  "evidence_sources": [
+    "CookingTime",
+    "Full-stack depth",
+    "Legacy modernization",
+    "SQL Server"
+  ],
+  "warnings": []
+}

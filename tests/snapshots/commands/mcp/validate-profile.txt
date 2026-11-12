@@ -1,0 +1,9 @@
+status: ok
+--- text
+[WARNING] coursework_summary: says 10 Azure courses, the imported learning data has 0
+[WARNING] coursework_summary: says 2 Azure labs, the imported learning data has 0
+[WARNING] identity.differentiators: says 5 GitHub Copilot courses, the imported learning data has 0
+[WARNING] identity.differentiators: says 3 leadership/communication courses, the imported learning data has 0
+[WARNING] identity.differentiators: says 10 completed Pluralsight courses, the imported learning data has 20
+[WARNING] identity.differentiators: says 1 completed Pluralsight labs, the imported learning data has 3
+[OK] Profile valid: 6 roles, 2 certifications, 1 projects, 3 stories, 6 warning(s)
