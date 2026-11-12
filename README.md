@@ -197,7 +197,7 @@ This points `core.hooksPath` at `scripts/hooks`, so the tracked hooks *are* the 
 
 - **On `git commit`** (`pre-commit`, about 6 seconds) everything except the tests: the staged-file guard (generated output, `.docx`, `.pyc`, un-templated `private/` files), `scripts/check_private_values.py` (a private salary minimum or a personal identifier written in a tracked file), byte-compile, `ruff check` and `ruff format --check`, `check_skill_hardcoding.py`, `jobo profile validate`, `lint-imports` and `mypy src`. The vault-dependent checks are skipped when no vault is found.
 - **On `git push`** (`pre-push`, about as long as the test suite, about a minute and a half) a leak audit of the commits being pushed (`scripts/check_pushed_commits.py`: the lines each commit adds, its author and its message, against the vault's personal-terms list, ignoring case), then the whole `pytest` suite. The tests run on your working tree, so commit or stash first. The audit can also be run by hand: `python scripts/check_pushed_commits.py --range origin/main..HEAD`.
-- **In CI** the code checks run again without a vault, and decide whether a pull request can merge.
+- **In CI** the code checks run again without a vault, and decide whether a pull request can merge: the five CI jobs are required checks on `main`, so the job names in `ci.yml` and the repository ruleset must change together.
 
 A commit can contain a failing test, because the suite runs at push, not at commit. `git commit --no-verify` and `git push --no-verify` skip the hooks. Skipping the commit hook is cheap to undo; skipping the push hook is not, because the repository is public and nothing else checks for a leak.
 

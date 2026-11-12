@@ -88,6 +88,10 @@ What was found when each step was timed (on `main`, 2026-11-12, 1805 tests):
 
 ## Follow-ups
 
+- CI was a convention, not a gate, when this was written: the `main` ruleset required no status
+  checks. [ADR 0033](0033-python-version-support-and-ci-matrix.md) made the five CI jobs required
+  checks afterwards, so CI now gates merges, the admin bypass aside.
+
 - Parallel tests, the per-test vault copy (about 16 seconds) and marking the two LibreOffice tests
   are measured above and left for later.
 
