@@ -1,4 +1,4 @@
-"""Smoke tests for the claude_jobs CLI commands."""
+"""Smoke tests for the ``jobo`` commands."""
 
 from __future__ import annotations
 

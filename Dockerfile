@@ -14,7 +14,7 @@ COPY tests ./tests
 COPY .claude/skills ./.claude/skills
 COPY README.md ./README.md
 
-# This image only ever runs the MCP server (src/jobomatic/interfaces/mcp/server.py -> src/jobomatic/interfaces/cli/main.py).
+# This image only ever runs the MCP server (src/jobomatic/interfaces/mcp/server.py, which calls the commands directly).
 # Every document is generated in Python (python-docx, installed by the `docx` extra below);
 # nothing in the project needs Node.js.
 # Versions are pinned by requirements-lock.txt (pip constraints). Dev tooling

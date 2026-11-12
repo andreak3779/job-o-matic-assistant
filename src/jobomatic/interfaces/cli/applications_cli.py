@@ -1,4 +1,4 @@
-"""``applications`` and ``constraints`` subcommands for the claude-jobs CLI.
+"""``applications`` and ``constraints`` subcommands for the ``jobo`` command line.
 
 Kept out of ``src/jobomatic/interfaces/cli/main.py`` so that file stays a thin dispatcher; it calls
 ``register`` while building its parser and ``run`` to dispatch.

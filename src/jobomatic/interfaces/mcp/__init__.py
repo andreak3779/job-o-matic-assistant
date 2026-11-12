@@ -1,1 +1,1 @@
-"""MCP server exposing the claude-jobs CLI to MCP clients (e.g. Claude Desktop)."""
+"""MCP server exposing the job-o-matic commands to MCP clients (e.g. Claude Desktop)."""
