@@ -174,12 +174,12 @@ The suite covers profile loading, the fit engine, JD parsing, and CLI smoke test
 
 ## CI
 
-`.github/workflows/ci.yml` runs on Python 3.11 with the pinned `requirements-lock.txt`:
+`.github/workflows/ci.yml` has two jobs, both installing the pinned `requirements-lock.txt` ([ADR 0033](docs/adr/0033-python-version-support-and-ci-matrix.md)):
 
-1. `ruff check` and `ruff format --check`
-2. `lint-imports`, the architecture rules (module layers, core/adapter boundaries, library boundaries)
-3. `mypy src`
-4. the `pytest` suite
+1. **Lint, contracts and types**, on Python 3.11 only (none of these can differ by interpreter): `ruff check` and `ruff format --check`, `lint-imports` (the architecture rules: module layers, core/adapter boundaries, library boundaries) and `mypy src`.
+2. **Tests**, the `pytest` suite on each supported Python: **3.11, 3.12, 3.13 and 3.14**. `requires-python` is `>=3.11` with no upper bound; a new Python release is a line in the matrix and in the classifiers, and a test fails if only one is edited.
+
+Only editable installs (the kind `scripts/setup.sh` makes) are supported: the code finds `skills/`, `reference/`, `templates/` and `demo-vault/` next to the checkout.
 
 CI has no access to the private vault, so tests use a throwaway vault built from the fictional demo data. Checks that need the real vault (`profile validate`, `scripts/check_skill_hardcoding.py`) run in the commit hook; the golden-output comparison (`scripts/golden_outputs.py compare`) is run by hand after a refactor.
 
