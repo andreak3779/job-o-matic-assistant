@@ -13,11 +13,10 @@ See ``generate_linkedin.py`` for the fuller version of this pattern.
 from __future__ import annotations
 
 import argparse
-import sys
-from datetime import date
 from pathlib import Path
 
-from jobomatic import bootstrap, paths
+from jobomatic import paths
+from jobomatic.presence.draft import DraftData, write_draft
 from jobomatic.presence.resume_freshness import resume_freshness_lines
 from jobomatic.presence.skill_text import (
     curated_tags,
@@ -28,7 +27,8 @@ from jobomatic.presence.skill_text import (
 )
 from jobomatic.profile.copy_fragments import compute_copy_fragments
 from jobomatic.profile.model import PresenceView
-from jobomatic.provenance import profile_hash, write_sidecar
+from jobomatic.provenance import profile_hash
+from jobomatic.results import CommandResult, emit
 
 ROOT = paths.code_root()
 SKILL_PATH = ROOT / "skills" / "update_jobgether_profile" / "SKILL.md"
@@ -134,6 +134,17 @@ def _build_draft(view: PresenceView, skill_text: str) -> tuple[str, list[str]]:
     return "\n".join(sections), warnings
 
 
+def run(out: Path | None = None) -> CommandResult[DraftData]:
+    """Write the jobgether profile draft and its sidecar (ADR 0028)."""
+    return write_draft(
+        platform="jobgether",
+        script="generate_jobgether.py",
+        skill_path=SKILL_PATH,
+        build=_build_draft,
+        out=out,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="generate-jobgether", description="Generate Jobgether profile copy"
@@ -142,45 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         "--out", type=Path, help="Output markdown file (default: jobgether-profile-update-draft.md)"
     )
     args = parser.parse_args(argv)
-
-    if not SKILL_PATH.is_file():
-        print(f"ERROR: SKILL.md not found: {SKILL_PATH}", file=sys.stderr)
-        return 1
-    try:
-        view = bootstrap.load_presence_view()
-    except FileNotFoundError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
-
-    skill_text = SKILL_PATH.read_text(encoding="utf-8")
-    content, warnings = _build_draft(view, skill_text)
-
-    out_file = (
-        args.out
-        or paths.output_dir("profiles", platform="jobgether") / f"{date.today().isoformat()}.md"
-    )
-    try:
-        out_file.parent.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        print(f"ERROR: cannot create output directory {out_file.parent}: {exc}", file=sys.stderr)
-        return 1
-    try:
-        out_file.write_text(content, encoding="utf-8")
-    except OSError as exc:
-        print(f"ERROR: cannot write output file {out_file}: {exc}", file=sys.stderr)
-        return 1
-
-    sidecar = write_sidecar(
-        out_file,
-        script="generate_jobgether.py",
-        profile=view,
-        inputs=[],
-        evidence_sources=[],
-        warnings=warnings,
-    )
-    print(f"Wrote {out_file}")
-    print(f"Wrote {sidecar}")
-    return 0
+    return emit(run(args.out))
 
 
 if __name__ == "__main__":

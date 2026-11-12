@@ -12,11 +12,13 @@ from pathlib import Path
 from typing import Any
 
 from jobomatic import gate
+from jobomatic.applications import outputs
 from jobomatic.documents.service import DocumentError
 from jobomatic.fit.terms import extract_skill_terms
 from jobomatic.paths import VaultError, not_found_message
 from jobomatic.profile.model import Profile
 from jobomatic.profile.service import ProfileError
+from jobomatic.results import Message
 
 
 def story_mentions(text: str, term: str) -> bool:
@@ -137,6 +139,12 @@ def check_gate(
     for note in notes:
         print(f"Note: {note}")
     return None
+
+
+def logged_messages(located: outputs.Located) -> tuple[Message, ...]:
+    """What ``outputs.report`` printed, as a message: which log entry a document was filed under."""
+    note = outputs.logged_note(located)
+    return (Message("info", note),) if note else ()
 
 
 def print_wrote(*paths: Path) -> None:

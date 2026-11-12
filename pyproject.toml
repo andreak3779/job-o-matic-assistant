@@ -414,7 +414,7 @@ name = "Presence: the five generators are independent and share only the helpers
 type = "layers"
 layers = [
     "jobomatic.presence.github | jobomatic.presence.job_board | jobomatic.presence.jobgether | jobomatic.presence.linkedin | jobomatic.presence.pluralsight",
-    "jobomatic.presence.resume_freshness | jobomatic.presence.skill_text",
+    "jobomatic.presence.draft | jobomatic.presence.resume_freshness | jobomatic.presence.skill_text",
 ]
 
 [[tool.importlinter.contracts]]
