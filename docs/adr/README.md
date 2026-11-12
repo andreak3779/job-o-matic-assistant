@@ -38,3 +38,11 @@ status below says so.
 | [0022](0022-umbrella-skills-scored-by-their-parts.md) | Umbrella skills such as AI are scored by evidence in their parts | Accepted |
 | [0023](0023-soft-skills-are-a-separate-unscored-block.md) | Soft skills are a separate block that is listed but not scored | Accepted |
 | [0024](0024-resume-page-budget.md) | The deterministic resume is trimmed to a page budget, and real pages are measured on request | Accepted |
+| [0026](0026-guided-setup-and-pre-1-0-status.md) | Setup is one guided path with scripts, and the project says it is pre-1.0 | Accepted |
+| [0027](0027-relative-paths-resolve-against-the-current-folder.md) | Relative paths resolve against the current folder, and the error says where it looked | Accepted |
+| [0028](0028-structured-command-results-for-cli-and-mcp.md) | Commands return structured results that the CLI and the MCP server render, instead of the MCP server reading printed output | Proposed (problem statement only) |
+| [0029](0029-remove-the-legacy-explicit-root-layout.md) | Remove the legacy explicit-root layout from the path module and the commands | Proposed (problem statement only) |
+| [0030](0030-finish-the-claude-jobs-rename.md) | Finish the rename from claude-jobs to job-o-matic: command alias, environment variables, docstrings | Proposed (problem statement only) |
+| [0031](0031-one-canonical-skills-location.md) | One canonical location for the skills, so the MCP server does not depend on symlinks | Proposed (problem statement only) |
+| [0032](0032-tiered-git-hooks.md) | Tiered git hooks: a fast check on commit, the full suite on push and in CI | Proposed (problem statement only) |
+| [0033](0033-python-version-support-and-ci-matrix.md) | Which Python versions are supported, and what CI tests | Proposed (problem statement only) |

@@ -9,6 +9,12 @@ description = "Deterministic job-search automation toolkit"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
+# "Alpha" is the nearest value PyPI offers for "pre-1.0, in active development" (ADR 0026).
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
 authors = [
     {name = "job-o-matic contributors"}
 ]

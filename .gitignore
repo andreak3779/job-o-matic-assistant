@@ -28,3 +28,8 @@ private/*
 
 # Personal skill that lives in the private vault; each machine links it locally.
 .claude/skills/part_time_retail_resume_and_cover_letter
+
+# Trying the demo vault in place writes its applications log and outputs here. Use a copy instead
+# (docs/setup.md); this only stops those files being committed by accident.
+demo-vault/applications/
+demo-vault/outputs/

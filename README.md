@@ -8,6 +8,8 @@
 
 A rule-based job-search toolkit for one person's search. It rates a job posting against a typed profile, refuses weak or duplicate applications unless you confirm, and drafts tailored documents for you to review and send yourself.
 
+> **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee. Commit and push your vault before you update.
+
 **What this is**
 
 - A command line (`jobo`), an MCP server for Claude Desktop, and skills for Claude Code, all running the same code.
@@ -21,11 +23,14 @@ A rule-based job-search toolkit for one person's search. It rates a job posting 
 - Not an applicant-screening tool. It serves the candidate's own go or no-go decision ([responsible use](docs/RESPONSIBLE_USE.md)).
 - Not a multi-user product. Personal data stays in a separate private repo ([privacy](docs/PRIVACY.md)).
 
-**Try it** (uses the fictional demo vault, no personal data):
+**Try it** (the fictional demo vault: no personal data). Not ready to install? [samples/](samples/README.md) shows real output.
 
 ```bash
-export JOBOMATIC_VAULT=$PWD/demo-vault
-jobo fit-check tests/fixtures/strong-fit-jd.md        # rating: Strong
+git clone https://github.com/andreak3779/job-o-matic-assistant.git && cd job-o-matic-assistant
+bash scripts/setup.sh                                     # Debian, Ubuntu and relatives; a minute or two
+source .venv/bin/activate
+export JOBOMATIC_VAULT="$PWD/demo-vault"
+jobo fit-check tests/fixtures/strong-fit-jd.md            # rating: Strong
 jobo generate-resume tests/fixtures/data-engineer-jd.md   # refused: the skills do not match
 ```
 
@@ -33,7 +38,9 @@ The second command exits with status 2 and a `REFUSED:` message. The refusal is 
 
 **Stack.** Python, because this is command-line and MCP tooling. My .NET work is in [CookingTime](https://github.com/andreak3779/CookingTime), a .NET 10 migration with Clean Architecture and tests. Sample output for a fictional person is in [samples/](samples/README.md).
 
-**Status.** Working, and used by its author for a live job search. The decisions behind it are in [docs/adr/](docs/adr/), what it guarantees in [docs/TRUTHFULNESS.md](docs/TRUTHFULNESS.md), and where its edges are in [docs/LIMITS.md](docs/LIMITS.md) and [docs/SCOPE.md](docs/SCOPE.md).
+**Status.** Pre-1.0, as the note at the top says: it works for its author's live job search, and its interfaces can still change. The decisions behind it are in [docs/adr/](docs/adr/), what it guarantees in [docs/TRUTHFULNESS.md](docs/TRUTHFULNESS.md), and where its edges are in [docs/LIMITS.md](docs/LIMITS.md) and [docs/SCOPE.md](docs/SCOPE.md).
+
+**Reviewing this project?** Start with [how it was built](docs/HOW_THIS_WAS_BUILT.md), the [architecture](docs/architecture.md) and the [decision records](docs/adr/), then see the [sample output](samples/README.md) and [what it does not do](docs/LIMITS.md).
 
 ## Architecture
 
@@ -77,107 +84,29 @@ The conventions Claude follows when using them are in [CLAUDE.md](CLAUDE.md).
 
 The profile is edited by hand (or by Claude, then checked) as YAML in the vault's `profile/` folder; there is no build step. `jobo profile validate` loads it and runs its consistency checks, `profile show facts|full|section ...` prints it as markdown for skills (`--public` for the public view), and `profile schema` prints the JSON Schema generated from the models.
 
-## Fresh OS install
+## Install
 
-The full, tested checklist is [docs/new-laptop-setup.md](docs/new-laptop-setup.md): system tools,
-clone, install, the demo vault, your own vault, the commit hook, Claude Code and Desktop, page checks
-with LibreOffice, evidence search with Ollama, and keeping two machines in step. The short version
-is below.
+The full guide, with what you should see at each step, is [docs/setup.md](docs/setup.md). The short
+version, on Debian, Ubuntu or a system built on them:
 
-Start here after a clean OS install/reimage. The toolchain is Python only. See the diagram
-below, then follow the numbered steps for your use case.
-
-```mermaid
-%%{init: {'theme': 'base'}}%%
-flowchart TB
-    subgraph Always["Always required"]
-        PY["Python 3.11+"]
-        VENV["repo-root .venv<br/>pip install -e '.[docx,parser,yaml,schema,pdf]'"]
-        PY --> VENV
-    end
-
-    VENV --> CLI["CLI usable<br/>src/jobomatic/interfaces/cli/main.py<br/>(profile, fit-check, generate-resume, render, ...)"]
-    VENV -->|"+ mcp extra"| MCP["MCP server usable<br/>src/jobomatic/interfaces/mcp/server.py<br/>(Claude Desktop / container)"]
+```bash
+sudo apt install -y git python3 python3-venv python3-pip     # once
+git clone https://github.com/andreak3779/job-o-matic-assistant.git
+cd job-o-matic-assistant
+bash scripts/setup.sh
 ```
 
-1. **Python 3.11+** — check with `python3 --version`. On Debian/Ubuntu the
-   venv module ships separately: `sudo apt install python3-venv` if step 2
-   fails.
-2. **Python setup** — see [CLI → Setup](#setup) below. Installs the
-   package and its dependencies (`docx`, `parser`, `yaml`, `schema`,
-   `pdf` extras) into `.venv/`.
-3. **MCP server (optional, only if you use Claude Desktop)** — see
-   [src/jobomatic/interfaces/mcp/README.md](src/jobomatic/interfaces/mcp/README.md#install). Adds the `mcp` extra
-   on top of step 2's venv. `.mcp.json` at the repo root uses a path relative
-   to the repo (`.venv/bin/python3`), so Claude Code can launch the MCP server
-   on any machine as long as the venv is at `.venv/` and Claude Code is opened
-   from the repo root. `claude_desktop_config.json` (a separate file, only
-   needed for Claude Desktop rather than Claude Code) holds absolute paths for
-   the machine it was written on — see [src/jobomatic/interfaces/mcp/README.md → Wire up Claude
-   Desktop](src/jobomatic/interfaces/mcp/README.md#wire-up-claude-desktop).
-4. **Your vault** — the private repo with your profile, applications log and outputs. Clone it
-   next to this checkout (`../job-o-matic-vault`) or point `JOBOMATIC_VAULT` at it. For a trial
-   run, `export JOBOMATIC_VAULT=$PWD/demo-vault` uses the fictional one. The `parser` extra
-   (Pluralsight importer) and `pdf` extra (learning-plan PDFs) are already in step 2's command.
-5. **Pre-commit hook (optional but recommended)** —
-   `bash scripts/install-hooks.sh` from the repo root. See
-   [Local pre-commit hook](#local-pre-commit-hook)
-   below.
+`setup.sh` builds `.venv`, installs the packages and runs the demo vault. It never uses `sudo` and
+never touches your data. In every new terminal, run `source .venv/bin/activate` first.
+`bash scripts/check-setup.sh` reports what is and is not working.
+
+Your own data lives in a separate private **vault** repository next to this one
+([Part 2](docs/setup.md#part-2-your-own-vault)). Claude Code and Desktop, page counts and evidence
+search are optional ([Part 3](docs/setup.md#part-3-optional-extras)).
 
 ## CLI
 
-### Setup
-
-Requires Python 3.11+ — check with `python3 --version` first (see step 1
-above if it's missing or too old).
-
-**1. Navigate to the repo root:**
-
-```bash
-cd /path/to/job-o-matic-assistant
-```
-
-**2. Create the virtual environment:**
-
-```bash
-python3 -m venv .venv
-```
-
-**3. Install the package in editable mode with its extras:**
-
-```bash
-.venv/bin/pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
-```
-
-Editable mode (`-e`) is required, not optional — the commands below won't
-import (`ModuleNotFoundError`) without it, since the package lives under `src/` and
-is found through the editable install, not a bare `PYTHONPATH`. The extras install:
-
-- `parser` (beautifulsoup4, lxml, orjson) — reads the Pluralsight history page and Microsoft Learn pages you save, to import completed courses
-- `pdf` (reportlab) — required by `generate-learning-plan`
-- `mcp` — the Claude Desktop server
-- `dev`, `lint` — pytest, ruff, mypy and import-linter
-
-`mcp` is only for the Claude Desktop server (see
-[src/jobomatic/interfaces/mcp/README.md](src/jobomatic/interfaces/mcp/README.md)), and `dev,lint`
-for the tests and the commit hook; leave them out for a minimal install. `-c requirements-lock.txt`
-pins the tested versions. `docx`, `yaml` and `schema` are core dependencies now, so they need no
-extra.
-
-**4. Verify the install:**
-
-```bash
-.venv/bin/python3 -c "import docx, bs4, yaml, jsonschema, reportlab; print('deps OK')"
-```
-
-If this prints `deps OK`, you're set. A `ModuleNotFoundError` here means the
-install in step 3 didn't complete — scroll up for the failing package and
-retry.
-
-**5. Activate the venv** (`source .venv/bin/activate`) so `jobo` is on your PATH, or run
-`.venv/bin/jobo`. `python -m jobomatic` does exactly the same as `jobo` without the venv on PATH.
-
-The command line lives in [src/jobomatic/interfaces/cli/main.py](src/jobomatic/interfaces/cli/main.py). From anywhere:
+The command line lives in [src/jobomatic/interfaces/cli/main.py](src/jobomatic/interfaces/cli/main.py). With the virtual environment active, `jobo` works from any folder (a relative file path starts from the folder you are in):
 
 ```bash
 jobo profile validate                    # load the profile and run its consistency checks
@@ -234,17 +163,11 @@ Two pieces of job-search state sit beside the fit engine (ADRs [0010](docs/adr/0
 
 ### Tests
 
-Requires the `dev` and `mcp` extras on top of [Setup](#setup) above —
-`test_mcp_server.py` imports the `mcp` package directly:
+`bash scripts/setup.sh` installs the test tools and the `mcp` package by default (skip them with
+`--no-dev`). Run the full suite with:
 
 ```bash
-.venv/bin/pip install -e ".[dev,mcp]"
-```
-
-Run the full suite with:
-
-```bash
-python3 -m pytest tests/ -q
+.venv/bin/python -m pytest tests/ -q      # about a minute
 ```
 
 The suite covers profile loading, the fit engine, JD parsing, and CLI smoke tests for `fit-check`, `gap-analysis`, and all five profile-update generators (`generate-linkedin`, `generate-github`, `generate-jobgether`, `generate-job-board`, `generate-pluralsight`).
@@ -270,7 +193,7 @@ One-time setup:
 bash scripts/install-hooks.sh
 ```
 
-This points `core.hooksPath` at `scripts/hooks`, so the tracked hook *is* the active hook and edits to it take effect immediately (no copy to re-install). It runs on every `git commit` and blocks it if any of these fail: the staged-file guard (generated output, `.docx`, `.pyc`, un-templated `private/` files), `scripts/check_private_values.py` (a private salary minimum retyped into a tracked file), byte-compile, `ruff check` and `ruff format --check`, `check_skill_hardcoding.py`, `jobo profile validate`, `lint-imports`, `mypy src`, and the pytest suite (about forty seconds). The vault-dependent checks are skipped when no vault is found. Bypass with `git commit --no-verify` only if you're deliberately committing through a known failure.
+This points `core.hooksPath` at `scripts/hooks`, so the tracked hook *is* the active hook and edits to it take effect immediately (no copy to re-install). It runs on every `git commit` and blocks it if any of these fail: the staged-file guard (generated output, `.docx`, `.pyc`, un-templated `private/` files), `scripts/check_private_values.py` (a private salary minimum retyped into a tracked file), byte-compile, `ruff check` and `ruff format --check`, `check_skill_hardcoding.py`, `jobo profile validate`, `lint-imports`, `mypy src`, and the pytest suite (about a minute). The vault-dependent checks are skipped when no vault is found. Bypass with `git commit --no-verify` only if you're deliberately committing through a known failure.
 
 ## Learning-plan PDFs
 

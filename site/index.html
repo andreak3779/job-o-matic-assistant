@@ -123,6 +123,7 @@ footer { margin-top: 60px; padding: 28px 0 40px; border-top: 2px solid var(--lin
 </header>
 
 <main class="wrap">
+  <div class="note" role="note" style="margin-top:28px"><p><strong>Pre-1.0 and in active development.</strong> It works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee.</p></div>
   <section aria-labelledby="what">
     <h2 id="what">What it does</h2>
     <p class="sub">One person's job search, made more honest and less repetitive.</p>
@@ -186,17 +187,16 @@ a stronger-fit posting.
   <section aria-labelledby="try-it">
     <h2 id="try-it">Try it</h2>
     <p class="sub">Uses the fictional demo vault. No personal data, no model calls.</p>
-<pre class="term"><span class="dim"># Python 3.11+</span>
+<pre class="term"><span class="dim"># Debian, Ubuntu and relatives; needs Python 3.11+</span>
 git clone https://github.com/andreak3779/job-o-matic-assistant.git
 cd job-o-matic-assistant
-python3 -m venv .venv
-.venv/bin/pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
+bash scripts/setup.sh
 source .venv/bin/activate
 
 export JOBOMATIC_VAULT=$PWD/demo-vault
 jobo fit-check tests/fixtures/strong-fit-jd.md          <span class="dim"># rating: Strong</span>
 jobo generate-resume tests/fixtures/data-engineer-jd.md <span class="dim"># refused: the skills do not match</span></pre>
-    <p class="cap">Full setup, including your own vault, is in the <a href="https://github.com/andreak3779/job-o-matic-assistant#readme">README</a>.</p>
+    <p class="cap">Full setup, including your own vault, is in the <a href="https://github.com/andreak3779/job-o-matic-assistant/blob/main/docs/setup.md">setup guide</a>.</p>
   </section>
 
   <section aria-labelledby="honest">

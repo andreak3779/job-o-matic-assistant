@@ -6,6 +6,8 @@ or any other MCP-capable app — can run fit checks, search the evidence in your
 own record, and generate application documents without a terminal. The server
 is registered as `job-o-matic`.
 
+> **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee. Commit and push your vault before you update.
+
 Every tool is a thin wrapper: it builds the same argv list the CLI itself
 uses and calls `jobomatic.main(argv)`, capturing stdout/stderr. No
 generation logic lives here — see `src/jobomatic/interfaces/cli/main.py` and the
@@ -43,10 +45,11 @@ gate before dispatching (see "Fit gate" below).
 | `search_evidence(query, k=3)` | `search <query> --k` over courses, labs, Microsoft Learn items and projects only — advisory (ADR 0012); needs the local Ollama service, and says "Evidence search skipped" without it. Resume bullets and interview stories are `local_only` (ADR 0019) and never returned, because a tool result goes to the model Claude Desktop talks to |
 | `profile_summary()` | `profile show --public facts` — headline, summary, certifications and skills; no contact details, nothing marked private |
 
-`jd`, `out`, and `role_json` paths may be absolute or relative to the repo
-root (path resolution is anchored to this file's location, not the
-process's working directory, same as the CLI). Prefer absolute paths from
-MCP clients since they don't have a reliable notion of "current directory."
+`jd`, `out`, and `role_json` paths may be absolute or relative. A relative
+path starts from the server process's current folder, exactly as on the
+command line ([ADR 0027](../../../../docs/adr/0027-relative-paths-resolve-against-the-current-folder.md)).
+Prefer absolute paths from MCP clients since they don't have a reliable notion
+of "current directory."
 For `generate_learning_plan`, this applies to the role config's own
 `"output"` key too — it's resolved relative to this server's working
 directory, so prefer an absolute path there as well.
@@ -133,110 +136,17 @@ generating documents. No other tool is gated this way.
 
 ## Install
 
-### Quick install (one command)
+The install steps are in one place: [docs/setup.md](../../../../docs/setup.md). The short version is
+`bash scripts/setup.sh` from the repository root, which installs the `mcp` package with everything
+else. Check it with `bash scripts/check-setup.sh`: it reports whether the MCP package is installed
+and whether `.mcp.json` can start the server.
 
-If you're familiar with Python and venv, here's the fastest way:
+**ModuleNotFoundError: No module named 'mcp'.** If Claude logs show this, the `mcp` package is
+missing from `.venv`. Run `bash scripts/setup.sh` again from the repository root, then restart Claude
+Desktop (it only reads its settings on startup).
 
-```bash
-cd /path/to/job-o-matic-assistant
-python3 -m venv .venv
-.venv/bin/pip install -e ".[mcp,parser,pdf]"
-.venv/bin/python3 -c "import mcp, docx, bs4, yaml, jsonschema, reportlab; print('deps OK')"
-```
-
-### Step-by-step install
-
-Follow these steps if this is a fresh OS install or you're setting up the
-project for the first time:
-
-**1. Check Python version**
-
-```bash
-python3 --version
-```
-
-You need Python 3.11 or newer. If you have an older version or Python isn't
-installed, install it first (or use your system's package manager).
-
-**2. Set up venv on Debian/Ubuntu (optional, but recommended)**
-
-If you're on Debian/Ubuntu, the venv module sometimes ships separately:
-
-```bash
-sudo apt install python3-venv
-```
-
-Skip this if you're on macOS or another distro — it's usually built-in.
-
-**3. Navigate to the repo root**
-
-```bash
-cd /path/to/job-o-matic-assistant
-```
-
-(Replace with your actual path — typically `/path/to/job-o-matic-assistant`)
-
-**4. Create the virtual environment**
-
-```bash
-python3 -m venv .venv
-```
-
-This creates a `.venv/` directory with an isolated Python environment. Wait
-for it to finish — it may take a minute.
-
-**5. Activate the venv and install dependencies**
-
-```bash
-.venv/bin/pip install -e ".[mcp,parser,pdf]"
-```
-
-This installs:
-
-- `mcp` (Model Context Protocol) — **required** for the MCP server
-- `docx` (python-docx) — for DOCX document generation
-- `parser` (beautifulsoup4, lxml, orjson) — for web scraping and data parsing
-- `yaml` (PyYAML) — for YAML file handling
-- `schema` (jsonschema) — for JSON schema validation
-- `pdf` (reportlab) — required for `generate_learning_plan`
-
-Wait for it to finish — this may take several minutes as it downloads and
-compiles packages.
-
-**6. Verify everything installed correctly**
-
-```bash
-.venv/bin/python3 -c "import mcp, docx, bs4, yaml, jsonschema, reportlab; print('deps OK')"
-.venv/bin/mcp version
-```
-
-If both commands print output (with "deps OK" in the first), you're ready to
-move on. If you see `ModuleNotFoundError`, something went wrong — scroll up to
-see which package failed to install, then see [Troubleshooting](#troubleshooting).
-
-**7. Next steps**
-
-- To try the server locally: see [Try it out (MCP Inspector)](#try-it-out-mcp-inspector)
-- To use it with Claude Desktop: see [Wire up Claude Desktop](#wire-up-claude-desktop)
-
-## Troubleshooting
-
-**ModuleNotFoundError: No module named 'mcp'**
-
-If Claude Desktop logs show `ModuleNotFoundError: No module named 'mcp'` when
-trying to use the MCP server, the `mcp` package is missing from your venv. Run
-the install command above from the repo root — it ensures all required
-dependencies, including `mcp`, are installed in `.venv/`:
-
-```bash
-.venv/bin/pip install -e ".[mcp,parser,pdf]"
-```
-
-After installing, restart Claude Desktop (it only reads the config on startup).
-
-If you've edited `claude_desktop_config.json` manually to point at your venv's
-Python, make sure you're pointing at the right path — typically
-`/path/to/job-o-matic-assistant/.venv/bin/python3` for this repo.
+If you edited `claude_desktop_config.json` by hand, point it at this repository's
+`.venv/bin/python3`, typically `/path/to/job-o-matic-assistant/.venv/bin/python3`.
 
 ## Try it out (MCP Inspector)
 
@@ -249,7 +159,7 @@ wiring up a client.
 
 ## Wire up Claude Desktop
 
-**Important:** Complete the [Install](#install) section first — Claude Desktop
+**Important:** Complete the [install](#install) first — Claude Desktop
 needs the dependencies to be installed in your venv before it can use the
 server.
 

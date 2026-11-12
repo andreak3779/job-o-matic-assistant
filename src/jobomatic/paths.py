@@ -50,6 +50,28 @@ def config_path() -> Path:
     return Path.home() / ".config" / "job-o-matic" / "config.toml"
 
 
+def not_found_message(path: Path, label: str = "File") -> str:
+    """The error for a file that is not there, in words that let a new user fix it.
+
+    A relative path starts from the current folder (ADR 0027), which is the usual reason a file
+    that exists is "not found", so the message names the full path it looked for and that folder.
+    """
+    short = f"{label} not found: {path}"
+    if path.is_absolute():
+        return f"{short}. Check the spelling of the path."
+    try:
+        here = Path.cwd()
+    except OSError:  # the current folder was deleted; there is nothing more to say about it
+        return short
+    return (
+        f"{short}\n"
+        f"  Looked for: {os.path.normpath(here / path)}\n"
+        f"  Current folder: {here}\n"
+        "  A relative path starts from the current folder: run the command from the folder "
+        "that holds the file, or give the full path."
+    )
+
+
 def code_root() -> Path:
     """Root of this checkout. For code and bundled assets, never for personal data."""
     return Path(__file__).resolve().parents[2]

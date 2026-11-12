@@ -8,7 +8,8 @@ Two checks over every git-tracked text file, both run by the pre-commit hook:
   employers, share-link IDs), except in the paths listed in ``scripts/pii-allowlist.txt``,
   which is the shrinking list of files still waiting for their scrub.
 
-Either check is skipped, exit 0, when its vault file is absent (CI and a fresh clone).
+Either check is skipped, exit 0, when its vault file is absent or when there is no vault at all (CI,
+a fresh clone, a contributor who has only the code).
 """
 
 from __future__ import annotations
@@ -57,6 +58,10 @@ def _tracked_texts() -> dict[str, str]:
 def _check_salary(files: dict[str, str]) -> int:
     try:
         constraints = load_constraints()
+    except paths.VaultError:
+        # A fresh clone, CI, or a contributor with only the code: nothing private to look for.
+        print("check_private_values: no vault — salary check skipped")
+        return 0
     except ValueError as exc:
         print(f"ERROR: private/search-constraints.json is invalid: {exc}", file=sys.stderr)
         return 1
