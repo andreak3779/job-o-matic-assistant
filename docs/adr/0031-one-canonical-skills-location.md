@@ -1,6 +1,6 @@
 # 0031 — One canonical location for the skills
 
-**Status:** Accepted.
+**Status:** Accepted. Built; see "As built".
 
 ## Context
 
@@ -70,3 +70,18 @@ What was found when this was investigated (on `main`, 2026-11-12):
 
 - None required. Linking the presence skills, if wanted, is a one-line change plus removing the
   name from the exemption list.
+
+## As built
+
+- `skill_prompts.skills_dir()` is `code_root()/skills`. `test_the_prompts_come_from_skills_not_from_the_claude_code_links`
+  builds the nine prompts from a tree that has no `.claude` folder, and fails against the old path.
+- The `Dockerfile` has no `COPY .claude/skills`. The image was built without it and, over stdio
+  against the demo vault mounted read-only, listed 9 prompts and 24 tools.
+- `tests/test_skill_links.py` checks the 24 tracked links and the three exemptions. Four mutations
+  each fail it: a link to another skill, a link turned into a text file, a new skill with no link,
+  and an exempt skill that gains a link.
+- `scripts/check-setup.sh` counts the tracked links in a clone, and every entry in a copy with no
+  `.git`. In a copy extracted with Python's `zipfile` it reports "24 of 24 skill links for Claude
+  Code are broken" with the way out, and the server in that copy starts and serves 9 prompts and 24
+  tools (before this change it failed at import).
+- Not done, as decided: linking the three presence skills; making a broken prompt skip itself.
