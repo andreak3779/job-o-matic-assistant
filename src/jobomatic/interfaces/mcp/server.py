@@ -47,6 +47,8 @@ from jobomatic.commands import fit_check as fit_check_command
 from jobomatic.commands import gap_analysis as gap_analysis_command
 from jobomatic.commands import interview_prep as interview_prep_command
 from jobomatic.commands import job_site_letter as job_site_command
+from jobomatic.commands import learning_import as learning_import_command
+from jobomatic.commands import learning_plan as learning_plan_command
 from jobomatic.commands import profile as profile_commands
 from jobomatic.commands import resume as resume_command
 from jobomatic.commands import search as search_command
@@ -788,16 +790,14 @@ def learning_import(
     link, never title; a stored completion date, topics and summary are never overwritten.
     Summaries and the evidence index are separate steps (CLI: learning summarize, index build)."""
     with _import_file(file, content) as path:
-        argv = ["learning", "import", path, "--provider", "pluralsight"]
-        if apply:
-            argv.append("--apply")
-        result = _run_cli(argv)
-    if apply and "Saved " in result:
-        result += (
+        result = learning_import_command.run(Path(path), "pluralsight", apply=apply)
+        text = _tool_text(result, learning_import_command.render)
+    if apply and result.data is not None and result.data.kept is not None:
+        text += (
             "\n\nNext (CLI): `learning summarize --missing` for summaries of the new items, "
             "then `index build` to refresh the evidence index."
         )
-    return result
+    return text
 
 
 @mcp.tool(description="Show the user's private salary minimums (or say they are not configured)")
@@ -862,7 +862,7 @@ def generate_learning_plan(role_json: str) -> list[ContentBlock]:
         cfg = None
     if isinstance(cfg, dict) and cfg.get("output") is not None:
         _checked_path(str(cfg["output"]), write=True, label="role_json output")
-    return _run_cli_with_artifacts(["generate-learning-plan", config_path])
+    return _tool_blocks(learning_plan_command.run(Path(config_path)))
 
 
 # The application-workflow skills, as prompts Claude Desktop can offer (see skill_prompts.py).

@@ -14,26 +14,21 @@ import tempfile
 from pathlib import Path
 
 from jobomatic import bootstrap
+from jobomatic.commands import learning_import
 from jobomatic.learning.adapters.mslearn_transcript import (
-    MsLearnTranscriptSource,
     fetch_transcript,
     sanitize,
 )
-from jobomatic.learning.adapters.pluralsight_html import PluralsightHtmlSource
 from jobomatic.learning.adapters.pluralsight_json import (
-    PluralsightJsonSource,
     looks_like_pluralsight_history,
 )
 from jobomatic.learning.model import (
-    ImportPlan,
     LearningItem,
-    SourceBatch,
     SummarySource,
     hours_text,
 )
-from jobomatic.learning.ports import LearningSource
-from jobomatic.learning.service import LearningError, run_import, stats
-from jobomatic.profile.service import ProfileError
+from jobomatic.learning.service import LearningError, stats
+from jobomatic.results import emit
 
 COMMAND = "learning"
 _SHOWN = 12  # how many new items to list before summarising
@@ -125,26 +120,8 @@ def _import(args: argparse.Namespace) -> int:
         raise LearningError("give either an export file or --mslearn, not both and not neither")
     with tempfile.TemporaryDirectory() as scratch:
         provider, raw = _prepare(args, Path(scratch))
-        source = _source(provider, raw)
-        store = bootstrap.learning_store()
-        batch, plan = run_import(source, store, bootstrap.topic_rules(), apply=args.apply)
-        _print_plan(batch, plan, provider)
-        if args.apply and plan.has_changes:
-            kept = bootstrap.import_archive().store(provider, raw)
-            print(f"Saved {len(plan.new)} new item(s); the export is kept as {kept}")
-        elif args.apply:
-            print("Nothing to save.")
-        else:
-            print("\nDry run: nothing was saved. Run again with --apply to save.")
-    return 0
-
-
-def _source(provider: str, raw: Path) -> LearningSource:
-    if provider == "mslearn":
-        return MsLearnTranscriptSource(raw)
-    if raw.suffix.lower() == ".json":
-        return PluralsightJsonSource(raw)
-    return PluralsightHtmlSource(raw)
+        result = learning_import.run(raw, provider, apply=args.apply)
+        return emit(result, learning_import.render)
 
 
 def _json_provider(path: Path) -> str:
@@ -187,63 +164,6 @@ def _prepare(args: argparse.Namespace, scratch: Path) -> tuple[str, Path]:
         raw.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         return provider, raw
     return provider, path
-
-
-def _print_plan(batch: SourceBatch, plan: ImportPlan, provider: str) -> None:
-    print(f"Source: {batch.source} ({provider}), {len(batch.items)} completed item(s) read")
-    for warning in batch.warnings:
-        print(f"  warning: {warning}")
-    if plan.new:
-        print(f"\nNew ({len(plan.new)}):")
-        for item in plan.new[:_SHOWN]:
-            when = item.completed_on.isoformat() if item.completed_on else "no date"
-            print(f"  + {item.title}  [{item.kind.value}, {when}, {', '.join(item.topics) or '?'}]")
-        if len(plan.new) > _SHOWN:
-            print(f"  ... and {len(plan.new) - _SHOWN} more")
-    if plan.rekeyed:
-        print(
-            f"\nSame title, different id ({len(plan.rekeyed)}), kept as one item with the new id:"
-        )
-        for r in plan.rekeyed[:_SHOWN]:
-            print(f"  = {r.title}: {r.old_id} -> {r.new_id}")
-        if len(plan.rekeyed) > _SHOWN:
-            print(f"  ... and {len(plan.rekeyed) - _SHOWN} more")
-    if plan.changed:
-        print(f"\nChanged ({len(plan.changed)}):")
-        for change in plan.changed:
-            for f in change.fields:
-                print(f"  ~ {change.title}: {f.name}: {f.old!r} -> {f.new!r}")
-    print(
-        f"\n{len(plan.new)} new, {len(plan.changed)} changed, {len(plan.rekeyed)} re-keyed, "
-        f"{plan.unchanged} unchanged"
-        + (f", {len(plan.absent)} stored but not in this export" if plan.absent else "")
-    )
-    if plan.unclassified:
-        print(f"{len(plan.unclassified)} new item(s) matched no topic rule:")
-        for item_id in plan.unclassified:
-            print(f"  ? {item_id}")
-    if batch.credentials:
-        _print_credentials(batch)
-
-
-def _print_credentials(batch: SourceBatch) -> None:
-    """Compare certifications in the transcript with the profile. Reported, never written."""
-    print(f"\nCredentials in the transcript: {len(batch.credentials)}")
-    try:
-        certs = {c.code: c for c in bootstrap.profile_repository().load().certifications}
-    except ProfileError:
-        print("  (profile not readable, so no comparison)")
-        return
-    for credential in batch.credentials:
-        if credential.kind != "exam" or not credential.code:
-            continue
-        cert = certs.get(credential.code)
-        if cert is None:
-            print(f"  note: passed exam {credential.code} is not in the profile's certifications")
-        elif cert.status.value != "certified":
-            print(
-                f"  note: {credential.code} was passed but the profile says {cert.status.value!r}"
-            )
 
 
 # -- reading ------------------------------------------------------------------------------------
