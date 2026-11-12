@@ -62,7 +62,7 @@ def test_invalid_json_fails_loudly(tmp_path: Path) -> None:
 
 
 def test_env_override_is_used(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("CLAUDE_JOBS_PRIVATE_DIR", str(tmp_path))
+    monkeypatch.setenv("JOBOMATIC_PRIVATE_DIR", str(tmp_path))
     assert private_dir() == tmp_path
     assert constraints_path() == tmp_path / "search-constraints.json"
 

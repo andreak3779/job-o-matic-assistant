@@ -537,7 +537,7 @@ def test_extra_allowed_dir_is_honoured(monkeypatch: pytest.MonkeyPatch, tmp_path
 
     extra = tmp_path / "extra"
     extra.mkdir()
-    monkeypatch.setenv("CLAUDE_JOBS_ALLOWED_DIRS", str(extra))
+    monkeypatch.setenv("JOBOMATIC_ALLOWED_DIRS", str(extra))
     assert server._checked_path(str(extra / "x.md"), write=True, label="out").endswith("x.md")
 
 
@@ -545,7 +545,7 @@ def test_extra_allowed_dir_is_honoured(monkeypatch: pytest.MonkeyPatch, tmp_path
 def test_a_job_description_in_the_code_repository_is_refused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("CLAUDE_JOBS_ALLOWED_DIRS")  # the suite opts tests/fixtures in
+    monkeypatch.delenv("JOBOMATIC_ALLOWED_DIRS")  # the suite opts tests/fixtures in
     with pytest.raises(ToolError, match="outside the directories this server may read from"):
         fit_check(str(FIXTURE_JD))
 
@@ -556,7 +556,7 @@ def test_a_job_description_in_an_extra_allowed_dir_is_read(
     extra = tmp_path / "postings"
     extra.mkdir()
     (extra / "jd.md").write_text(FIXTURE_JD.read_text(encoding="utf-8"), encoding="utf-8")
-    monkeypatch.setenv("CLAUDE_JOBS_ALLOWED_DIRS", str(extra))
+    monkeypatch.setenv("JOBOMATIC_ALLOWED_DIRS", str(extra))
     assert "Fit Rating:" in fit_check(str(extra / "jd.md"))
 
 
@@ -572,7 +572,7 @@ def test_protected_vault_locations_are_refused_even_inside_an_allowed_dir(
         "vault git": paths.vault_root() / ".git" / "config",
     }[where]
     # Even when the client is allowed the whole folder that holds them.
-    monkeypatch.setenv("CLAUDE_JOBS_ALLOWED_DIRS", os.pathsep.join([str(target.parent.parent)]))
+    monkeypatch.setenv("JOBOMATIC_ALLOWED_DIRS", os.pathsep.join([str(target.parent.parent)]))
     with pytest.raises(ToolError, match="outside the directories this server may read from"):
         fit_check(str(target))
 

@@ -378,5 +378,5 @@ def test_parse_date_refuses_to_guess(raw: str) -> None:
 
 
 def test_log_path_env_override(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("CLAUDE_JOBS_APPLICATIONS_LOG", str(tmp_path / "x.jsonl"))
+    monkeypatch.setenv("JOBOMATIC_APPLICATIONS_LOG", str(tmp_path / "x.jsonl"))
     assert apps.log_path() == tmp_path / "x.jsonl"

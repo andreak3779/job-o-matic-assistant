@@ -19,8 +19,8 @@ def legacy(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     checkout = tmp_path / "work" / "checkout"
     checkout.mkdir(parents=True)
     monkeypatch.delenv("JOBOMATIC_VAULT", raising=False)
-    monkeypatch.delenv("CLAUDE_JOBS_APPLICATIONS_LOG", raising=False)
-    monkeypatch.delenv("CLAUDE_JOBS_PRIVATE_DIR", raising=False)
+    monkeypatch.delenv("JOBOMATIC_APPLICATIONS_LOG", raising=False)
+    monkeypatch.delenv("JOBOMATIC_PRIVATE_DIR", raising=False)
     monkeypatch.setenv("JOBOMATIC_CONFIG", str(tmp_path / "no-config.toml"))
     monkeypatch.setattr(paths, "code_root", lambda: checkout)
     return checkout
@@ -111,8 +111,8 @@ def test_invalid_config_toml_fails_loudly(
 def test_per_file_overrides_still_win_inside_a_vault(
     tmp_vault: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CLAUDE_JOBS_PRIVATE_DIR", str(tmp_path / "p"))
-    monkeypatch.setenv("CLAUDE_JOBS_APPLICATIONS_LOG", str(tmp_path / "a.jsonl"))
+    monkeypatch.setenv("JOBOMATIC_PRIVATE_DIR", str(tmp_path / "p"))
+    monkeypatch.setenv("JOBOMATIC_APPLICATIONS_LOG", str(tmp_path / "a.jsonl"))
     assert paths.private_dir() == tmp_path / "p"
     assert paths.applications_log() == tmp_path / "a.jsonl"
 

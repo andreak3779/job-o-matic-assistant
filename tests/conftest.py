@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from jobomatic import paths
+
 DEMO_VAULT = Path(__file__).resolve().parents[1] / "demo-vault"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -25,14 +27,18 @@ def _isolate_personal_data(tmp_path_factory, monkeypatch):
     shutil.copytree(DEMO_VAULT, vault)
     for sub in ("private", "applications", "outputs", "imports", "index"):
         (vault / sub).mkdir(exist_ok=True)
-    monkeypatch.setenv("CLAUDE_JOBS_APPLICATIONS_LOG", str(scratch / "applications.jsonl"))
-    monkeypatch.setenv("CLAUDE_JOBS_PRIVATE_DIR", str(scratch / "private"))
+    monkeypatch.setenv("JOBOMATIC_APPLICATIONS_LOG", str(scratch / "applications.jsonl"))
+    monkeypatch.setenv("JOBOMATIC_PRIVATE_DIR", str(scratch / "private"))
     monkeypatch.setenv("JOBOMATIC_VAULT", str(vault))
     monkeypatch.setenv("JOBOMATIC_CONFIG", str(scratch / "no-config.toml"))
     # The MCP server does not read the code repository (src/jobomatic/interfaces/mcp/access.py). The sample job
     # descriptions live in tests/fixtures, so the tests opt that one folder in, the same way a
-    # user would with CLAUDE_JOBS_ALLOWED_DIRS. Tests that check this variable set their own.
-    monkeypatch.setenv("CLAUDE_JOBS_ALLOWED_DIRS", str(FIXTURES))
+    # user would with JOBOMATIC_ALLOWED_DIRS. Tests that check this variable set their own.
+    monkeypatch.setenv("JOBOMATIC_ALLOWED_DIRS", str(FIXTURES))
+    # A variable under its old name left in the developer's shell must not fail every test; the
+    # tests of that error (test_retired_variables.py) set the old names themselves.
+    for old in paths.RETIRED_VARIABLES:
+        monkeypatch.delenv(old, raising=False)
     return scratch
 
 
@@ -52,7 +58,7 @@ def tmp_vault(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         (DEMO_VAULT / "profile" / "location-preferences.json").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
-    monkeypatch.delenv("CLAUDE_JOBS_APPLICATIONS_LOG", raising=False)
-    monkeypatch.delenv("CLAUDE_JOBS_PRIVATE_DIR", raising=False)
+    monkeypatch.delenv("JOBOMATIC_APPLICATIONS_LOG", raising=False)
+    monkeypatch.delenv("JOBOMATIC_PRIVATE_DIR", raising=False)
     monkeypatch.setenv("JOBOMATIC_VAULT", str(vault))
     return vault

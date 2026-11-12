@@ -165,7 +165,7 @@ else
         fi
     fi
     if [ -x "$VENV/bin/jobo" ]; then
-        out="$(env -u CLAUDE_JOBS_PRIVATE_DIR -u CLAUDE_JOBS_APPLICATIONS_LOG \
+        out="$(env -u JOBOMATIC_PRIVATE_DIR -u JOBOMATIC_APPLICATIONS_LOG \
             "$VENV/bin/jobo" profile validate 2>&1)"
         rc=$?
         summary="$(printf '%s\n' "$out" | tail -n 1)"

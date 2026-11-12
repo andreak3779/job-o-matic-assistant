@@ -228,7 +228,7 @@ fi
 # ── 5. The demo ──────────────────────────────────────────────────────────────
 step "Trying the demo vault (a fictional candidate, no personal data)"
 demo() {
-    env -u CLAUDE_JOBS_PRIVATE_DIR -u CLAUDE_JOBS_APPLICATIONS_LOG \
+    env -u JOBOMATIC_PRIVATE_DIR -u JOBOMATIC_APPLICATIONS_LOG \
         JOBOMATIC_VAULT="$ROOT/demo-vault" "$VENV/bin/jobo" "$@"
 }
 
