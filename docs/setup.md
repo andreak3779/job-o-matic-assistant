@@ -147,6 +147,7 @@ save about half the disk space):
 | `mcp` | The server Claude Code and Claude Desktop use (Part 3) |
 | `parser` | Reading the Pluralsight and Microsoft Learn pages you save, to import completed courses |
 | `pdf` | Making learning-plan PDFs |
+| `web` | The local web page, `jobo web` (Part 3). Not installed unless you add `--web` |
 | `dev`, `lint` | The tests, and the code checks (ruff, mypy, import-linter) |
 
 ### Step 4 of 4: Try it yourself
@@ -295,6 +296,14 @@ current install steps. Then follow
 [Wire up Claude Desktop](../src/jobomatic/interfaces/mcp/README.md#wire-up-claude-desktop) and
 restart Desktop, because it only reads its settings on startup. Its settings file,
 `~/.config/Claude/claude_desktop_config.json`, holds paths for this computer and is never synced.
+
+### The local web page (`jobo web`)
+
+A browser screen for the fit check, the applications list, the Pluralsight import and the document
+downloads, on your own computer only ([ADR 0025](adr/0025-simple-web-ui.md)). It is not installed
+by default. Add it with `bash scripts/setup.sh --web`, then run `jobo web`. It opens your browser at
+an address that works once, listens on `127.0.0.1` only, and stops when you press Ctrl+C in the
+terminal. Without the extra, `jobo web` tells you what to install.
 
 ### Page counts (`--check-pages`)
 

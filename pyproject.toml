@@ -61,6 +61,10 @@ dev = [
     "pytest>=8.0,<10",
     "pytest-cov>=5.0,<8",
 ]
+# The local web UI (ADR 0025): `jobo web`. Optional, so the core install stays as it is.
+web = [
+    "flask>=3.1,<4",
+]
 lint = [
     "ruff>=0.6",
     "mypy>=1.10",
@@ -84,6 +88,7 @@ packages = [
     "jobomatic.interfaces",
     "jobomatic.interfaces.cli",
     "jobomatic.interfaces.mcp",
+    "jobomatic.interfaces.web",
     "jobomatic.presence",
     "jobomatic.privacy",
     "jobomatic.profile",
@@ -100,6 +105,7 @@ packages = [
 # NOTE: only editable installs (`pip install -e .`) are supported.
 [tool.setuptools.package-data]
 "jobomatic" = ["branding/*"]
+"jobomatic.interfaces.web" = ["templates/*.html", "static/*"]
 "jobomatic.fit" = ["*.json"]
 "jobomatic.documents.adapters" = ["*.json"]
 "jobomatic.learning" = ["topics.yaml", "*.schema.json"]
@@ -448,6 +454,14 @@ layers = [
     "jobomatic.interfaces.cli.main",
     "jobomatic.interfaces.cli.applications_cli | jobomatic.interfaces.cli.learning_cli | jobomatic.interfaces.cli.profile_cli | jobomatic.interfaces.cli.render_cli | jobomatic.interfaces.cli.retrieval_cli",
 ]
+
+# The web interface (ADR 0025) is a third way in beside the command line and the MCP server, and is
+# independent of both. Only the command line's main starts it (`jobo web`).
+[[tool.importlinter.contracts]]
+name = "The web interface uses neither the command line nor the MCP server"
+type = "forbidden"
+source_modules = ["jobomatic.interfaces.web"]
+forbidden_modules = ["jobomatic.interfaces.cli", "jobomatic.interfaces.mcp"]
 
 # Third-party libraries: only direct imports count here (a module using a command that uses docx is fine).
 [[tool.importlinter.contracts]]

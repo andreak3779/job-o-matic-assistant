@@ -36,7 +36,7 @@ jobs:
           cache-dependency-path: requirements-lock.txt
 
       - name: Install
-        run: pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
+        run: pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,web,dev,lint]"
 
       - name: Ruff (lint)
         run: ruff check .
@@ -67,7 +67,7 @@ jobs:
           cache-dependency-path: requirements-lock.txt
 
       - name: Install
-        run: pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,dev,lint]"
+        run: pip install -c requirements-lock.txt -e ".[mcp,parser,pdf,web,dev,lint]"
 
       - name: Tests
         run: pytest -q -p no:cacheprovider

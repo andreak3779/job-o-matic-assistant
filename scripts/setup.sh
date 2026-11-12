@@ -23,6 +23,7 @@ usage() {
 Usage: bash scripts/setup.sh [options]
 
   --no-dev           skip the test and lint tools (a smaller install)
+  --web              also install the local web page (Flask), for `jobo web`
   --hooks            turn on the git hooks, commit and push (only for people changing the code)
   --recreate         delete .venv and build it again (use after upgrading Python)
   --python PATH      use this Python, which must be 3.11 or newer (for example python3.12)
@@ -41,6 +42,7 @@ usage_error() {
 }
 
 WITH_DEV=1
+WITH_WEB=0
 DO_HOOKS=0
 RECREATE=0
 PYTHON_ARG=""
@@ -50,6 +52,7 @@ NEW_VAULT=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-dev) WITH_DEV=0 ;;
+        --web) WITH_WEB=1 ;;
         --hooks) DO_HOOKS=1 ;;
         --recreate) RECREATE=1 ;;
         --python)
@@ -195,6 +198,7 @@ fi
 # ── 3. The packages ──────────────────────────────────────────────────────────
 step "Installing the packages"
 EXTRAS="mcp,parser,pdf"
+[ "$WITH_WEB" = 1 ] && EXTRAS="$EXTRAS,web"
 [ "$WITH_DEV" = 1 ] && EXTRAS="$EXTRAS,dev,lint"
 info "This downloads about 250 MB, needs the internet and usually takes a minute or two."
 PIP="$VENV/bin/pip"
