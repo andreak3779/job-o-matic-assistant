@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Local pre-commit guardrail — no GitHub Actions minutes involved.
+# Local pre-commit guardrail — the fast tier of three (ADR 0032). No GitHub Actions minutes involved.
 #
-# CI repeats the checks that do not need the private vault, but it runs after the
-# push. This hook is the first line of defence and also runs the vault-dependent
-# checks. It must catch a broken import, a syntax error or a private value before
-# it is committed; the full suite is small enough to run every time.
+#   commit  (this hook)  every check except the test suite, about 6 seconds: the staged-file guard,
+#                        the private-value scan, syntax, ruff, the skill and profile checks that
+#                        need the vault, the import contracts and mypy. A leak must be caught
+#                        before a commit exists, so none of these wait for the push.
+#   push    (pre-push)   a leak audit of the commits being pushed, then the full test suite.
+#   CI                   ruff, contracts, mypy and the tests again, with no vault; it decides merges.
 #
 # Enabled by scripts/install-hooks.sh (sets core.hooksPath, so edits to this file
 # take effect immediately — there is no copy to keep in sync).
@@ -68,13 +70,6 @@ else
     echo "  (import-linter not installed — skipping; run: pip install -e '.[lint]')"
 fi
 
-echo "[pre-commit] pytest..."
-if "$PY" -m pytest --version >/dev/null 2>&1; then
-    "$PY" -m pytest tests -q -x -p no:cacheprovider || status=1
-else
-    echo "  (pytest not installed — skipping; run: pip install -e '.[dev]')"
-fi
-
 if [ "$status" -ne 0 ]; then
     echo ""
     echo "[pre-commit] BLOCKED — fix the issue(s) above, or commit with --no-verify"
@@ -82,5 +77,5 @@ if [ "$status" -ne 0 ]; then
     exit 1
 fi
 
-echo "[pre-commit] clean"
+echo "[pre-commit] clean (the tests run when you push)"
 exit 0

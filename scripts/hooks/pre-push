@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Local pre-push guardrail — the slow tier of three (ADR 0032). See scripts/hooks/pre-commit.
+#
+# The repository is public, so a push is the point where a leak stops being recoverable. This hook
+# first audits the commits being pushed for personal identifiers (the added lines only, every term,
+# case-insensitive: stricter than the commit-time scan, and it also covers commits made with
+# --no-verify or on another machine), then runs the whole test suite, which no longer runs on each
+# commit. CI runs the suite again after the push.
+#
+# git sends one line per ref on stdin: <local ref> <local sha> <remote ref> <remote sha>.
+#
+# Enabled by scripts/install-hooks.sh (core.hooksPath), the same as the commit hook.
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+PY=".venv/bin/python3"
+if [ ! -x "$PY" ]; then
+    PY="python3"
+fi
+
+# Keep what git sent: the audit reads it, and the tests are skipped when nothing is being published.
+pushed="$(cat)"
+
+# A push that only deletes branches publishes nothing: no audit, no tests.
+if ! printf '%s\n' "$pushed" | awk 'NF == 4 && $2 !~ /^0+$/ { found = 1 } END { exit !found }'; then
+    echo "[pre-push] nothing is being published (a deletion); no checks to run"
+    exit 0
+fi
+
+status=0
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "[pre-push] note: the working tree has uncommitted changes. The tests below run on the"
+    echo "           working tree, not on the commits being pushed, so they can pass or fail for"
+    echo "           the wrong reason. Commit or stash first for a true result."
+fi
+
+echo "[pre-push] leak audit of the commits being pushed..."
+printf '%s\n' "$pushed" | "$PY" scripts/check_pushed_commits.py "$@" || status=1
+
+echo "[pre-push] pytest..."
+if "$PY" -m pytest --version >/dev/null 2>&1; then
+    "$PY" -m pytest tests -q -x -p no:cacheprovider || status=1
+else
+    echo "  (pytest not installed — skipping; run: pip install -e '.[dev]')"
+fi
+
+if [ "$status" -ne 0 ]; then
+    echo ""
+    echo "[pre-push] BLOCKED — fix the issue(s) above. 'git push --no-verify' skips this hook, and"
+    echo "           nothing else checks for a leak: the repository is public, and a pushed value"
+    echo "           cannot be taken back."
+    exit 1
+fi
+
+echo "[pre-push] clean"
+exit 0
