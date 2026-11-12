@@ -391,7 +391,7 @@ type = "layers"
 layers = [
     "jobomatic.interfaces",
     "jobomatic.commands | jobomatic.gate | jobomatic.presence",
-    "jobomatic.bootstrap",
+    "jobomatic.bootstrap | jobomatic.results",
     "jobomatic.corpus",
     "jobomatic.applications | jobomatic.privacy",
     "jobomatic.fit",

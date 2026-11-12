@@ -31,6 +31,7 @@ from jobomatic.fit.engine import FitResult, rate_parsed_jd
 from jobomatic.fit.parser import parse_jd
 from jobomatic.fit.salary import assess_salary
 from jobomatic.profile.model import Profile
+from jobomatic.results import Refusal
 
 PASSING_RATINGS = frozenset({"Strong", "Good"})
 OVERRIDABLE_RATINGS = frozenset({"Worth a try", "Stretch"})
@@ -40,22 +41,8 @@ CONFIRM_REAPPLY = "confirm_reapply"
 CONFIRM_BELOW_MINIMUM = "confirm_below_minimum"
 
 
-class GateRefusal(Exception):
+class GateRefusal(Refusal):
     """A gate said no. ``override`` names the confirmation that would let it through, if any."""
-
-    def __init__(self, reason: str, override: str | None = None) -> None:
-        super().__init__(reason)
-        self.reason = reason
-        self.override = override
-
-    def __str__(self) -> str:
-        if self.override is None:
-            return self.reason
-        flag = "--" + self.override.replace("_", "-")
-        return (
-            f"{self.reason}\nOnly if the user says so, run again with {self.override} "
-            f"(command line: {flag}; tool: {self.override}=true)."
-        )
 
 
 @dataclass
