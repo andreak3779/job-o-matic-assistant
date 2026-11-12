@@ -595,9 +595,3 @@ def _run(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
-def deprecated(argv: list[str] | None = None) -> int:
-    """The old ``claude-jobs`` command: the same as ``jobo``, with a notice (removed after one release)."""
-    print("claude-jobs is now called jobo; this alias will be removed.", file=sys.stderr)
-    return main(argv)

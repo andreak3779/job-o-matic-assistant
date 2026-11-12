@@ -17,7 +17,7 @@ source .venv/bin/activate           # puts jobo on your PATH; your prompt starts
 
 `jobo: command not found` means the second line was skipped. `python -m jobomatic` does the same
 thing as `jobo`, but only with the virtual environment active, because it needs that environment's
-Python. `claude-jobs` still works as an old name for `jobo` and prints a notice; it will be removed.
+Python.
 
 A relative path such as `tests/fixtures/strong-fit-jd.md` starts from the folder you are in
 ([ADR 0027](docs/adr/0027-relative-paths-resolve-against-the-current-folder.md)). If a file is "not
