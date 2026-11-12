@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from jobomatic import paths
-from jobomatic.commands.support import load_profile_or_none, require_path
+from jobomatic.commands.support import require_path
 
 
 def test_require_path_returns_path_when_it_exists(tmp_path: Path) -> None:
@@ -42,39 +42,28 @@ def test_require_path_for_an_absolute_path_only_asks_for_the_spelling(tmp_path: 
     assert "Current folder" not in text
 
 
-def test_load_profile_or_none_returns_the_profile_from_the_vault() -> None:
-    profile = load_profile_or_none()
-
-    assert profile is not None
-    assert profile.identity.name == "Sarah Ashford"
+# A profile that cannot be loaded is a clean error result from every command (ADR 0007, 0028), not
+# a traceback. ``fit-check`` stands for them all; the missing-profile test in test_cli_commands.py
+# runs every command.
 
 
-def test_load_profile_or_none_returns_none_for_a_missing_profile(
-    tmp_vault: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    result = load_profile_or_none()
-    assert result is None
-    err = capsys.readouterr().err
-    assert "ERROR" in err
-    assert "missing profile file" in err
+def _error_text_of_fit_check() -> str:
+    from jobomatic.commands import fit_check
+
+    result = fit_check.run("# Dev | Acme Corp\n\n## Requirements\n- C#\n")
+    assert result.status == "error"
+    return result.messages[-1].text
 
 
-def test_load_profile_or_none_returns_none_for_a_broken_file(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
+def test_a_missing_profile_file_is_an_error_that_names_it(tmp_vault: Path) -> None:
+    assert "missing profile file" in _error_text_of_fit_check()
+
+
+def test_a_broken_profile_file_is_an_error_that_says_so() -> None:
     (paths.profile_dir() / "roles.yaml").write_text("roles: [", encoding="utf-8")
-
-    result = load_profile_or_none()
-
-    assert result is None
-    err = capsys.readouterr().err
-    assert "ERROR" in err
-    assert "not valid YAML" in err
+    assert "not valid YAML" in _error_text_of_fit_check()
 
 
-def test_load_profile_or_none_returns_none_when_there_is_no_vault(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_no_vault_at_all_is_an_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("JOBOMATIC_VAULT", str(tmp_path / "nowhere"))
-    assert load_profile_or_none() is None
-    assert "ERROR" in capsys.readouterr().err
+    assert _error_text_of_fit_check()

@@ -9,7 +9,7 @@ import re
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from docx import Document
 from docx.shared import Pt
@@ -17,9 +17,11 @@ from docx.shared import Pt
 from jobomatic import bootstrap, paths
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
-    load_profile_or_none,
+    DocumentData,
+    note_logged,
+    produce_document,
     require_path,
-    run_and_report,
+    say,
     story_mentions,
 )
 from jobomatic.documents.adapters.docx_advanced import (
@@ -36,6 +38,7 @@ from jobomatic.fit.parser import parse_jd
 from jobomatic.profile.ports import ProfileRepository
 from jobomatic.profile.service import mark_stories_used
 from jobomatic.provenance import write_sidecar
+from jobomatic.results import CommandResult, Message, emit, failure
 
 Stage = Literal["phone_screen", "technical_screen", "final_round"]
 
@@ -270,8 +273,49 @@ def generate_interview_prep(
     recruiter_briefing: str | None = None,
     qa_cards: list[dict[str, str]] | None = None,
     salary_section: str | None = None,
+    notes: list[Message] | None = None,
+) -> tuple[Path, Path, FitResult]:
+    """Build and write the interview-prep DOCX plus provenance sidecar, from a posting file.
+
+    See ``generate_interview_prep_from_text``.
+    """
+    return generate_interview_prep_from_text(
+        jd_path.read_text(encoding="utf-8"),
+        source=jd_path,
+        profile=profile,
+        out_path=out_path,
+        stage=stage,
+        gap_coaching_path=gap_coaching_path,
+        write_star_bank=write_star_bank,
+        profile_repository=profile_repository,
+        company_research=company_research,
+        recruiter_briefing=recruiter_briefing,
+        qa_cards=qa_cards,
+        salary_section=salary_section,
+        notes=notes,
+    )
+
+
+def generate_interview_prep_from_text(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    profile: Any | None = None,
+    out_path: Path | None = None,
+    stage: Stage = "technical_screen",
+    gap_coaching_path: Path | None = None,
+    write_star_bank: bool = False,
+    profile_repository: ProfileRepository | None = None,
+    company_research: str | None = None,
+    recruiter_briefing: str | None = None,
+    qa_cards: list[dict[str, str]] | None = None,
+    salary_section: str | None = None,
+    notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write the interview-prep DOCX plus provenance sidecar.
+
+    ``source`` is where the posting came from, recorded in the sidecar (``None`` for pasted text);
+    ``notes``, when given, collects what would otherwise be printed (see ``say``).
 
     ``stage`` gates document scope per the SKILL.md's stage table: Phone
     Screen gets 2 STAR stories, Technical Screen and Final Round get the
@@ -308,7 +352,6 @@ def generate_interview_prep(
         _validate_qa_cards(qa_cards)
 
     profile = profile or bootstrap.load_profile()
-    jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
 
@@ -330,7 +373,7 @@ def generate_interview_prep(
     if out_path is None:
         out_path = located.folder / "interview-prep.docx"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    outputs.report(located)
+    note_logged(notes, located)
 
     stage_label = _STAGE_LABELS[stage]
     today = date.today().strftime("%B %d, %Y")
@@ -395,7 +438,7 @@ def generate_interview_prep(
             section_heading(doc, "Salary / Negotiation")
             add_paragraph(doc, (salary_section or "").strip(), space_after=Pt(6))
         else:
-            print("Salary section supplied but stage is not final_round — omitted.")
+            say(notes, "info", "Salary section supplied but stage is not final_round — omitted.")
 
     section_heading(doc, "Fit Rating")
     add_paragraph(doc, f"{result.rating} — {result.rationale}", space_after=Pt(6))
@@ -420,8 +463,10 @@ def generate_interview_prep(
         repository = profile_repository or bootstrap.profile_repository()
         repository.save_stories(updated)
         for title in titles:
-            print(
-                f"STAR story {title!r}: last_used -> {last_used_value}; used for {used_for_entry}"
+            say(
+                notes,
+                "info",
+                f"STAR story {title!r}: last_used -> {last_used_value}; used for {used_for_entry}",
             )
 
     low_confidence = result.skills_only_rating in ("Pass", "Stretch", "Worth a try") and bool(
@@ -431,12 +476,54 @@ def generate_interview_prep(
         out_path,
         script="interview_prep.py",
         profile=profile,
-        inputs=[str(jd_path)],
+        inputs=[str(source)] if source else [],
         fit_rating=result.rating,
         evidence_sources=result.evidence_sources(),
         warnings=["low evidence — manually review before using"] if low_confidence else [],
     )
     return out_path, sidecar, result
+
+
+def run(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    out: Path | None = None,
+    stage: str = "technical_screen",
+    update_star_bank: bool = False,
+    company_research: str | None = None,
+    recruiter_briefing: str | None = None,
+    qa_cards_json: str | None = None,
+    salary_section: str | None = None,
+) -> CommandResult[DocumentData]:
+    """Write the interview-prep document for the posting.
+
+    ``qa_cards_json`` is the text of a JSON list of Q&A cards; the other optional inputs are the
+    text of what was supplied. ``update_star_bank`` records which stories were used in the vault's
+    ``stories.yaml``, so the run holds the vault write lock.
+    """
+    if stage not in _STAGE_LABELS:
+        return failure(f"unknown stage {stage!r}; expected one of {', '.join(_STAGE_LABELS)}")
+
+    def make(profile: Any, notes: list[Message]) -> tuple[Path, Path, FitResult]:
+        try:
+            qa_cards = json.loads(qa_cards_json) if qa_cards_json is not None else None
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"invalid JSON in --qa-cards file: {exc}") from exc
+        return generate_interview_prep_from_text(
+            jd_text,
+            source=source,
+            out_path=out,
+            stage=cast(Stage, stage),
+            write_star_bank=update_star_bank,
+            company_research=company_research,
+            recruiter_briefing=recruiter_briefing,
+            qa_cards=qa_cards,
+            salary_section=salary_section,
+            notes=notes,
+        )
+
+    return produce_document(make=make)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -490,7 +577,7 @@ def main(argv: list[str] | None = None) -> int:
 
     company_research = None
     recruiter_briefing = None
-    qa_cards = None
+    qa_cards_json = None
     salary_section = None
     try:
         if args.company_research is not None:
@@ -501,32 +588,26 @@ def main(argv: list[str] | None = None) -> int:
             recruiter_briefing = args.recruiter_briefing.read_text(encoding="utf-8")
         if args.qa_cards is not None:
             require_path(args.qa_cards, "Q&A cards file")
-            qa_cards = json.loads(args.qa_cards.read_text(encoding="utf-8"))
+            qa_cards_json = args.qa_cards.read_text(encoding="utf-8")
         if args.salary_section is not None:
             require_path(args.salary_section, "Salary section file")
             salary_section = args.salary_section.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
-    except json.JSONDecodeError as exc:
-        print(f"ERROR: invalid JSON in --qa-cards file: {exc}", file=sys.stderr)
-        return 1
 
-    profile = load_profile_or_none()
-    if profile is None:
-        return 1
-
-    return run_and_report(
-        generate_interview_prep,
-        args.jd,
-        profile=profile,
-        out_path=args.out,
-        stage=args.stage,
-        write_star_bank=args.update_star_bank,
-        company_research=company_research,
-        recruiter_briefing=recruiter_briefing,
-        qa_cards=qa_cards,
-        salary_section=salary_section,
+    return emit(
+        run(
+            args.jd.read_text(encoding="utf-8"),
+            source=args.jd,
+            out=args.out,
+            stage=args.stage,
+            update_star_bank=args.update_star_bank,
+            company_research=company_research,
+            recruiter_briefing=recruiter_briefing,
+            qa_cards_json=qa_cards_json,
+            salary_section=salary_section,
+        )
     )
 
 

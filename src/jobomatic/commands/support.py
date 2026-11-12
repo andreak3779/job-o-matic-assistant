@@ -14,12 +14,10 @@ from typing import Any
 
 from jobomatic import gate
 from jobomatic.applications import outputs
-from jobomatic.documents.service import DocumentError
 from jobomatic.fit.engine import FitResult
 from jobomatic.fit.terms import extract_skill_terms
-from jobomatic.paths import VaultError, not_found_message
+from jobomatic.paths import not_found_message
 from jobomatic.profile.model import Profile
-from jobomatic.profile.service import ProfileError
 from jobomatic.results import CommandResult, Level, Message, console, guarded, ok
 
 
@@ -41,22 +39,6 @@ def require_path(path: Path, label: str = "File") -> Path:
     if not path.exists():
         raise FileNotFoundError(not_found_message(path, label))
     return path
-
-
-def load_profile_or_none() -> Profile | None:
-    """Load the profile, printing a clean ERROR and returning ``None`` on failure.
-
-    A missing or malformed profile is an ordinary, expected failure (a fresh clone has no vault;
-    a hand edit can break a YAML file), not a bug, so every CLI script's ``main()`` handles it
-    the same way: ``profile = load_profile_or_none(); if profile is None: return 1``.
-    """
-    from jobomatic import bootstrap
-
-    try:
-        return bootstrap.load_profile()
-    except (ProfileError, VaultError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return None
 
 
 # The user's confirmations past a refusal (ADR 0003, 0010, 0011, 0021). Each is a decision the
@@ -95,52 +77,6 @@ def add_confirmation_flags(parser: argparse.ArgumentParser, *names: str) -> None
     for name in names:
         flag, help_text = _CONFIRMATIONS[name]
         parser.add_argument(flag, action="store_true", help=help_text)
-
-
-def check_gate(
-    kind: str, jd_path: Path | None, profile: Profile | None, args: argparse.Namespace
-) -> int | None:
-    """Run the gate for a command, before it writes anything (ADR 0003, 0028).
-
-    ``kind`` is ``documents`` (fit, duplicate and pay: the resume and cover letter), ``letter``
-    (location and duplicate: the job-site letter) or ``location`` (the cold-call letter, when it is
-    given a posting). Prints what passed. Returns ``None`` to go ahead, or the exit status to stop
-    with: 2 for a refusal, which is printed to stderr, and 1 when the posting cannot be read.
-    """
-    if jd_path is None:
-        return None
-    try:
-        text = jd_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
-    confirm_gaps = getattr(args, "confirm_gaps", False)
-    confirm_reapply = getattr(args, "confirm_reapply", False)
-    confirm_below_minimum = getattr(args, "confirm_below_minimum", False)
-    try:
-        if kind == "documents":
-            assert profile is not None
-            result = gate.check_documents(
-                text,
-                profile,
-                confirm_gaps=confirm_gaps,
-                confirm_reapply=confirm_reapply,
-                confirm_below_minimum=confirm_below_minimum,
-            )
-            if result.fit is not None:
-                print(f"Fit Rating: {result.fit.rating} — {result.fit.rationale}")
-            notes = result.notes
-        elif kind == "letter":
-            notes = gate.check_letter(text, confirm_reapply=confirm_reapply)
-        else:
-            gate.check_location(text)
-            notes = []
-    except gate.GateRefusal as exc:
-        print(f"REFUSED: {exc}", file=sys.stderr)
-        return 2
-    for note in notes:
-        print(f"Note: {note}")
-    return None
 
 
 def logged_messages(located: outputs.Located) -> tuple[Message, ...]:
@@ -213,21 +149,37 @@ def gate_documents(
     notes.extend(Message("note", note) for note in result.notes)
 
 
+def gate_letter(jd_text: str, confirm: Confirmations, notes: list[Message]) -> None:
+    """The gate for the job-site letter: location and duplicate, not skill fit (ADR 0003)."""
+    advice = gate.check_letter(jd_text, confirm_reapply=confirm.reapply)
+    notes.extend(Message("note", note) for note in advice)
+
+
+def gate_location(jd_text: str, notes: list[Message]) -> None:
+    """The gate for cold outreach given a posting: a location Pass only, never skill fit."""
+    gate.check_location(jd_text)
+
+
 def produce_document(
     *,
     make: Callable[[Profile | None, list[Message]], tuple[Path, Path, FitResult | None]],
     gate_with_profile: Callable[[Profile, list[Message]], None] | None = None,
+    gate_without_profile: Callable[[list[Message]], None] | None = None,
 ) -> CommandResult[DocumentData]:
     """Run a document command: gate it, make the document, and describe what happened.
 
-    ``gate_with_profile`` is for a gate that needs the profile (fit); it runs first, before any
-    file is written. ``make`` returns the document, its sidecar and the fit. The whole run holds the
-    vault write lock, because it checks the log for a duplicate and then records a draft in it.
+    A gate runs first, before any file is written: ``gate_without_profile`` for one that needs only
+    the posting (location, duplicate) and ``gate_with_profile`` for one that needs the profile too
+    (fit). ``make`` returns the document, its sidecar and the fit. The whole run holds the vault
+    write lock, because it checks the log for a duplicate and then records a draft in it, and some
+    documents write the story bank back.
     """
 
     def body() -> CommandResult[DocumentData]:
         notes: list[Message] = []
         profile: Profile | None = None
+        if gate_without_profile is not None:
+            gate_without_profile(notes)
         if gate_with_profile is not None:
             profile = bootstrap_load_profile()
             gate_with_profile(profile, notes)
@@ -248,25 +200,6 @@ def print_wrote(*paths: Path) -> None:
     """Print "Wrote <path>" for each output artifact, in order."""
     for p in paths:
         print(f"Wrote {p}")
-
-
-def run_and_report(fn: Callable[..., tuple[Path, Path, Any]], *args: Any, **kwargs: Any) -> int:
-    """Call a generator function that returns (out_path, sidecar_path, ...),
-    catch ValueError as a clean ERROR + exit 1 (the one exception class core
-    generator functions in this project use for expected validation
-    failures — e.g. interview_prep's missing qa_cards fields, thank-you's
-    missing discussion points), and print the standard "Wrote" lines on
-    success. Extra tuple elements beyond (out_path, sidecar_path) are
-    ignored.
-    """
-    try:
-        result = fn(*args, **kwargs)
-    except (ValueError, DocumentError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
-    out, sidecar = result[0], result[1]
-    print_wrote(out, sidecar)
-    return 0
 
 
 def verify_pages(kind: str, path: Path, notes: list[Message] | None = None) -> int:
