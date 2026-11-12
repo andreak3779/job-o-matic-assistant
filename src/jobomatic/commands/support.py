@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from jobomatic import gate
 from jobomatic.documents.service import DocumentError
 from jobomatic.fit.terms import extract_skill_terms
 from jobomatic.paths import VaultError, not_found_message
@@ -49,6 +51,77 @@ def load_profile_or_none() -> Profile | None:
     except (ProfileError, VaultError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return None
+
+
+# The user's confirmations past a refusal (ADR 0003, 0010, 0011, 0021). Each is a decision the
+# user makes, never a default, so each is an unticked flag.
+_CONFIRMATIONS = {
+    "gaps": (
+        "--confirm-gaps",
+        "Generate despite a Stretch or Worth a try rating (only after the user says so)",
+    ),
+    "reapply": (
+        "--confirm-reapply",
+        "Generate despite an application to this posting inside the duplicate window",
+    ),
+    "below_minimum": (
+        "--confirm-below-minimum",
+        "Generate despite stated pay below the minimum (only after the user says so)",
+    ),
+}
+
+
+def add_confirmation_flags(parser: argparse.ArgumentParser, *names: str) -> None:
+    """Add the ``--confirm-*`` flags named in ``names`` (``gaps``, ``reapply``, ``below_minimum``)."""
+    for name in names:
+        flag, help_text = _CONFIRMATIONS[name]
+        parser.add_argument(flag, action="store_true", help=help_text)
+
+
+def check_gate(
+    kind: str, jd_path: Path | None, profile: Profile | None, args: argparse.Namespace
+) -> int | None:
+    """Run the gate for a command, before it writes anything (ADR 0003, 0028).
+
+    ``kind`` is ``documents`` (fit, duplicate and pay: the resume and cover letter), ``letter``
+    (location and duplicate: the job-site letter) or ``location`` (the cold-call letter, when it is
+    given a posting). Prints what passed. Returns ``None`` to go ahead, or the exit status to stop
+    with: 2 for a refusal, which is printed to stderr, and 1 when the posting cannot be read.
+    """
+    if jd_path is None:
+        return None
+    try:
+        text = jd_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    confirm_gaps = getattr(args, "confirm_gaps", False)
+    confirm_reapply = getattr(args, "confirm_reapply", False)
+    confirm_below_minimum = getattr(args, "confirm_below_minimum", False)
+    try:
+        if kind == "documents":
+            assert profile is not None
+            result = gate.check_documents(
+                text,
+                profile,
+                confirm_gaps=confirm_gaps,
+                confirm_reapply=confirm_reapply,
+                confirm_below_minimum=confirm_below_minimum,
+            )
+            if result.fit is not None:
+                print(f"Fit Rating: {result.fit.rating} — {result.fit.rationale}")
+            notes = result.notes
+        elif kind == "letter":
+            notes = gate.check_letter(text, confirm_reapply=confirm_reapply)
+        else:
+            gate.check_location(text)
+            notes = []
+    except gate.GateRefusal as exc:
+        print(f"REFUSED: {exc}", file=sys.stderr)
+        return 2
+    for note in notes:
+        print(f"Note: {note}")
+    return None
 
 
 def print_wrote(*paths: Path) -> None:

@@ -253,16 +253,11 @@ def test_an_invalid_stage_is_refused_by_the_command_line(
     assert "--stage" in capsys.readouterr().err
 
 
-# -- the gates belong to the command, not to the command line's dispatcher --------------------
-
-_GATE_MOVES = pytest.mark.xfail(
-    strict=True,
-    reason="ADR 0028 step 4: the gates run in interfaces/cli/main.py today, so a command called "
-    "directly skips them. Remove this mark when they move into the commands.",
-)
+# -- the gates belong to the command, not to the command line's dispatcher (ADR 0028) --------
+# A command called directly, as ``python -m jobomatic.commands.resume`` or a future adapter would,
+# must refuse what the gate refuses and write nothing.
 
 
-@_GATE_MOVES
 @pytest.mark.parametrize(
     "module, suffix",
     [(resume, ".docx"), (cover_letter, ".docx"), (job_site_letter, ".txt"), (cold_call, ".docx")],
@@ -276,7 +271,6 @@ def test_a_command_refuses_a_location_pass_when_called_directly(
     assert not out.exists()
 
 
-@_GATE_MOVES
 @pytest.mark.parametrize("module", [resume, cover_letter], ids=["resume", "cover_letter"])
 def test_a_command_refuses_a_stretch_until_confirmed_when_called_directly(module, env: Env) -> None:
     out = env.out / "refused.docx"

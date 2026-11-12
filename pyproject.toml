@@ -378,7 +378,7 @@ source_modules = [
 forbidden_modules = ["jobomatic.interfaces"]
 
 [[tool.importlinter.contracts]]
-name = "The gate is used by the interfaces and uses only the modules, never the commands"
+name = "The gate is used by the commands and the interfaces and uses only the modules"
 type = "forbidden"
 source_modules = ["jobomatic.gate"]
 forbidden_modules = ["jobomatic.commands", "jobomatic.interfaces", "jobomatic.bootstrap"]
@@ -390,7 +390,8 @@ name = "The modules form layers: each uses only the ones below it, and siblings 
 type = "layers"
 layers = [
     "jobomatic.interfaces",
-    "jobomatic.commands | jobomatic.gate | jobomatic.presence",
+    "jobomatic.commands | jobomatic.presence",
+    "jobomatic.gate",
     "jobomatic.bootstrap | jobomatic.results",
     "jobomatic.corpus",
     "jobomatic.applications | jobomatic.privacy",

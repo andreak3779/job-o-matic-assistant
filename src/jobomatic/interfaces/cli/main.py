@@ -158,54 +158,6 @@ def _application_dir(jd_path: Path) -> int:
     return 0
 
 
-def _read_jd(jd_path: Path) -> str | None:
-    try:
-        return jd_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return None
-
-
-def _run_gates(command: str, jd_path: Path, confirmations: dict[str, bool]) -> int | None:
-    """Run the gate for ``command``; print what passed. ``None`` means go ahead.
-
-    A refusal prints the reason to stderr and returns exit status 2 (ADR 0003, 0021).
-    """
-    from jobomatic import bootstrap, gate
-    from jobomatic.profile.service import ProfileError
-
-    text = _read_jd(jd_path)
-    if text is None:
-        return 1
-    try:
-        if command in ("generate-resume", "generate-cover-letter"):
-            try:
-                profile = bootstrap.load_profile()
-            except ProfileError as exc:
-                print(f"ERROR: {exc}", file=sys.stderr)
-                return 1
-            result = gate.check_documents(
-                text,
-                profile,
-                confirm_gaps=confirmations.get("confirm_gaps", False),
-                confirm_reapply=confirmations.get("confirm_reapply", False),
-                confirm_below_minimum=confirmations.get("confirm_below_minimum", False),
-            )
-            if result.fit is not None:
-                print(f"Fit Rating: {result.fit.rating} — {result.fit.rationale}")
-            notes = result.notes
-        else:
-            notes = gate.check_letter(
-                text, confirm_reapply=confirmations.get("confirm_reapply", False)
-            )
-    except gate.GateRefusal as exc:
-        print(f"REFUSED: {exc}", file=sys.stderr)
-        return 2
-    for note in notes:
-        print(f"Note: {note}")
-    return None
-
-
 def _generate_letter(
     command: str,
     jd_path: Path,
@@ -214,9 +166,6 @@ def _generate_letter(
     confirmations: dict[str, bool] | None = None,
     check_pages: bool = False,
 ) -> int:
-    refused = _run_gates(command, jd_path, confirmations or {})
-    if refused is not None:
-        return refused
     # Import the script module under its full name. Using a runtime
     # ``importlib.import_module`` here is intentional: the scripts are
     # discovered from the static ``_LETTER_GENERATORS`` mapping below, and
@@ -230,6 +179,10 @@ def _generate_letter(
         args.extend(["--out", str(out_path)])
     if check_pages:
         args.append("--check-pages")
+    # The gate runs inside the command (ADR 0028); the user's confirmations are passed through.
+    for name, given in (confirmations or {}).items():
+        if given:
+            args.append("--" + name.replace("_", "-"))
     return cast(int, module.main(args))
 
 
@@ -240,20 +193,9 @@ def _generate_cold_call(
     role_type: str | None,
     out_path: Path | None,
 ) -> int:
-    from jobomatic import gate
     from jobomatic.commands.cold_call import (
         main as cold_call_main,
     )
-
-    if jd_path is not None:
-        text = _read_jd(jd_path)
-        if text is None:
-            return 1
-        try:
-            gate.check_location(text)
-        except gate.GateRefusal as exc:
-            print(f"REFUSED: {exc}", file=sys.stderr)
-            return 2
 
     args: list[str] = [str(jd_path)] if jd_path is not None else []
     if company:

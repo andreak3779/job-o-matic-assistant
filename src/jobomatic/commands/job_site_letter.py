@@ -19,6 +19,8 @@ from docx.shared import Pt
 from jobomatic import bootstrap
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
+    add_confirmation_flags,
+    check_gate,
     load_profile_or_none,
     require_path,
     run_and_report,
@@ -185,6 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("jd", type=Path, help="Path to job description markdown file")
     parser.add_argument("--company", help="Override company name used in filename")
     parser.add_argument("--out", type=Path, help="Output path (default .txt; use .docx for DOCX)")
+    add_confirmation_flags(parser, "reapply")
     args = parser.parse_args(argv)
 
     try:
@@ -192,6 +195,10 @@ def main(argv: list[str] | None = None) -> int:
     except FileNotFoundError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
+
+    refused = check_gate("letter", args.jd, None, args)
+    if refused is not None:
+        return refused
 
     profile = load_profile_or_none()
     if profile is None:
