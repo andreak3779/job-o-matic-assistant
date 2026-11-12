@@ -121,6 +121,13 @@ def _check_pii(files: dict[str, str], *, refresh_allowlist: bool) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
+    try:
+        # A variable that was renamed (ADR 0030) raises the same error as a missing vault, which
+        # both checks below treat as "nothing to check". Ask first, so a stale variable is an error.
+        paths.reject_retired_variables()
+    except paths.VaultError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     files = _tracked_texts()
     status = _check_salary(files)
     status |= _check_pii(files, refresh_allowlist="--refresh-allowlist" in argv)
