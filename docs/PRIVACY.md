@@ -34,7 +34,12 @@ phone number uses the reserved 555-01xx range.
   - runs `scripts/check_private_values.py`, which fails if a private salary minimum or any term from
     the vault's personal-terms list (names, emails, phone numbers, employers, share-link IDs) is
     written in any tracked file;
-  - runs the other checks listed in the [README](../README.md#local-pre-commit-hook).
+  - runs the other checks listed in the [README](../README.md#local-git-hooks).
+- **A hook on every push** (`scripts/hooks/pre-push`, [ADR 0032](adr/0032-tiered-git-hooks.md)): the
+  repository is public, so a push is where a leak stops being recoverable. It audits what the
+  pushed commits publish (each commit's added lines, its author and committer, its message) against
+  the same personal-terms list, ignoring case, and prints only `path:line`. This also covers commits
+  made with `--no-verify`, on another machine or before the hook existed.
 - **Public views.** The text for LinkedIn, GitHub and similar sites comes from a public view of the
   profile that contains only fields marked public in the model
   ([ADR 0018](adr/0018-visibility-declared-in-the-model.md)). A guard scans that text for emails, phone
@@ -51,8 +56,9 @@ CI runs without the vault, so it checks code and architecture rules against the 
 ## What this does not protect against
 
 - Someone with access to the author's machine or the private vault.
-- A mistake that bypasses the hook (`git commit --no-verify`, or a machine without the hook
-  installed). The hook is a safety net, not access control.
+- A mistake that bypasses the hooks (`git commit --no-verify`, `git push --no-verify`, or a machine
+  without the hooks installed). The hooks are a safety net, not access control, and CI has no
+  vault, so nothing after the push checks for a leak.
 - A private term that is not in the vault's personal-terms list.
 - Data at rest is not encrypted beyond what the machine and the private repo provide.
 

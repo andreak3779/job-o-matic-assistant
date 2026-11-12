@@ -181,11 +181,11 @@ The suite covers profile loading, the fit engine, JD parsing, and CLI smoke test
 3. `mypy src`
 4. the `pytest` suite
 
-CI has no access to the private vault, so tests use a throwaway vault built from the fictional demo data. Checks that need the real vault (`profile validate`, `scripts/check_skill_hardcoding.py`) run in the pre-commit hook; the golden-output comparison (`scripts/golden_outputs.py compare`) is run by hand after a refactor.
+CI has no access to the private vault, so tests use a throwaway vault built from the fictional demo data. Checks that need the real vault (`profile validate`, `scripts/check_skill_hardcoding.py`) run in the commit hook; the golden-output comparison (`scripts/golden_outputs.py compare`) is run by hand after a refactor.
 
-The workflow runs on pushes to `main`, on pull requests and by manual dispatch. The local git pre-commit hook below runs the same checks, plus the ones that need the vault, before each commit.
+The workflow runs on pushes to `main`, on pull requests and by manual dispatch. The local git hooks below run the same checks, plus the ones that need the vault, in two steps ([ADR 0032](docs/adr/0032-tiered-git-hooks.md)): a fast one when you commit and a slow one when you push.
 
-### Local pre-commit hook
+### Local git hooks
 
 One-time setup:
 
@@ -193,7 +193,13 @@ One-time setup:
 bash scripts/install-hooks.sh
 ```
 
-This points `core.hooksPath` at `scripts/hooks`, so the tracked hook *is* the active hook and edits to it take effect immediately (no copy to re-install). It runs on every `git commit` and blocks it if any of these fail: the staged-file guard (generated output, `.docx`, `.pyc`, un-templated `private/` files), `scripts/check_private_values.py` (a private salary minimum retyped into a tracked file), byte-compile, `ruff check` and `ruff format --check`, `check_skill_hardcoding.py`, `jobo profile validate`, `lint-imports`, `mypy src`, and the pytest suite (about a minute). The vault-dependent checks are skipped when no vault is found. Bypass with `git commit --no-verify` only if you're deliberately committing through a known failure.
+This points `core.hooksPath` at `scripts/hooks`, so the tracked hooks *are* the active hooks and edits to them take effect immediately (no copy to re-install).
+
+- **On `git commit`** (`pre-commit`, about 6 seconds) everything except the tests: the staged-file guard (generated output, `.docx`, `.pyc`, un-templated `private/` files), `scripts/check_private_values.py` (a private salary minimum or a personal identifier written in a tracked file), byte-compile, `ruff check` and `ruff format --check`, `check_skill_hardcoding.py`, `jobo profile validate`, `lint-imports` and `mypy src`. The vault-dependent checks are skipped when no vault is found.
+- **On `git push`** (`pre-push`, about as long as the test suite, about a minute and a half) a leak audit of the commits being pushed (`scripts/check_pushed_commits.py`: the lines each commit adds, its author and its message, against the vault's personal-terms list, ignoring case), then the whole `pytest` suite. The tests run on your working tree, so commit or stash first. The audit can also be run by hand: `python scripts/check_pushed_commits.py --range origin/main..HEAD`.
+- **In CI** the code checks run again without a vault, and decide whether a pull request can merge.
+
+A commit can contain a failing test, because the suite runs at push, not at commit. `git commit --no-verify` and `git push --no-verify` skip the hooks. Skipping the commit hook is cheap to undo; skipping the push hook is not, because the repository is public and nothing else checks for a leak.
 
 ## Learning-plan PDFs
 
