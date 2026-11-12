@@ -63,7 +63,7 @@ autouse test fixture, by `scripts/setup.sh` and `scripts/check-setup.sh` (which 
 
 **The per-file overrides stay**, unchanged, and are not part of this record. They are the
 container's and the test fixture's way to place one file, they work with a vault, and renaming
-them belongs to [ADR 0030](0030-finish-the-claude-jobs-rename.md). The `paths.py` docstring says
+them was done in [ADR 0030](0030-finish-the-claude-jobs-rename.md). The `paths.py` docstring says
 that they are overrides, not a second layout.
 
 ## Considered and rejected
@@ -91,4 +91,6 @@ that they are overrides, not a second layout.
   same change, and the `interview_prep` skill no longer mentions the option. That skill still names
   `profile/star-bank.md` in several places although the story bank is `stories.yaml`; correcting
   the skill text is separate work.
-- [ADR 0030](0030-finish-the-claude-jobs-rename.md) renames the per-file override variables.
+- [ADR 0030](0030-finish-the-claude-jobs-rename.md) renamed the per-file override variables to
+  `JOBOMATIC_PRIVATE_DIR` and `JOBOMATIC_APPLICATIONS_LOG`. It also records a correction to this
+  record: the container does not use the overrides (the image sets only `JOBOMATIC_VAULT`).
