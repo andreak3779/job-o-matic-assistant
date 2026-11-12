@@ -72,7 +72,7 @@ silent success.
 
 ## Prompts
 
-The skills in `.claude/skills/<name>/SKILL.md` are the single source for the
+The skills in `skills/<name>/SKILL.md` are the single source for the
 workflows. Nine of them are served to Claude Desktop as MCP prompts (each takes an
 optional `jd` argument that is appended to the prompt):
 

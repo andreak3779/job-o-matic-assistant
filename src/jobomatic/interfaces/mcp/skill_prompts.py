@@ -1,6 +1,6 @@
 """Expose the application-workflow skills to Claude Desktop as MCP prompts.
 
-The skills in ``.claude/skills/<name>/SKILL.md`` are written for Claude Code, which can run shell
+The skills in ``skills/<name>/SKILL.md`` (ADR 0031) are written for Claude Code, which can run shell
 commands (``python -m jobomatic ...``). Claude Desktop has the MCP tools instead, so each
 prompt is the skill's own text behind a short preamble that says which tool to call in place of
 each command. The skill files stay the single source: nothing is copied or edited.
@@ -91,7 +91,9 @@ class Skill:
 
 
 def skills_dir() -> Path:
-    return paths.code_root() / ".claude" / "skills"
+    """The canonical skills folder. ``.claude/skills`` holds only links for Claude Code, and the
+    server does not depend on them (ADR 0031)."""
+    return paths.code_root() / "skills"
 
 
 def load_skill(folder: str, root: Path | None = None) -> Skill:
