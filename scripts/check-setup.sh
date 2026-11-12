@@ -95,6 +95,35 @@ else
     ok "'jobo' is on your PATH and belongs to this folder"
 fi
 
+# Claude Code finds the skills through the links in .claude/skills (ADR 0031). A copy of the
+# repository that lost its symlinks (a zip extracted by some tools) has none. In a git clone only
+# the tracked links are counted: a link you added yourself for a private skill is not the
+# repository's. A copy with no .git has nothing to ask, so every entry in the folder is counted.
+skills_total=0
+skills_broken=0
+skill_names="$(git -C "$ROOT" ls-files .claude/skills 2>/dev/null | sed 's|.*/||')"
+if [ -z "$skill_names" ] && [ -d "$ROOT/.claude/skills" ]; then
+    skill_names="$(ls -A "$ROOT/.claude/skills")"
+fi
+while IFS= read -r skill_name; do
+    [ -n "$skill_name" ] || continue
+    skills_total=$((skills_total + 1))
+    if [ ! -L "$ROOT/.claude/skills/$skill_name" ] || [ ! -f "$ROOT/.claude/skills/$skill_name/SKILL.md" ]; then
+        skills_broken=$((skills_broken + 1))
+    fi
+done <<< "$skill_names"
+if [ "$skills_total" -eq 0 ]; then
+    warn "there is no .claude/skills folder, so Claude Code has no skills here."
+    line "Restore it with:  git checkout -- .claude/skills   (or use a git clone, not a zip)"
+elif [ "$skills_broken" -eq 0 ]; then
+    ok "$skills_total skills are linked for Claude Code"
+else
+    warn "$skills_broken of $skills_total skill links for Claude Code are broken."
+    line "A copy that lost its symlinks has no skills in Claude Code (the commands and the"
+    line "MCP server still work). In a git clone, restore them with:  git checkout -- .claude/skills"
+    line "A downloaded zip cannot be repaired this way: use a git clone instead."
+fi
+
 if [ "$START_DIR" != "$ROOT" ]; then
     warn "You ran this from $START_DIR."
     line "The examples in the docs assume the repository folder:  cd \"$ROOT\""

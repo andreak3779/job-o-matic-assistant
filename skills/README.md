@@ -9,8 +9,13 @@ re-derives a career fact; it reads the profile.
 skills/       one folder per skill (SKILL.md, and sometimes small helper files)
 reference/    material a skill step loads mid-workflow (rubrics, question bank, writing style)
 templates/    layout notes and example inputs (docx layout, role-config example, import page)
-.claude/skills/<name>  symlinks to skills/<name>, so Claude Code finds them
+.claude/skills/<name>  symlinks to skills/<name>, so Claude Code finds them (nothing else reads them)
 ```
+
+`skills/` is the one source: the MCP server and the presence generators read it directly. The links
+are a convenience for Claude Code, and a copy of the repository that lost them (a zip extracted by
+some tools) has no skills in Claude Code until it is a `git clone` again; `scripts/check-setup.sh`
+says so.
 
 Personal data (the profile, the STAR story bank, gap-coaching notes, role configs, generated
 documents) lives in the private vault, never here. See `docs/architecture.md`.
@@ -68,7 +73,8 @@ in the code. The skill that drives it is personal, so it lives in the private va
 | `update_pluralsight_profile` | Pluralsight bio, title, links |
 
 The last three presence skills are not symlinked into `.claude/skills`. The old repository did not
-link them either, so Claude Code does not offer them on its own; add a symlink to opt one in.
+link them either, so Claude Code does not offer them on its own; add a symlink to opt one in, and
+remove its name from `NOT_LINKED` in `tests/test_skill_links.py`.
 
 ## Reference and templates
 
@@ -85,7 +91,8 @@ link them either, so Claude Code does not offer them on its own; add a symlink t
 ## Adding or changing a skill
 
 - A new skill is a folder `skills/<name>/SKILL.md` with `name` and `description` front matter, plus
-  a symlink `.claude/skills/<name>` -> `../../skills/<name>`.
+  a symlink `.claude/skills/<name>` -> `../../skills/<name>`. A test fails if a skill has neither a
+  link nor an entry in `NOT_LINKED` (ADR 0031).
 - Run `python scripts/check_skill_hardcoding.py` after editing any `SKILL.md`. It flags cert
   statuses and course counts written as literal prose that no longer match the profile.
 - When you add a reference file, say in it which skill and step loads it.
