@@ -1,6 +1,6 @@
 # 0030 — Finish the rename from claude-jobs to job-o-matic
 
-**Status:** Accepted.
+**Status:** Accepted. Built; see "As built".
 
 ## Context
 
@@ -87,3 +87,24 @@ but the test fixture and `scripts/golden_outputs.py` use them, and that is a sep
 
 - Skill text that says "Project 1" (`primary_learning_plan_generator`) is model-facing prompt text
   and is not changed here.
+
+## As built
+
+- `paths.py` holds `RETIRED_VARIABLES` and `reject_retired_variables()`. It is called from
+  `private_dir()`, `applications_log()` and the MCP server's `_locations()`; in `_locations()` it is
+  the first line, before `_or_none` can hide it. An old variable set to an empty string is ignored,
+  since it never moved anything.
+- `tests/test_retired_variables.py` covers each old name, the command line (one line, exit 1) and
+  the MCP server with and without a vault. Removing the call from `_locations()` fails the
+  no-vault tests, which is the case the call exists for.
+- The autouse test fixture removes the old names, so a stale shell variable cannot fail the suite.
+- `claude-jobs` is gone from `pyproject.toml` and `main.py`. On this machine `.venv/bin/claude-jobs`
+  still exists and fails with `ImportError: cannot import name 'deprecated'`, as the decision
+  expects, until `pip install -e .` is run again.
+- `tests/test_old_names_are_gone.py` lists tracked files and fails on an old name outside the ADRs,
+  two history documents, the retired-variables map and its tests, and the MCP README note. A stray
+  `CLAUDE_JOBS_X` in a source file fails it.
+- `test_curated_skills_only_need_commands_that_have_a_tool` now matches `jobo` and
+  `python -m jobomatic` and asserts that each skill names at least one command.
+- Not done, as decided: the "Project 1" wording in `primary_learning_plan_generator/SKILL.md`, and
+  removing the retired-variables map (before 1.0).
