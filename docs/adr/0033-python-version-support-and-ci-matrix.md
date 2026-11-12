@@ -45,10 +45,10 @@ What was found when this was investigated (2026-11-12):
   at the time; only a wheel would be exposed.
 - **`setup.sh` already falls back** to an install without the lock, with a warning, and tries
   `python3, 3.12, 3.13, 3.11, 3.14` in that order.
-- **The `main` ruleset requires no status checks** (it blocks deletion, non-fast-forward, creation
-  and update), so CI job names are free to change, and a red CI does not block a merge by itself.
-  [ADR 0032](0032-tiered-git-hooks.md) calls CI the authority for merging; that is convention, not
-  enforcement.
+- **The `main` ruleset required no status checks** when this was investigated (it blocked deletion,
+  non-fast-forward, creation and update), so CI job names were free to change, and a red CI did not
+  block a merge by itself. [ADR 0032](0032-tiered-git-hooks.md) called CI the authority for merging;
+  that was convention, not enforcement. See "As built" for what changed afterwards.
 
 ## Decision
 
@@ -101,7 +101,8 @@ What was found when this was investigated (2026-11-12):
 
 ## Follow-ups
 
-- Making CI a required check on `main` is a GitHub setting and is left to the repository owner.
+- Making CI a required check on `main` was left to the repository owner when this was written; it was
+  done afterwards (see "As built").
 - Migrating `(str, Enum)` to `StrEnum`, which the ruff comment mentions, is separate.
 
 ## As built
@@ -125,4 +126,11 @@ What was found when this was investigated (2026-11-12):
   contracts and mypy pass.
 - The first run of the matrix on GitHub's runners is the pull request that introduced it; its result
   is recorded in that pull request.
-- Not done, as decided: the `main` ruleset was left alone in this change (see Follow-ups).
+- Not done in the change itself, as decided: the `main` ruleset. It was changed after the pull request
+  merged and the five jobs had reported on `main`, with the owner's approval (2026-11-12): the
+  `protect job-o-matic` ruleset now also requires the checks `Lint, contracts and types (Python 3.11)`
+  and `Tests (Python 3.11)`, `Tests (Python 3.12)`, `Tests (Python 3.13)` and `Tests (Python 3.14)`,
+  from GitHub Actions, without "require branches to be up to date". Its other rules and the admin
+  bypass are unchanged, so an admin merge still works. **The ruleset names the jobs**: a change to the
+  matrix in `ci.yml` needs the same change to the ruleset, or pull requests from anyone without the
+  bypass wait for a check that never reports. The drift test cannot see the ruleset.
