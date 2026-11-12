@@ -14,47 +14,43 @@
 <meta property="og:image" content="https://andreak3779.github.io/job-o-matic-assistant/assets/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
 <style>
+/* tokens:start */
 :root {
-  --bg: #fdf6e3;
-  --surface: #ffffff;
-  --text: #1b1f4b;
-  --muted: #4a4f7a;
-  --line: #e4d9b8;
-  --accent: #0e8f96;
-  --accent-ink: #ffffff;
-  --pink: #c4207f;
-  --sun: #ffd23f;
-  --term-bg: #1b1f4b;
-  --term-text: #fdf6e3;
-  --term-dim: #9aa0d6;
-  --ok: #7ee08a;
-  --warn: #ffd23f;
-  --bad: #ff8a7a;
+  --bg: #fdf6e3; --surface: #ffffff; --text: #1b1f4b; --muted: #4a4f7a; --line: #e4d9b8;
+  --accent: #0e8f96; --accent-ink: #ffffff; --accent-text: #0a6e74;
+  --pink: #c4207f; --pink-ink: #ffffff; --sun: #ffd23f; --navy: #1b1f4b; --cream: #fdf6e3;
+  --ok: #17703a; --warn: #8a5300; --err: #b3261e; --new: #d9f3f4;
+  --fit-pass: #ff4f3f; --fit-stretch: #ff9f1c; --fit-worth: #ffd23f;
+  --fit-good: #c6e84a; --fit-strong: #2fbf4f; --fit-ink: #1b1f4b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #11143a;
-    --surface: #1b1f4b;
-    --text: #fdf6e3;
-    --muted: #b4b9e6;
-    --line: #333873;
-    --accent: #38c9d0;
-    --accent-ink: #11143a;
-    --pink: #ff7cc0;
-    --term-bg: #0b0d28;
+    --bg: #11143a; --surface: #1b1f4b; --text: #fdf6e3; --muted: #b4b9e6; --line: #333873;
+    --accent: #38c9d0; --accent-ink: #11143a; --accent-text: #38c9d0;
+    --pink: #ff7cc0; --pink-ink: #11143a;
+    --ok: #7ee08a; --warn: #ffd23f; --err: #ff8a7a; --new: #1f3a6e;
   }
 }
 :root[data-theme="dark"] {
   --bg: #11143a; --surface: #1b1f4b; --text: #fdf6e3; --muted: #b4b9e6; --line: #333873;
-  --accent: #38c9d0; --accent-ink: #11143a; --pink: #ff7cc0; --term-bg: #0b0d28;
+  --accent: #38c9d0; --accent-ink: #11143a; --accent-text: #38c9d0;
+  --pink: #ff7cc0; --pink-ink: #11143a;
+  --ok: #7ee08a; --warn: #ffd23f; --err: #ff8a7a; --new: #1f3a6e;
 }
+/* tokens:end */
+:root {
+  --term-bg: #1b1f4b; --term-text: #fdf6e3; --term-dim: #9aa0d6;
+  --term-ok: #7ee08a; --term-warn: #ffd23f; --term-bad: #ff8a7a;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --term-bg: #0b0d28; } }
+:root[data-theme="dark"] { --term-bg: #0b0d28; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
   font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
 }
-a { color: var(--accent); }
+a { color: var(--accent-text); }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
 header.hero {
   background: var(--sun); color: #1b1f4b; border-bottom: 6px solid #1b1f4b;
@@ -84,7 +80,7 @@ pre.term {
   background: var(--term-bg); color: var(--term-text); border-radius: 12px; padding: 18px 20px; overflow-x: auto;
   font: 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace; margin: 0; border: 2px solid #1b1f4b;
 }
-.term .dim { color: var(--term-dim); } .term .ok { color: var(--ok); } .term .warn { color: var(--warn); } .term .bad { color: var(--bad); }
+.term .dim { color: var(--term-dim); } .term .ok { color: var(--term-ok); } .term .warn { color: var(--term-warn); } .term .bad { color: var(--term-bad); }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 20px; }
 .cap { font-size: .9rem; color: var(--muted); margin: 8px 2px 0; }
 .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; counter-reset: s; }
