@@ -61,20 +61,30 @@ def env(tmp_path: Path) -> Env:
 # -- turning a run into text that does not change from day to day -----------------------------
 
 
+def _replace_path(text: str, path: str, placeholder: str) -> str:
+    """Replace ``path`` where it is a whole path, not a piece of a longer name. With the checkout at
+    ``/app`` (the container's working folder), a plain replace also rewrote the ``/app`` that starts
+    ``/applications`` (ADR 0033)."""
+    return re.sub(rf"(?<![\w.-]){re.escape(path)}(?![\w.-])", lambda _: placeholder, text)
+
+
 def _normalize(text: str, tmp_path: Path) -> str:
     vault = Path(os.environ["JOBOMATIC_VAULT"])
     today = date.today()
-    replacements = [
+    paths_to_hide = [
         (str(REPO), "<REPO>"),
         (str(tmp_path.resolve()), "<TMP>"),
         (str(tmp_path), "<TMP>"),
         (str(vault.parent.resolve()), "<SCRATCH>"),
         (str(vault.parent), "<SCRATCH>"),
         (str(Path.cwd()), "<CWD>"),
+    ]
+    for old, new in paths_to_hide:
+        text = _replace_path(text, old, new)
+    for old, new in [
         (today.isoformat(), "<TODAY>"),
         (today.strftime("%B %Y"), "<MONTH-YEAR>"),
-    ]
-    for old, new in replacements:
+    ]:
         text = text.replace(old, new)
     # The sidecar files record when they were made, to the second.
     text = re.sub(r"<TODAY>T\d\d:\d\d:\d\d(\.\d+)?Z", "<NOW>", text)
