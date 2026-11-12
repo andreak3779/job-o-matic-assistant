@@ -6,12 +6,11 @@ WORKDIR /app
 # when pyproject.toml actually changes, not on every source edit.
 COPY pyproject.toml requirements-lock.txt ./
 COPY src ./src
+# skills/ is what src/jobomatic/interfaces/mcp/skill_prompts.py serves to Claude Desktop as prompts.
 COPY skills ./skills
 COPY reference ./reference
 COPY templates ./templates
 COPY tests ./tests
-# The skills that src/jobomatic/interfaces/mcp/skill_prompts.py serves to Claude Desktop as prompts.
-COPY .claude/skills ./.claude/skills
 COPY README.md ./README.md
 
 # This image only ever runs the MCP server (src/jobomatic/interfaces/mcp/server.py, which calls the commands directly).

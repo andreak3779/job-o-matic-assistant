@@ -37,6 +37,25 @@ def test_each_curated_skill_becomes_one_prompt():
     assert prompts == expected and len(expected) == len(skill_prompts.CURATED_SKILLS)
 
 
+def test_the_prompts_come_from_skills_not_from_the_claude_code_links(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """ADR 0031: a copy of the repository that lost its ``.claude/skills`` links still serves them."""
+    import shutil
+
+    from jobomatic import paths
+
+    for folder in skill_prompts.CURATED_SKILLS:
+        target = tmp_path / "skills" / folder
+        target.mkdir(parents=True)
+        shutil.copy(paths.code_root() / "skills" / folder / "SKILL.md", target / "SKILL.md")
+    assert not (tmp_path / ".claude").exists()
+    monkeypatch.setattr(paths, "code_root", lambda: tmp_path)
+
+    assert skill_prompts.skills_dir() == tmp_path / "skills"
+    assert len(skill_prompts.build_prompts()) == len(skill_prompts.CURATED_SKILLS)
+
+
 def test_a_prompt_is_the_skill_text_behind_the_tool_preamble():
     skill = skill_prompts.load_skill("post_interview_thank_you_letter")
     text = skill_prompts.prompt_text(skill)
