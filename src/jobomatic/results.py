@@ -34,15 +34,16 @@ from jobomatic.retrieval.model import RetrievalError
 T = TypeVar("T")
 
 Status = Literal["ok", "error", "refused"]
-Level = Literal["info", "note", "warning", "error"]
+Level = Literal["info", "note", "log", "warning", "error"]
 
 EXIT_CODES: dict[Status, int] = {"ok": 0, "error": 1, "refused": 2}
 
 
 @dataclass(frozen=True)
 class Message:
-    """One line about the run. ``info`` is plain, ``note`` is advice to show alongside the
-    result, ``warning`` is something the run worked around, ``error`` is why it failed."""
+    """One line about the run. ``info`` is plain output, ``note`` is advice to show alongside the
+    result, ``log`` is how the run went (progress, what it did on the way: shown apart from the
+    result), ``warning`` is something the run worked around, ``error`` is why it failed."""
 
     level: Level
     text: str
@@ -57,8 +58,8 @@ class CommandResult(Generic[T]):
     override: str | None = None  # refused only: the confirmation that clears it
 
     def __post_init__(self) -> None:
-        if self.status != "ok" and not any(m.level == "error" for m in self.messages):
-            raise ValueError(f"a {self.status} result needs an error message saying why")
+        if self.status != "ok" and not self.messages:
+            raise ValueError(f"a {self.status} result needs a message saying why")
         if self.override is not None and self.status != "refused":
             raise ValueError("only a refused result can name an override")
 
@@ -156,9 +157,10 @@ def console(result: CommandResult[Any], render: Callable[[Any], str] | None = No
 
     - the payload, rendered by ``render`` (a renderer per payload type, next to the payload), goes
       to stdout;
-    - an ``info`` message goes to stdout as it is, a ``note`` after ``Note: ``, a ``warning`` to
-      stderr after ``WARNING: ``, and an ``error`` to stderr after ``ERROR: `` (``REFUSED: `` for a
-      refusal, followed by how to confirm past it when something can);
+    - an ``info`` message goes to stdout as it is and a ``note`` after ``Note: ``;
+    - a ``log`` message goes to stderr as it is, a ``warning`` after ``WARNING: ``, and an
+      ``error`` after ``ERROR: `` (``REFUSED: `` for a refusal, followed by how to confirm past it
+      when something can);
     - each file the run wrote is listed last as ``Wrote <path>``.
 
     The command line prints this, and the MCP server returns it, so the two cannot differ.
@@ -173,6 +175,8 @@ def console(result: CommandResult[Any], render: Callable[[Any], str] | None = No
             out.append(message.text)
         elif message.level == "note":
             out.append(f"Note: {message.text}")
+        elif message.level == "log":
+            err.append(message.text)
         elif message.level == "warning":
             err.append(f"WARNING: {message.text}")
         else:

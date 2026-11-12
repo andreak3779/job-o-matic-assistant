@@ -10,6 +10,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 from jobomatic import bootstrap
 from jobomatic.interfaces.mcp import server, skill_prompts
+from jobomatic.retrieval import scoring
 from tests.retrieval_fakes import FakeEmbedder
 
 # Commands a curated skill may mention that have no tool, so Desktop must not try them.
@@ -86,21 +87,26 @@ def fake(monkeypatch):
 
 
 def test_search_evidence_finds_a_course_and_never_returns_private_prose(fake, monkeypatch):
-    run = server._run_cli  # the fake embedder scores low, so lift the cutoff as the CLI tests do
-    monkeypatch.setattr(server, "_run_cli", lambda argv: run([*argv, "--min-score", "0"]))
+    monkeypatch.setattr(scoring, "DEFAULT_MIN_SCORE", 0.0)  # the fake embedder scores low
     out = server.search_evidence("message broker routing")
     assert "Message Queues in Practice" in out
     assert "(resume" not in out and "(interview story" not in out
 
 
-def test_search_evidence_only_asks_for_cloud_safe_kinds(monkeypatch):
-    seen: list[list[str]] = []
-    monkeypatch.setattr(server, "_run_cli", lambda argv: seen.append(argv) or "ok")
+def test_search_evidence_only_asks_for_cloud_safe_kinds(fake, monkeypatch):
+    seen: list[tuple[tuple, dict]] = []
+    real = server.search_command.search
+
+    def spy(*args, **kwargs):
+        seen.append((args, kwargs))
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(server.search_command, "search", spy)
     server.search_evidence("terraform", k=500)
-    argv = seen[0]
-    kinds = {argv[i + 1] for i, a in enumerate(argv) if a == "--kind"}
-    assert kinds == {"course", "lab", "module", "learning_path", "project"}
-    assert argv[argv.index("--k") + 1] == "10"
+    ((args, kwargs),) = seen
+    assert args == ("terraform",)
+    assert kwargs["kinds"] == frozenset({"course", "lab", "module", "learning_path", "project"})
+    assert kwargs["k"] == 10
 
 
 def test_search_evidence_refuses_an_empty_query():
@@ -114,7 +120,13 @@ def test_profile_summary_is_the_public_view():
 
 
 def test_profile_summary_asks_for_the_public_view_only(monkeypatch):
-    seen: list[list[str]] = []
-    monkeypatch.setattr(server, "_run_cli", lambda argv: seen.append(argv) or "ok")
+    seen: list[tuple[tuple, dict]] = []
+    real = server.profile_commands.show
+
+    def spy(*args, **kwargs):
+        seen.append((args, kwargs))
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(server.profile_commands, "show", spy)
     server.profile_summary()
-    assert seen[0] == ["profile", "show", "--public", "facts"]
+    assert seen == [(("facts",), {"public": True})]

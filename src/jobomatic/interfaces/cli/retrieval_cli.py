@@ -13,9 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from jobomatic import bootstrap
+from jobomatic.commands import search as search_command
+from jobomatic.commands.search import describe_report, sync_index
 from jobomatic.learning.service import LearningError
 from jobomatic.privacy.guard import DEFAULT_PII_PATTERNS
 from jobomatic.profile.service import ProfileError
+from jobomatic.results import emit
 from jobomatic.retrieval import scoring, service
 from jobomatic.retrieval.adapters.ollama import (
     DEFAULT_CHAT_MODEL,
@@ -23,10 +26,8 @@ from jobomatic.retrieval.adapters.ollama import (
     ollama_chat,
 )
 from jobomatic.retrieval.model import (
-    BuildReport,
     EmbeddingUnavailable,
     RetrievalError,
-    SkillEvidence,
 )
 
 COMMANDS = ("index", "search", "evidence")
@@ -85,27 +86,6 @@ def _shared_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--embed-model", default=DEFAULT_EMBED_MODEL)
 
 
-def _describe(report: BuildReport) -> str:
-    if report.rebuilt:
-        head = f"Rebuilt the index: {report.total} chunks embedded."
-    else:
-        head = (
-            f"Index up to date: {report.total} chunks "
-            f"({report.added} new, {report.updated} changed, {report.removed} removed, "
-            f"{report.unchanged} unchanged)."
-        )
-    return head
-
-
-def _sync(embed_model: str, *, rebuild: bool = False) -> BuildReport:
-    index = bootstrap.retrieval_index()
-    if rebuild:
-        index.path.unlink(missing_ok=True)
-    return service.build_index(
-        bootstrap.retrieval_chunks(), bootstrap.retrieval_embedder(embed_model), index
-    )
-
-
 def _pii_scan(text: str) -> list[str]:
     return [name for name, pattern in DEFAULT_PII_PATTERNS.items() if pattern.search(text)]
 
@@ -132,8 +112,8 @@ def _skills_for(target: str, include_all: bool) -> list[tuple[str, str]]:
 def run(args: argparse.Namespace) -> int:
     try:
         if args.command == "index":
-            report = _sync(args.embed_model, rebuild=args.rebuild)
-            print(_describe(report))
+            report = sync_index(args.embed_model, rebuild=args.rebuild)
+            print(describe_report(report))
             return 0
         if args.command == "search":
             return _search(args)
@@ -153,31 +133,20 @@ def run(args: argparse.Namespace) -> int:
 
 
 def _search(args: argparse.Namespace) -> int:
-    embedder = bootstrap.retrieval_embedder(args.embed_model)
-    index = bootstrap.retrieval_index()
-    if args.keyword_only:
-        if not index.hashes():
-            print("No index yet; run `index build` first.", file=sys.stderr)
-            return 1
-    else:
-        print(_describe(_sync(args.embed_model)), file=sys.stderr)
-    hits = service.search(
-        index,
+    result = search_command.search(
         args.query,
-        embedder,
         k=args.k,
         min_score=args.min_score,
-        semantic=not args.keyword_only,
+        embed_model=args.embed_model,
         kinds=frozenset(args.kind) if args.kind else None,
+        keyword_only=args.keyword_only,
     )
-    item = SkillEvidence(skill=args.query, hits=hits)
-    print(service.render_markdown([item]))
-    return 0
+    return emit(result, search_command.render)
 
 
 def _evidence(args: argparse.Namespace) -> int:
     embedder = bootstrap.retrieval_embedder(args.embed_model)
-    print(_describe(_sync(args.embed_model)), file=sys.stderr)
+    print(describe_report(sync_index(args.embed_model)), file=sys.stderr)
     skills = _skills_for(args.target, args.all)
     if not skills:
         print("No requirements to look up (the fit engine already grounds them all; use --all).")

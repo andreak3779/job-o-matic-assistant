@@ -42,6 +42,8 @@ from jobomatic import paths, results
 from jobomatic.commands import applications as applications_commands
 from jobomatic.commands import constraints as constraints_command
 from jobomatic.commands import fit_check as fit_check_command
+from jobomatic.commands import profile as profile_commands
+from jobomatic.commands import search as search_command
 from jobomatic.commands.support import vault_write_lock
 from jobomatic.interfaces.cli.main import main as cli_main
 from jobomatic.interfaces.mcp import access, skill_prompts
@@ -328,7 +330,7 @@ def _tool_text(result: results.CommandResult[Any], render: Callable[[Any], str])
 
 @mcp.tool(description="Validate the candidate profile and run its consistency checks")
 def validate_profile() -> str:
-    return _run_cli(["profile", "validate"])
+    return _tool_text(profile_commands.validate(), profile_commands.render_validate)
 
 
 @mcp.tool(description="Inline fit check for a job description")
@@ -866,10 +868,14 @@ _CLOUD_SAFE_KINDS = ("course", "lab", "module", "learning_path", "project")
 def search_evidence(query: str, k: int = 3) -> str:
     if not query.strip():
         raise ToolError("query must not be empty")
-    argv = ["search", query.strip(), "--k", str(max(1, min(int(k), 10)))]
-    for kind in _CLOUD_SAFE_KINDS:
-        argv += ["--kind", kind]
-    return _run_cli(argv)
+    return _tool_text(
+        search_command.search(
+            query.strip(),
+            k=max(1, min(int(k), 10)),
+            kinds=frozenset(_CLOUD_SAFE_KINDS),
+        ),
+        search_command.render,
+    )
 
 
 @mcp.tool(
@@ -879,7 +885,7 @@ def search_evidence(query: str, k: int = 3) -> str:
     )
 )
 def profile_summary() -> str:
-    return _run_cli(["profile", "show", "--public", "facts"])
+    return _tool_text(profile_commands.show("facts", public=True), profile_commands.render_show)
 
 
 @mcp.tool(
