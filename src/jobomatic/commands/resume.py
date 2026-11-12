@@ -15,11 +15,13 @@ from docx.shared import Pt
 from jobomatic import bootstrap, paths
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
+    Confirmations,
+    DocumentData,
     add_confirmation_flags,
-    check_gate,
-    load_profile_or_none,
+    gate_documents,
+    note_logged,
+    produce_document,
     require_path,
-    run_and_report,
     verify_pages,
 )
 from jobomatic.documents.adapters.docx_layout import (
@@ -31,6 +33,7 @@ from jobomatic.documents.pagefit import fit_resume
 from jobomatic.fit.engine import FitResult, profile_has_skill_text, rate_parsed_jd
 from jobomatic.fit.parser import parse_jd
 from jobomatic.provenance import write_sidecar
+from jobomatic.results import CommandResult, Message, emit
 
 _PAGE2_HEADER_SIZE = Pt(9)
 _MARKDOWN_RULE = re.compile(r"[-*_]{3,}")  # a leftover "---" line is not a paragraph
@@ -162,16 +165,42 @@ def generate_resume(
     company: str | None = None,
     out_path: Path | None = None,
     check_pages: bool = False,
+    notes: list[Message] | None = None,
+) -> tuple[Path, Path, FitResult]:
+    """Build and write a tailored resume DOCX plus provenance sidecar from a posting file.
+
+    Returns ``(docx_path, sidecar_path, fit_result)``. See ``generate_resume_from_text``.
+    """
+    return generate_resume_from_text(
+        jd_path.read_text(encoding="utf-8"),
+        source=jd_path,
+        profile=profile,
+        company=company,
+        out_path=out_path,
+        check_pages=check_pages,
+        notes=notes,
+    )
+
+
+def generate_resume_from_text(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    profile: Any | None = None,
+    company: str | None = None,
+    out_path: Path | None = None,
+    check_pages: bool = False,
+    notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a tailored resume DOCX plus provenance sidecar.
 
-    Returns ``(docx_path, sidecar_path, fit_result)``. The profile is *not*
-    mutated: the JD-specific tagline is used for this document only. The content is trimmed to
-    two pages first (or refused), before anything is logged. ``check_pages`` then measures the
-    real page count with LibreOffice and raises if it is over.
+    ``source`` is where the posting came from, recorded in the sidecar (``None`` for text that was
+    pasted in). The profile is *not* mutated: the JD-specific tagline is used for this document
+    only. The content is trimmed to two pages first (or refused), before anything is logged.
+    ``check_pages`` then measures the real page count with LibreOffice and raises if it is over.
+    ``notes``, when given, collects what would otherwise be printed (see ``say``).
     """
     profile = profile or bootstrap.load_profile()
-    jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
     content = _resume_content(profile, parsed, _build_tagline(parsed, profile))
@@ -187,7 +216,7 @@ def generate_resume(
     if out_path is None:
         out_path = located.folder / "resume.docx"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    outputs.report(located)
+    note_logged(notes, located)
 
     DocxTailoredResume().render(content, out_path)
 
@@ -195,12 +224,36 @@ def generate_resume(
         out_path,
         script="generate_resume.py",
         profile=profile,
-        inputs=[str(jd_path)],
+        inputs=[str(source)] if source else [],
         fit_rating=result.rating,
     )
     if check_pages:
-        verify_pages("resume", out_path)
+        verify_pages("resume", out_path, notes)
     return out_path, sidecar, result
+
+
+def run(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    company: str | None = None,
+    out: Path | None = None,
+    check_pages: bool = False,
+    confirm: Confirmations = Confirmations(),
+) -> CommandResult[DocumentData]:
+    """Gate the posting (fit, duplicate, pay) and then write the tailored resume (ADR 0003, 0028)."""
+    return produce_document(
+        gate_with_profile=lambda profile, notes: gate_documents(jd_text, profile, confirm, notes),
+        make=lambda profile, notes: generate_resume_from_text(
+            jd_text,
+            source=source,
+            profile=profile,
+            company=company,
+            out_path=out,
+            check_pages=check_pages,
+            notes=notes,
+        ),
+    )
 
 
 def generate_profile_resume(
@@ -249,19 +302,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none()
-    if profile is None:
-        return 1
-    refused = check_gate("documents", args.jd, profile, args)
-    if refused is not None:
-        return refused
-    return run_and_report(
-        generate_resume,
-        args.jd,
-        profile=profile,
-        company=args.company,
-        out_path=args.out,
-        check_pages=args.check_pages,
+    return emit(
+        run(
+            args.jd.read_text(encoding="utf-8"),
+            source=args.jd,
+            company=args.company,
+            out=args.out,
+            check_pages=args.check_pages,
+            confirm=Confirmations.from_args(args),
+        )
     )
 
 

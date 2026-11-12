@@ -12,11 +12,14 @@ from typing import Any
 from jobomatic import bootstrap, paths
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
+    Confirmations,
+    DocumentData,
     add_confirmation_flags,
-    check_gate,
-    load_profile_or_none,
+    gate_documents,
+    note_logged,
+    produce_document,
     require_path,
-    run_and_report,
+    say,
     verify_pages,
 )
 from jobomatic.documents.adapters.docx_layout import (
@@ -33,6 +36,7 @@ from jobomatic.fit.engine import (
 )
 from jobomatic.fit.parser import parse_jd
 from jobomatic.provenance import write_sidecar
+from jobomatic.results import CommandResult, Message, emit
 
 
 def _display_skill(skill: str, parsed: Any) -> str:
@@ -195,14 +199,43 @@ def generate_cover_letter(
     out_path: Path | None = None,
     record: bool = True,
     check_pages: bool = False,
+    notes: list[Message] | None = None,
+) -> tuple[Path, Path, FitResult]:
+    """Build and write a tailored cover-letter DOCX plus provenance sidecar from a posting file.
+
+    See ``generate_cover_letter_from_text``.
+    """
+    return generate_cover_letter_from_text(
+        jd_path.read_text(encoding="utf-8"),
+        source=jd_path,
+        profile=profile,
+        company=company,
+        out_path=out_path,
+        record=record,
+        check_pages=check_pages,
+        notes=notes,
+    )
+
+
+def generate_cover_letter_from_text(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    profile: Any | None = None,
+    company: str | None = None,
+    out_path: Path | None = None,
+    record: bool = True,
+    check_pages: bool = False,
+    notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a tailored cover-letter DOCX plus provenance sidecar.
 
+    ``source`` is where the posting came from, recorded in the sidecar (``None`` for pasted text).
     ``record=False`` skips the applications log and needs an explicit ``out_path``.
     ``check_pages`` measures the real page count with LibreOffice and raises unless it is one.
+    ``notes``, when given, collects what would otherwise be printed (see ``say``).
     """
     profile = profile or bootstrap.load_profile()
-    jd_text = jd_path.read_text(encoding="utf-8")
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
     company = company or parsed.company
@@ -219,7 +252,7 @@ def generate_cover_letter(
         )
         if out_path is None:
             out_path = located.folder / "cover-letter.docx"
-        outputs.report(located)
+        note_logged(notes, located)
     elif out_path is None:
         raise ValueError("out_path is required when record is False")
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -228,17 +261,18 @@ def generate_cover_letter(
     DocxTailoredCoverLetter().render(letter, out_path)
 
     if evidence["low_confidence"]:
-        print(
-            f"WARNING: only {len(result.grounded_required)} required skill(s) have verified evidence; "
+        say(
+            notes,
+            "warning",
+            f"only {len(result.grounded_required)} required skill(s) have verified evidence; "
             "letter drafted cautiously.",
-            file=sys.stderr,
         )
 
     sidecar = write_sidecar(
         out_path,
         script="generate_cover_letter.py",
         profile=profile,
-        inputs=[str(jd_path)],
+        inputs=[str(source)] if source else [],
         fit_rating=result.rating,
         evidence_sources=result.evidence_sources(),
         warnings=["low evidence — manually review before sending"]
@@ -246,8 +280,32 @@ def generate_cover_letter(
         else [],
     )
     if check_pages:
-        verify_pages("cover-letter", out_path)
+        verify_pages("cover-letter", out_path, notes)
     return out_path, sidecar, result
+
+
+def run(
+    jd_text: str,
+    *,
+    source: Path | None = None,
+    company: str | None = None,
+    out: Path | None = None,
+    check_pages: bool = False,
+    confirm: Confirmations = Confirmations(),
+) -> CommandResult[DocumentData]:
+    """Gate the posting (fit, duplicate, pay) and then write the tailored cover letter."""
+    return produce_document(
+        gate_with_profile=lambda profile, notes: gate_documents(jd_text, profile, confirm, notes),
+        make=lambda profile, notes: generate_cover_letter_from_text(
+            jd_text,
+            source=source,
+            profile=profile,
+            company=company,
+            out_path=out,
+            check_pages=check_pages,
+            notes=notes,
+        ),
+    )
 
 
 PLACEHOLDER_COMPANY = "[Company Name]"
@@ -327,20 +385,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none()
-    if profile is None:
-        return 1
-    refused = check_gate("documents", args.jd, profile, args)
-    if refused is not None:
-        return refused
-
-    return run_and_report(
-        generate_cover_letter,
-        args.jd,
-        profile=profile,
-        company=args.company,
-        out_path=args.out,
-        check_pages=args.check_pages,
+    return emit(
+        run(
+            args.jd.read_text(encoding="utf-8"),
+            source=args.jd,
+            company=args.company,
+            out=args.out,
+            check_pages=args.check_pages,
+            confirm=Confirmations.from_args(args),
+        )
     )
 
 

@@ -24,7 +24,7 @@ from collections.abc import Callable, Iterable
 from datetime import date
 from importlib import resources
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -41,11 +41,13 @@ from jobomatic import applications as applications_log
 from jobomatic import paths, results
 from jobomatic.commands import applications as applications_commands
 from jobomatic.commands import constraints as constraints_command
+from jobomatic.commands import cover_letter as cover_letter_command
 from jobomatic.commands import fit_check as fit_check_command
 from jobomatic.commands import gap_analysis as gap_analysis_command
 from jobomatic.commands import profile as profile_commands
+from jobomatic.commands import resume as resume_command
 from jobomatic.commands import search as search_command
-from jobomatic.commands.support import vault_write_lock
+from jobomatic.commands.support import Confirmations, vault_write_lock
 from jobomatic.interfaces.cli.main import main as cli_main
 from jobomatic.interfaces.mcp import access, skill_prompts
 from jobomatic.presence import github, job_board, jobgether, linkedin, pluralsight
@@ -325,21 +327,30 @@ def _jd_path(jd: str):
         Path(tmp_path).unlink(missing_ok=True)
 
 
-def _posting_text(jd: str) -> str:
+class _Posting(NamedTuple):
+    text: str
+    source: Path | None  # the file it was read from, or None when it was pasted in
+
+
+def _posting(jd: str) -> _Posting:
     """The posting a tool was given: the text itself, or a file this server may read.
 
     A path-shaped string must be a real file the server may read (a clear error otherwise, e.g. a
     typo); anything else is the job description text, as a client that pastes it in chat sends it.
     """
     if not _looks_like_path(jd):
-        return jd
+        return _Posting(jd, None)
     path = Path(_checked_path(jd, write=False, label="job description path"))
     if not path.is_file():
         raise ToolError(f"job description file not found: {path}")
     try:
-        return path.read_text(encoding="utf-8")
+        return _Posting(path.read_text(encoding="utf-8"), path)
     except OSError as exc:
         raise ToolError(f"could not read the job description {path}: {exc}") from exc
+
+
+def _posting_text(jd: str) -> str:
+    return _posting(jd).text
 
 
 def _checked_out(out: str | None) -> Path | None:
@@ -410,6 +421,28 @@ def generate_job_board(out: str | None = None) -> list[ContentBlock]:
 def generate_pluralsight(out: str | None = None) -> list[ContentBlock]:
     """out: optional output markdown path."""
     return _tool_blocks(pluralsight.run(_checked_out(out)), embed_text_as_resource=True)
+
+
+def _document_tool(
+    command: Callable[..., results.CommandResult[Any]],
+    jd: str,
+    company: str | None,
+    out: str | None,
+    *,
+    confirm_gaps: bool = False,
+    confirm_reapply: bool = False,
+    confirm_below_minimum: bool = False,
+) -> list[ContentBlock]:
+    """Run a gated document command (its gates run inside it) and return its text and files."""
+    posting = _posting(jd)
+    result = command(
+        posting.text,
+        source=posting.source,
+        company=company or None,
+        out=_checked_out(out),
+        confirm=Confirmations(confirm_gaps, confirm_reapply, confirm_below_minimum),
+    )
+    return _tool_blocks(result)
 
 
 def _letter_argv(
@@ -485,8 +518,8 @@ def generate_resume(
     proceed anyway), or when the posted pay is below the user's minimum (pass
     confirm_below_minimum=true only after the user says to continue).
     Generating only logs a *draft*; it never marks the posting as applied."""
-    return _letter_tool(
-        "generate-resume",
+    return _document_tool(
+        resume_command.run,
         jd,
         company,
         out,
@@ -521,8 +554,8 @@ def generate_cover_letter(
     proceed anyway), or when the posted pay is below the user's minimum (pass
     confirm_below_minimum=true only after the user says to continue).
     Generating only logs a *draft*; it never marks the posting as applied."""
-    return _letter_tool(
-        "generate-cover-letter",
+    return _document_tool(
+        cover_letter_command.run,
         jd,
         company,
         out,
@@ -556,9 +589,9 @@ def generate_application_documents(
     path. The duplicate-application and below-minimum-pay checks (and their
     confirm_reapply / confirm_below_minimum overrides) work as on generate_resume."""
     blocks: list[ContentBlock] = []
-    for command in ("generate-resume", "generate-cover-letter"):
+    for command in (resume_command.run, cover_letter_command.run):
         blocks.extend(
-            _letter_tool(
+            _document_tool(
                 command,
                 jd,
                 company,
