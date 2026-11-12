@@ -12,6 +12,8 @@ from typing import Any
 from jobomatic import bootstrap, paths
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
+    add_confirmation_flags,
+    check_gate,
     load_profile_or_none,
     require_path,
     run_and_report,
@@ -316,6 +318,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Count the real pages with LibreOffice and fail unless it is 1 (slow; needs LibreOffice)",
     )
+    add_confirmation_flags(parser, "gaps", "reapply", "below_minimum")
     args = parser.parse_args(argv)
 
     try:
@@ -327,6 +330,9 @@ def main(argv: list[str] | None = None) -> int:
     profile = load_profile_or_none()
     if profile is None:
         return 1
+    refused = check_gate("documents", args.jd, profile, args)
+    if refused is not None:
+        return refused
 
     return run_and_report(
         generate_cover_letter,

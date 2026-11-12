@@ -1,7 +1,7 @@
 """The gates: when documents may be generated for a posting (ADR 0003, 0008, 0010, 0011, 0021).
 
-Both interfaces, the command line and the MCP server, call these, so a rule holds no matter who
-asks. The gates need the fit rules, the applications log and the salary constraints, which the
+The commands call these before they write anything (ADR 0028), so a rule holds no matter which
+interface asks: the command line, the MCP server or a command called directly. The gates need the fit rules, the applications log and the salary constraints, which the
 modules may not call from each other, so they sit here, one level above them.
 
 What each gate decides:

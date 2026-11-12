@@ -14,6 +14,7 @@ from docx.shared import Pt
 
 from jobomatic import bootstrap, paths
 from jobomatic.commands.support import (
+    check_gate,
     load_profile_or_none,
     require_path,
     run_and_report,
@@ -272,6 +273,10 @@ def main(argv: list[str] | None = None) -> int:
         except FileNotFoundError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
+
+    refused = check_gate("location", args.jd, None, args)
+    if refused is not None:
+        return refused
 
     profile = load_profile_or_none()
     if profile is None:
