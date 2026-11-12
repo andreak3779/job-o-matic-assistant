@@ -1,9 +1,9 @@
 # 0025 — Simple web UI: standalone pages and a local web UI for the MCP tools, in the job-o-matic look
 
-**Status:** Proposed. Part of this exists: the Pluralsight import page
+**Status:** Accepted. Being built in the order of "Follow-ups"; "As built" is added when it is done.
+The Pluralsight import page
 ([`templates/pluralsight_import_template.html`](../../templates/pluralsight_import_template.html))
-works today, but does not yet use the brand. The local web UI for the MCP tools and the shared
-look are decisions, not built.
+worked before this record but did not use the brand.
 
 **Build order:** [ADR 0028](0028-structured-command-results-for-cli-and-mcp.md) is built: every
 command the MCP server offers returns a `CommandResult` (`jobomatic.results`), and the command
@@ -91,11 +91,12 @@ authentication". A web UI for the MCP tools has to open a port, so this is that 
   from outside. Templates are `.html` files with Jinja's automatic escaping on, and no template
   uses `|safe` or switches escaping off for data that did not come from the project itself.
 - **HTMX for partial updates, vendored.** One small pinned file, served from the package with its
-  licence file, no CDN, used for things like showing the dry-run result or saving a status
+  licence text, no CDN, used for things like showing the dry-run result or saving a status
   change without a reload. It is configured to refuse cross-origin requests and `eval`
-  (`selfRequestsOnly`, `allowEval` off). Every page still works as an ordinary form post; HTMX
-  only makes it smoother. There is no build step, and there is no other JavaScript beyond a few
-  inline lines.
+  (`selfRequestsOnly`, `allowEval` off), and as "Decided at build time" adds, to ignore script tags
+  and keep no history snapshots. Every page still works as an ordinary form post; HTMX
+  only makes it smoother. There is no build step, and no inline JavaScript (a small static file
+  holds the little there is).
 - **The first version covers what a screen improves**: fit check (paste a posting), duplicate
   check, `validate_profile`, the two pages below, and **document downloads** (resume, cover
   letter and the other generators), offered only after the gate passes and served through the
@@ -254,8 +255,8 @@ home page that links to these two.
   quick starts are updated with it, not left to drift.
 - **Document downloads make the web UI a way to produce a resume**, so the gate, the page budget
   and the rule on protected-characteristic information in `CLAUDE.md` apply to it as to every
-  other generator, and a self-identification question still has to be asked per posting. The page
-  asks it; it does not assume an answer.
+  other generator. The generators never add self-identification, so the page does not ask a
+  question that could not change anything: it shows a fixed notice (see "Decided at build time").
 
 ## Follow-ups
 
@@ -284,3 +285,53 @@ In this order:
 - The web UI is **Flask with Jinja templates and HTMX**, a Python-only stack in an optional `web`
   extra. React and the Python UI frameworks were weighed and are listed under "Considered and
   rejected".
+
+## Decided at build time
+
+Checked against the code on 2026-11-12, then decided with the owner (one pull request, the notice
+for self-identification, and `web` opt-in in the setup script). The rest of this record is unchanged.
+
+**What was checked.** The contrast figures in section 3 are right (computed: 3.6, 5.6, 6.0 and 14.5
+to one decimal). Flask 3.1.3 is pure Python and needs Werkzeug, Jinja2, MarkupSafe, itsdangerous and
+blinker (click is already installed). HTMX 2.0.11 is licensed 0BSD. The Pluralsight page's `FORMAT`
+and `VERSION` matched `pluralsight_json.py` but only by a comment. No code adds self-identification:
+the generators never do, only the skills do, in conversation. The file policy is
+`interfaces/mcp/access.py`, a module written by the author.
+
+1. **The tokens have one source file**, `branding/tokens.css`. Standalone pages open from disk and
+   cannot link a stylesheet, so each embeds a verbatim copy between `/* tokens:start */` and
+   `/* tokens:end */`, and a test fails if a copy differs. The web UI serves the file itself.
+2. **A contrast test** reads the tokens and checks every text and background pair the pages use:
+   4.5:1 for text, 3:1 for large text and control edges, in light and dark.
+3. **A test that the Pluralsight page's `FORMAT` and `VERSION` equal those in `pluralsight_json.py`**,
+   as section 4 promised.
+4. **Response headers beyond the guards above**, from one hook: a Content-Security-Policy
+   (`default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-ancestors
+   'none'; form-action 'self'; base-uri 'none'`), `X-Content-Type-Options: nosniff`,
+   `Referrer-Policy: no-referrer` and `Cache-Control: no-store`, because the pages show a real profile
+   and real postings. There is no inline script, inline handler or inline style; a test enforces it.
+5. **No path ever comes from the browser.** Postings and notes are text fields; the Pluralsight file
+   is an upload written to a throwaway temporary folder for the call; documents go to the default
+   outputs folder; a download is served by an id the server issued for a path in the result's
+   `written` list, never by a name the request supplies. This meets "the file policy applies exactly
+   as to the MCP server" by construction, without importing or moving `access.py`. A test fails if a
+   route or form field takes a path-shaped value.
+6. **Document downloads show a fixed notice instead of a question**: "These documents never include
+   self-identification. If a posting invites you to self-identify, decide per posting and add it
+   yourself; this tool does not add it." Nothing can be added, so there is nothing to ask.
+7. **HTMX is vendored with provenance**: taken from the npm registry tarball for the pinned version
+   in an empty folder, checked against the registry's integrity value, with its SHA-256, version and
+   0BSD text in `VENDORED.md`; a test pins the SHA-256. Its configuration sets `selfRequestsOnly`,
+   `allowEval` off, `allowScriptTags` off and history snapshots off (its default keeps page snapshots
+   in the browser's `localStorage`).
+8. **Override boxes come from the result.** A refusal's `override` decides whether a box exists and
+   what it says. No box is hard-coded, so a skills or location Pass, which has no override, shows none.
+9. **Import contracts**: Flask, Jinja2 and Werkzeug are used only by `jobomatic.interfaces.web`; `web`
+   uses neither the command line nor the MCP server; only `cli.main` uses `web`, lazily, for `jobo web`.
+10. **A parity test with an exemption list**: every MCP tool is mapped to a web route or named in
+    `NOT_IN_WEB`. For the first version that list holds `search_constraints`, `search_evidence`,
+    `profile_summary`, `interview_prep`, the presence generators, the thank-you and cold-call
+    letters and the learning plan. A new MCP tool fails the test until someone decides.
+11. **`web` is an optional extra everywhere.** CI installs it so the matrix tests it; `setup.sh`
+    takes `--web` to add it; `jobo web` without Flask prints the one command that fixes it.
+
