@@ -64,7 +64,7 @@ def test_a_refusal_with_no_override_cannot_be_confirmed_past() -> None:
 
 @pytest.mark.parametrize("status", ["error", "refused"])
 def test_a_result_that_did_not_succeed_must_say_why(status: str) -> None:
-    with pytest.raises(ValueError, match="needs an error message"):
+    with pytest.raises(ValueError, match="needs a message"):
         CommandResult(status)  # type: ignore[arg-type]
 
 

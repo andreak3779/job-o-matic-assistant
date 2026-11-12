@@ -111,7 +111,7 @@ def _learning_items():
 
 
 def test_learning_drift_is_quiet_when_the_counts_match() -> None:
-    from jobomatic.interfaces.cli.profile_cli import learning_drift
+    from jobomatic.commands.profile import learning_drift
     from tests.profile_fixtures import sample_profile
 
     profile = sample_profile(coursework_summary="2 courses + 1 labs completed")
@@ -124,7 +124,7 @@ def test_learning_drift_is_quiet_when_the_counts_match() -> None:
 
 
 def test_learning_drift_names_each_count_that_no_longer_matches() -> None:
-    from jobomatic.interfaces.cli.profile_cli import learning_drift
+    from jobomatic.commands.profile import learning_drift
     from tests.profile_fixtures import sample_profile
 
     profile = sample_profile(coursework_summary="9 courses + 1 labs completed")
@@ -139,7 +139,7 @@ def test_learning_drift_names_each_count_that_no_longer_matches() -> None:
 
 
 def test_learning_drift_has_nothing_to_say_before_anything_is_imported() -> None:
-    from jobomatic.interfaces.cli.profile_cli import learning_drift
+    from jobomatic.commands.profile import learning_drift
     from tests.profile_fixtures import sample_profile
 
     assert learning_drift(sample_profile(coursework_summary="9 courses + 9 labs"), []) == []
