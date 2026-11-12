@@ -42,7 +42,7 @@ status below says so.
 | [0026](0026-guided-setup-and-pre-1-0-status.md) | Setup is one guided path with scripts, and the project says it is pre-1.0 | Accepted |
 | [0027](0027-relative-paths-resolve-against-the-current-folder.md) | Relative paths resolve against the current folder, and the error says where it looked | Accepted |
 | [0028](0028-structured-command-results-for-cli-and-mcp.md) | Commands return structured results that the CLI and the MCP server render, instead of the MCP server reading printed output | Proposed (problem statement only) |
-| [0029](0029-remove-the-legacy-explicit-root-layout.md) | Remove the legacy explicit-root layout from the path module and the commands | Proposed (problem statement only) |
+| [0029](0029-remove-the-legacy-explicit-root-layout.md) | Remove the legacy explicit-root layout from the path module and the commands | Proposed (decision drafted; not built) |
 | [0030](0030-finish-the-claude-jobs-rename.md) | Finish the rename from claude-jobs to job-o-matic: command alias, environment variables, docstrings | Proposed (problem statement only) |
 | [0031](0031-one-canonical-skills-location.md) | One canonical location for the skills, so the MCP server does not depend on symlinks | Proposed (problem statement only) |
 | [0032](0032-tiered-git-hooks.md) | Tiered git hooks: a fast check on commit, the full suite on push and in CI | Proposed (problem statement only) |
