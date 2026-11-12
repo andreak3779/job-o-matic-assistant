@@ -40,7 +40,7 @@ class SearchConstraints:
 
 
 def private_dir() -> Path:
-    """Directory holding gitignored personal files (override: CLAUDE_JOBS_PRIVATE_DIR)."""
+    """Directory holding gitignored personal files (override: JOBOMATIC_PRIVATE_DIR)."""
     return paths.private_dir()
 
 

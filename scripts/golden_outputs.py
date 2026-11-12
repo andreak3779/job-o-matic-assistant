@@ -116,7 +116,7 @@ def capture(vault: Path | None, dest: Path) -> list[str]:
     dest.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as scratch_name:
         scratch = Path(scratch_name)
-        os.environ["CLAUDE_JOBS_APPLICATIONS_LOG"] = str(scratch / "applications.jsonl")
+        os.environ["JOBOMATIC_APPLICATIONS_LOG"] = str(scratch / "applications.jsonl")
         if vault is not None:
             os.environ["JOBOMATIC_VAULT"] = str(vault)
 

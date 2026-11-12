@@ -19,7 +19,7 @@ from jobomatic.applications.model import Application, ImportReport, PostingCheck
 
 
 def log_path() -> Path:
-    """The applications log (override: CLAUDE_JOBS_APPLICATIONS_LOG)."""
+    """The applications log (override: JOBOMATIC_APPLICATIONS_LOG)."""
     return paths.applications_log()
 
 

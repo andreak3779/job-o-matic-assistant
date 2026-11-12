@@ -91,11 +91,11 @@ mcp = MCPServer("job-o-matic", title="Job-O-Matic Assistant", icons=server_icons
 # writes (and what gets attached back to the client) to the vault's outputs/, the
 # learning-plans/ folder, the stories file, the temp dir and the extra directories. The
 # code repository is not readable. Extra directories are allowed with
-# CLAUDE_JOBS_ALLOWED_DIRS (os.pathsep-separated).
+# JOBOMATIC_ALLOWED_DIRS (os.pathsep-separated).
 
 
 def _extra_roots() -> tuple[Path, ...]:
-    raw = os.environ.get("CLAUDE_JOBS_ALLOWED_DIRS", "")
+    raw = os.environ.get(paths.ALLOWED_DIRS_ENV, "")
     return tuple(Path(p).expanduser().resolve() for p in raw.split(os.pathsep) if p.strip())
 
 
@@ -109,6 +109,8 @@ def _or_none(find: Callable[[], Path]) -> Path | None:
 
 def _locations() -> access.Locations:
     """Where things are right now (read per call: the vault and env can change in tests)."""
+    # First, and outside ``_or_none`` below, which would hide the error when there is no vault.
+    paths.reject_retired_variables()
     code_root = paths.code_root()
     temp = Path(tempfile.gettempdir()).resolve()
     vault = _or_none(paths.vault_root)
@@ -150,7 +152,7 @@ def _checked_path(value: str, *, write: bool, label: str) -> str:
         raise ToolError(
             f"{label} {value!r} is outside the directories this server may "
             f"{'write to' if write else 'read from'} ({allowed}). "
-            "Set CLAUDE_JOBS_ALLOWED_DIRS to allow another directory."
+            f"Set {paths.ALLOWED_DIRS_ENV} to allow another directory."
         )
     return str(resolved)
 
@@ -703,7 +705,7 @@ def _import_file(file: str | None, content: str | dict[str, Any] | list[Any] | N
     if len(content.encode("utf-8")) > _MAX_IMPORT_CONTENT_BYTES:
         raise ToolError(
             "content is too large to pass through a tool call; save it as a file in the vault "
-            "(or a directory in CLAUDE_JOBS_ALLOWED_DIRS) and pass file instead"
+            f"(or a directory in {paths.ALLOWED_DIRS_ENV}) and pass file instead"
         )
     suffix = ".json" if content.lstrip()[:1] in ("{", "[") else ".html"
     with tempfile.TemporaryDirectory(prefix="pluralsight-import-") as scratch:

@@ -94,7 +94,7 @@ def test_import_needs_exactly_one_of_a_file_or_mslearn(vault: Path, tmp_path: Pa
 def test_mslearn_flag_needs_a_share_id_in_the_vault(
     vault: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CLAUDE_JOBS_PRIVATE_DIR", str(vault / "private"))
+    monkeypatch.setenv("JOBOMATIC_PRIVATE_DIR", str(vault / "private"))
     assert main(["learning", "import", "--mslearn"]) == 1
     assert "mslearn_share_id" in capsys.readouterr().out
 
@@ -102,7 +102,7 @@ def test_mslearn_flag_needs_a_share_id_in_the_vault(
 def test_mslearn_flag_fetches_cleans_and_saves(
     vault: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("CLAUDE_JOBS_PRIVATE_DIR", str(vault / "private"))
+    monkeypatch.setenv("JOBOMATIC_PRIVATE_DIR", str(vault / "private"))
     (vault / "private" / "sources.yaml").write_text("mslearn_share_id: abc123\n", encoding="utf-8")
 
     class Response:

@@ -12,9 +12,9 @@ Everything outside this module asks it for a path instead of building one from
 If none of them yields a directory holding the marker, every path lookup raises
 ``VaultError`` (ADR 0007): there is no silent fallback to files inside this repo.
 
-The per-file overrides (``CLAUDE_JOBS_PRIVATE_DIR``, ``CLAUDE_JOBS_APPLICATIONS_LOG``) move one
-folder or file and still win, because the test fixture and the container rely on them. They are
-not a second layout. There is no other way to locate data (ADR 0029): tests select a throwaway
+The per-file overrides (``JOBOMATIC_PRIVATE_DIR``, ``JOBOMATIC_APPLICATIONS_LOG``) move one
+folder or file and still win, because the test fixture and ``scripts/golden_outputs.py`` rely on
+them. They are not a second layout. There is no other way to locate data (ADR 0029): tests select a throwaway
 vault with ``JOBOMATIC_VAULT``.
 """
 
@@ -27,14 +27,32 @@ from datetime import date
 from pathlib import Path
 
 VAULT_ENV = "JOBOMATIC_VAULT"
-PRIVATE_DIR_ENV = "CLAUDE_JOBS_PRIVATE_DIR"
-APPLICATIONS_LOG_ENV = "CLAUDE_JOBS_APPLICATIONS_LOG"
+PRIVATE_DIR_ENV = "JOBOMATIC_PRIVATE_DIR"
+APPLICATIONS_LOG_ENV = "JOBOMATIC_APPLICATIONS_LOG"
+ALLOWED_DIRS_ENV = "JOBOMATIC_ALLOWED_DIRS"
 VAULT_MARKER = ".jobomatic.toml"
 SIBLING_VAULT_NAME = "job-o-matic-vault"
 
 
 class VaultError(RuntimeError):
     """No usable vault: none configured, none found next to the checkout, or one is invalid."""
+
+
+# The variables' earlier names (ADR 0030). They are not read. Setting one is an error, because
+# ignoring it would quietly send data somewhere the user did not point it. Delete this map and
+# ``reject_retired_variables`` before 1.0.
+RETIRED_VARIABLES = {
+    "CLAUDE_JOBS_PRIVATE_DIR": PRIVATE_DIR_ENV,
+    "CLAUDE_JOBS_APPLICATIONS_LOG": APPLICATIONS_LOG_ENV,
+    "CLAUDE_JOBS_ALLOWED_DIRS": ALLOWED_DIRS_ENV,
+}
+
+
+def reject_retired_variables() -> None:
+    """Raise ``VaultError`` if a variable that was renamed is still set to something (ADR 0030)."""
+    for old, new in RETIRED_VARIABLES.items():
+        if os.environ.get(old):
+            raise VaultError(f"{old} is no longer read; it is now called {new}. Rename it.")
 
 
 def config_path() -> Path:
@@ -111,6 +129,7 @@ def vault_root() -> Path:
 
 def private_dir() -> Path:
     """Personal constraint files such as salary minimums."""
+    reject_retired_variables()
     override = os.environ.get(PRIVATE_DIR_ENV)
     if override:
         return Path(override).expanduser()
@@ -119,6 +138,7 @@ def private_dir() -> Path:
 
 def applications_log() -> Path:
     """The append-only applications log (ADR 0010)."""
+    reject_retired_variables()
     override = os.environ.get(APPLICATIONS_LOG_ENV)
     if override:
         return Path(override).expanduser()

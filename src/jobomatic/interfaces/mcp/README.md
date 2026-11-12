@@ -197,6 +197,10 @@ The server finds your vault the way the CLI does: `$JOBOMATIC_VAULT`, then
 
 If you registered the server under its old name (`claude-jobs`, pointing at the archived
 `claude-projects` checkout), delete that entry so Desktop does not start the old code.
+If your entry sets `CLAUDE_JOBS_ALLOWED_DIRS`, `CLAUDE_JOBS_PRIVATE_DIR` or
+`CLAUDE_JOBS_APPLICATIONS_LOG`, rename them to `JOBOMATIC_ALLOWED_DIRS`, `JOBOMATIC_PRIVATE_DIR` and
+`JOBOMATIC_APPLICATIONS_LOG` (ADR 0030). The old names are not read; the server refuses to run with
+one set and says which new name to use.
 Restart Claude Desktop after either method — it only reads this config on startup.
 Then try, in order: a fit check on a pasted job description, one document generation, and a
 `search_evidence` question.
@@ -242,7 +246,7 @@ answers `profile_summary` and `fit_check` against the fictional `demo-vault` mou
 Every path a client passes in is untrusted (a pasted job posting can carry prompt-injection text
 that steers a tool call). The rules live in `src/jobomatic/interfaces/mcp/access.py` (written by the author, ADR 0020):
 
-- **Readable:** the vault, the system temp directory, and any directory in `CLAUDE_JOBS_ALLOWED_DIRS`.
+- **Readable:** the vault, the system temp directory, and any directory in `JOBOMATIC_ALLOWED_DIRS`.
   The code repository itself is not.
 - **Writable:** the vault `outputs/` folder (and its learning-plans folder), the one file
   `profile/stories.yaml` (for `--update-star-bank`), the temp directory and the extra directories.
@@ -251,7 +255,7 @@ that steers a tool call). The rules live in `src/jobomatic/interfaces/mcp/access
   log (changed only through the applications tools), and any `.git` directory.
 
 Paths are resolved first (`..` and symlinks followed), so a link inside `outputs/` cannot lead out of it.
-Anything else is refused with a `ToolError`. `CLAUDE_JOBS_ALLOWED_DIRS` takes paths separated by `:`
+Anything else is refused with a `ToolError`. `JOBOMATIC_ALLOWED_DIRS` takes paths separated by `:`
 on Linux and macOS.
 
 ### `learning_import`: access review
@@ -268,8 +272,8 @@ ADR 0020 asked for a review before any importer tool. What a client controls and
 - **Not available:** Microsoft Learn (a transcript is refused) and anything that uses the network.
 - **What comes back to the model:** course titles, dates and counts, nothing from the profile.
 - **Where the file lives:** Desktop reaches only the vault and the directories in
-  `CLAUDE_JOBS_ALLOWED_DIRS`. Put the downloaded import file in the vault (for example
-  `imports/`), add its folder to `CLAUDE_JOBS_ALLOWED_DIRS`, or paste a small one as `content`.
+  `JOBOMATIC_ALLOWED_DIRS`. Put the downloaded import file in the vault (for example
+  `imports/`), add its folder to `JOBOMATIC_ALLOWED_DIRS`, or paste a small one as `content`.
 
 ### PII
 
