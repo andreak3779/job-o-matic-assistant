@@ -44,6 +44,6 @@ status below says so.
 | [0028](0028-structured-command-results-for-cli-and-mcp.md) | Commands return structured results that the CLI and the MCP server render, instead of the MCP server reading printed output | Accepted |
 | [0029](0029-remove-the-legacy-explicit-root-layout.md) | Remove the legacy explicit-root layout from the path module and the commands | Accepted |
 | [0030](0030-finish-the-claude-jobs-rename.md) | Finish the rename from claude-jobs to job-o-matic: command alias, environment variables, docstrings | Accepted |
-| [0031](0031-one-canonical-skills-location.md) | One canonical location for the skills, so the MCP server does not depend on symlinks | Proposed (problem statement only) |
+| [0031](0031-one-canonical-skills-location.md) | One canonical location for the skills, so the MCP server does not depend on symlinks | Accepted |
 | [0032](0032-tiered-git-hooks.md) | Tiered git hooks: a fast check on commit, the full suite on push and in CI | Proposed (problem statement only) |
 | [0033](0033-python-version-support-and-ci-matrix.md) | Which Python versions are supported, and what CI tests | Proposed (problem statement only) |
