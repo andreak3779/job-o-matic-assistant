@@ -1,6 +1,9 @@
 # 0002 — MCP server is a thin adapter over the CLI, not independent logic
 
-**Status:** Accepted
+**Status:** Accepted. Amended by [0028](0028-structured-command-results-for-cli-and-mcp.md): the MCP server is
+still a thin adapter with no logic of its own, but it now calls the commands directly and reads a
+structured result, instead of running the command line with output captured. The text below is the
+decision as it was made.
 
 ## Context
 

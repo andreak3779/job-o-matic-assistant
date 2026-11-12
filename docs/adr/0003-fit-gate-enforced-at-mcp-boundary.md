@@ -2,7 +2,10 @@
 
 **Status:** Accepted. Amended in November 2026 (the gate moved into `gate.py`; see "Update" at the end) and [0021](0021-fit-rating-weights-core-requirements.md): the
 gate now lives in `src/jobomatic/gate.py` and is run by the command line as well as the MCP server;
-a Stretch or Worth a try rating can be confirmed past (`confirm_gaps`).
+a Stretch or Worth a try rating can be confirmed past (`confirm_gaps`). Amended again by
+[0028](0028-structured-command-results-for-cli-and-mcp.md): the gate now runs inside each command,
+before it writes anything, rather than in the command line's dispatcher, so it holds for a command
+called directly and for every interface by construction.
 
 ## Context
 

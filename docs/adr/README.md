@@ -15,8 +15,8 @@ status below says so.
 | # | Decision | Status |
 | --- | --- | --- |
 | [0001](0001-deterministic-fit-engine.md) | Deterministic fit-rating engine instead of an LLM call | Accepted |
-| [0002](0002-mcp-thin-adapter-over-cli.md) | MCP server is a thin adapter over the CLI, not independent logic | Accepted |
-| [0003](0003-fit-gate-enforced-at-mcp-boundary.md) | Fit gate enforced in code at the MCP boundary | Accepted; now enforced in `gate.py` for both interfaces |
+| [0002](0002-mcp-thin-adapter-over-cli.md) | MCP server is a thin adapter over the CLI, not independent logic | Accepted; amended by [0028](0028-structured-command-results-for-cli-and-mcp.md) (it calls the commands, not the command line) |
+| [0003](0003-fit-gate-enforced-at-mcp-boundary.md) | Fit gate enforced in code at the MCP boundary | Accepted; now enforced in `gate.py`, and run inside each command ([0028](0028-structured-command-results-for-cli-and-mcp.md)) |
 | [0004](0004-stdio-only-transport.md) | stdio transport only — no network-facing MCP server | Accepted (revisit if a LAN setup is built) |
 | [0005](0005-container-data-via-bind-mount.md) | Container built from code only; personal data reaches it via bind mount | Accepted |
 | [0006](0006-separate-project-domains.md) | Three separate project domains instead of one flat structure | Superseded by [0016](0016-modular-monolith-ports-and-adapters.md) |
@@ -38,10 +38,10 @@ status below says so.
 | [0022](0022-umbrella-skills-scored-by-their-parts.md) | Umbrella skills such as AI are scored by evidence in their parts | Accepted |
 | [0023](0023-soft-skills-are-a-separate-unscored-block.md) | Soft skills are a separate block that is listed but not scored | Accepted |
 | [0024](0024-resume-page-budget.md) | The deterministic resume is trimmed to a page budget, and real pages are measured on request | Accepted |
-| [0025](0025-simple-web-ui.md) | Simple web UI: standalone pages plus a local, loopback-only web UI for the MCP tools, all in the job-o-matic look | Proposed (the Pluralsight import page exists; the brand pass and the local UI are not built; waits for [0028](0028-structured-command-results-for-cli-and-mcp.md)) |
+| [0025](0025-simple-web-ui.md) | Simple web UI: standalone pages plus a local, loopback-only web UI for the MCP tools, all in the job-o-matic look | Proposed (the Pluralsight import page exists; the brand pass and the local UI are not built; [0028](0028-structured-command-results-for-cli-and-mcp.md) is built, so the UI can start) |
 | [0026](0026-guided-setup-and-pre-1-0-status.md) | Setup is one guided path with scripts, and the project says it is pre-1.0 | Accepted |
 | [0027](0027-relative-paths-resolve-against-the-current-folder.md) | Relative paths resolve against the current folder, and the error says where it looked | Accepted |
-| [0028](0028-structured-command-results-for-cli-and-mcp.md) | Commands return structured results that the CLI and the MCP server render, instead of the MCP server reading printed output | Proposed (decision drafted; not built) |
+| [0028](0028-structured-command-results-for-cli-and-mcp.md) | Commands return structured results that the CLI and the MCP server render, instead of the MCP server reading printed output | Accepted |
 | [0029](0029-remove-the-legacy-explicit-root-layout.md) | Remove the legacy explicit-root layout from the path module and the commands | Accepted |
 | [0030](0030-finish-the-claude-jobs-rename.md) | Finish the rename from claude-jobs to job-o-matic: command alias, environment variables, docstrings | Proposed (problem statement only) |
 | [0031](0031-one-canonical-skills-location.md) | One canonical location for the skills, so the MCP server does not depend on symlinks | Proposed (problem statement only) |

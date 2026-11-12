@@ -1,6 +1,6 @@
 # job-o-matic MCP server
 
-Exposes the `jobo` CLI (`src/jobomatic/interfaces/cli/main.py`) as MCP tools, and the
+Exposes the `jobo` commands (`src/jobomatic/commands/`) as MCP tools, and the
 application-workflow skills as MCP prompts, so an MCP client — Claude Desktop,
 or any other MCP-capable app — can run fit checks, search the evidence in your
 own record, and generate application documents without a terminal. The server
@@ -8,13 +8,15 @@ is registered as `job-o-matic`.
 
 > **Pre-1.0 and in active development.** job-o-matic works end to end and is used by its author for a live job search. It is not yet 1.0: command options, the profile file layout and generated-document formats can still change, and there is no migration guarantee. Commit and push your vault before you update.
 
-Every tool is a thin wrapper: it builds the same argv list the CLI itself
-uses and calls `jobomatic.main(argv)`, capturing stdout/stderr. No
-generation logic lives here — see `src/jobomatic/interfaces/cli/main.py` and the
-`project-*/scripts/*.py` modules for that — with one deliberate exception:
-`generate_resume`, `generate_cover_letter`, and `generate_application_documents`
-re-run the same fit-rating check those scripts already do internally, as a
-gate before dispatching (see "Fit gate" below).
+Every tool is a thin wrapper: it checks the paths it was given, calls the command's `run()`
+(see `src/jobomatic/commands/`, and `src/jobomatic/presence/` for the profile-update generators)
+with plain values, and returns the text of the result and the content of the files the result
+lists as written. It does not drive the command line, read printed text, or capture output
+([ADR 0028](../../../../docs/adr/0028-structured-command-results-for-cli-and-mcp.md)). No
+generation logic lives here, and no gate logic either: the fit, duplicate, pay and location gates
+run inside the commands, before anything is written, so they hold for every caller (see "Fit gate"
+below). The MCP server and the command line do not import each other; an import contract checks
+it.
 
 ## Tools
 
@@ -59,13 +61,13 @@ a path — this is the normal case when a client like Claude Desktop has a
 job description pasted or attached in the chat itself, since that content
 never lands on disk anywhere the server's filesystem can see. A `jd` string
 is treated as a path only if it's short, single-line, and contains no
-spaces; anything else is written to a temp file for the duration of the
-call and cleaned up afterward. A path-shaped string that doesn't resolve to
+spaces; anything else is the job description text itself and goes straight to the
+command (nothing is written to disk for it). A path-shaped string that doesn't resolve to
 a real file still raises a clear "job description file not found" error
 (so a typo'd path never gets silently reinterpreted as literal JD text).
 
-A failed command (non-zero exit code) raises an MCP tool error containing
-the captured stdout/stderr, so the client sees it as a failure rather than a
+A command that does not succeed (an error or a refusal) raises an MCP tool error containing
+what the command line would have printed, so the client sees it as a failure rather than a
 silent success.
 
 ## Prompts
