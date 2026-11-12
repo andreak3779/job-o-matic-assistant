@@ -34,22 +34,33 @@ def load_terms(path: Path) -> dict[str, list[str]]:
 
 
 def _compile(category: str, values: Iterable[str]) -> re.Pattern[str] | None:
-    parts = []
+    """One pattern per category.
+
+    The boundary tests are written once around all the literal terms, not once per term: with a
+    lookbehind at the start of every alternative the regex engine cannot skip ahead to a literal,
+    and a scan of the tracked files took 17 s instead of 1.3 s (ADR 0032). The two forms match the
+    same lines; ``tests/test_pii_scan_equivalence.py`` keeps the older one as the reference.
+    """
+    literals: list[str] = []
+    shaped: list[str] = []
     for value in sorted({v.strip() for v in values if len(v.strip()) >= 3}, key=len, reverse=True):
-        escaped = re.escape(value)
         if category == "phones":
             # Any separator style between digit groups.
             digits = re.sub(r"\D", "", value)
             if len(digits) == 10:
-                parts.append(rf"\(?{digits[:3]}\)?[-. ]?{digits[3:6]}[-. ]?{digits[6:]}")
+                shaped.append(rf"\(?{digits[:3]}\)?[-. ]?{digits[3:6]}[-. ]?{digits[6:]}")
                 continue
+        literals.append(re.escape(value))
+    if literals:
         # A term must not sit inside a longer word, but one that follows a written-out
         # escape such as the two characters ``\n`` in a string literal still counts.
-        parts.append(rf"(?:(?<![\w])|(?<=\\n)|(?<=\\t)|(?<=\\r)){escaped}(?![\w])")
-    if not parts:
+        shaped.append(
+            r"(?:(?<![\w])|(?<=\\n)|(?<=\\t)|(?<=\\r))(?:" + "|".join(literals) + r")(?![\w])"
+        )
+    if not shaped:
         return None
     flags = re.IGNORECASE if category in _CASE_INSENSITIVE else 0
-    return re.compile("|".join(parts), flags)
+    return re.compile("|".join(shaped), flags)
 
 
 def find_pii(
