@@ -58,7 +58,7 @@ Nothing reads printed text. Each command has a function `run(params) -> CommandR
 ```python
 @dataclass(frozen=True)
 class Message:
-    level: Literal["note", "warning", "error"]
+    level: Literal["info", "note", "warning", "error"]
     text: str
 
 
@@ -82,13 +82,25 @@ class CommandResult(Generic[T]):
 - **`written` replaces `Wrote <path>` lines.** The CLI renderer still prints them, in the same
   place, so the printed output is unchanged. The MCP server attaches exactly these files, still
   checked against its write roots as defence in depth.
-- The type lives in `jobomatic.commands` (already a listed package), not a new subpackage.
+- A message is `info` (plain output such as "Logged as drafted"), `note` (advice to show with the
+  result), `warning` (something the run worked around) or `error` (why it did not succeed). An
+  `error` or `refused` result must carry at least one `error` message, and only a `refused` result
+  can carry an `override`.
+- The type lives in `jobomatic/results.py`, a top-level module in the same layer as `bootstrap`.
+  It cannot live in `jobomatic.commands` as first drafted: the five presence generators are among
+  the 24 tools, `presence` and `commands` are independent siblings in the import contracts, and no
+  module may use the `commands` package. A top-level module is already in the package list, so
+  nothing is added to `pyproject.toml` except its place in the layers contract.
 
 ### 2. One boundary for expected failures
 
-A single helper in the command layer turns the expected failures (`ProfileError`, `VaultError`,
-`DocumentError`, `ValueError` from validation, `FileNotFoundError`, an `OSError` on a write) into
-`error`, and `GateRefusal` into `refused` with its `override`. It replaces the printing in
+A single helper, `guarded` in `jobomatic/results.py`, turns the expected failures (`ProfileError`,
+`VaultError`, `DocumentError`, `LearningError`, `RetrievalError`, `ValueError` from validation, and
+`OSError`, which includes `FileNotFoundError`) into `error`, and a refusal into `refused` with its
+`override`. The refusal is a base exception, `Refusal`, defined in `results.py`; the gate's
+`GateRefusal` extends it, so the helper does not import the gate (the gate sits in a layer above
+it). `Refusal` also owns the sentence that tells a caller how to confirm, so both interfaces say
+it the same way. The helper replaces the printing in
 `run_and_report` and `load_profile_or_none`. An exception that is not on that list is a bug and
 propagates, as it does today; the MCP framework reports it as a tool error.
 
@@ -99,6 +111,9 @@ anything is written: `generate-resume` and `generate-cover-letter` (fit, duplica
 `generate-job-site` (location, duplicate) and `generate-cold-call` with a posting (location).
 This is ADR 0016 rule 4 (policy lives in the use case) and makes [ADR 0003](0003-fit-gate-enforced-at-mcp-boundary.md)
 true by construction. It is done **before** any MCP tool is switched to call a command directly.
+The import contracts need a change for this: `commands`, `gate` and `presence` are independent
+siblings today, so a command cannot import the gate. The gate moves to the layer below the
+commands and presence (it uses only the fit, applications and profile modules).
 A test fails for any gated command that can complete without the gate: given a posting the gate
 must refuse, `run()` returns `refused` and writes nothing, for the CLI and the MCP server alike.
 
