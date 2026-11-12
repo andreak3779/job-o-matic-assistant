@@ -17,6 +17,7 @@ from jobomatic.interfaces.cli import (
     render_cli,
     retrieval_cli,
 )
+from jobomatic.results import emit
 
 
 def _root() -> Path:
@@ -24,10 +25,9 @@ def _root() -> Path:
 
 
 def _generate_learning_plan(role_json: Path) -> int:
-    # Imported here because reportlab belongs to the optional ``pdf`` extra.
-    from jobomatic.documents.adapters import pdf_template
+    from jobomatic.commands import learning_plan
 
-    return cast(int, pdf_template.main([str(role_json)]))
+    return emit(learning_plan.run(role_json))
 
 
 def _fit_check(jd_path: Path) -> int:

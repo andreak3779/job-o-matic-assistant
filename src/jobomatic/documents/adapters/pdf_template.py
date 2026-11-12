@@ -344,6 +344,21 @@ def load_config(path: Path) -> dict[str, Any]:
     return cfg
 
 
+def render_config_file(cfg_path: Path) -> Path:
+    """Render the learning plan described by the role JSON at ``cfg_path`` and return the PDF path.
+
+    Raises ``FileNotFoundError`` if the file is missing, and ``ValueError`` (``json.JSONDecodeError``
+    for bad JSON) if the config is not valid.
+    """
+    if not cfg_path.exists():
+        raise FileNotFoundError(f"config file not found: {cfg_path}")
+    try:
+        cfg = load_config(cfg_path)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"JSON parse error in {cfg_path}: {exc}") from exc
+    return _build(cfg)
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     parser = argparse.ArgumentParser(
@@ -356,18 +371,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     args = parser.parse_args(argv)
 
-    cfg_path = Path(args.role_json)
-    if not cfg_path.exists():
-        print(f"ERROR: config file not found: {cfg_path}", file=sys.stderr)
-        return 1
-
     try:
-        cfg = load_config(cfg_path)
-        out = _build(cfg)
-    except json.JSONDecodeError as exc:
-        print(f"ERROR: JSON parse error in {cfg_path}: {exc}", file=sys.stderr)
-        return 1
-    except ValueError as exc:
+        out = render_config_file(Path(args.role_json))
+    except (FileNotFoundError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
