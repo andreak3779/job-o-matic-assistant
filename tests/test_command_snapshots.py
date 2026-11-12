@@ -144,15 +144,23 @@ def _run_cli(case: Case, env: Env, tmp_path: Path, capsys: pytest.CaptureFixture
     return _normalize(text, tmp_path)
 
 
-def _run_mcp(case: Case, env: Env, tmp_path: Path) -> str:
+def _run_mcp(case: Case, env: Env, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> str:
     assert case.mcp is not None
     if case.setup:
         case.setup(env)
+    capsys.readouterr()  # drop anything a setup step printed
     try:
         value = case.mcp(env)
     except ToolError as exc:
+        _assert_stdout_untouched(capsys)
         return _normalize("status: error\n" + _section("message", str(exc)), tmp_path)
+    _assert_stdout_untouched(capsys)
     return _normalize(_render_blocks(value), tmp_path)
+
+
+def _assert_stdout_untouched(capsys: pytest.CaptureFixture[str]) -> None:
+    """The MCP server speaks its protocol on stdout, so a tool must never print there."""
+    assert capsys.readouterr().out == ""
 
 
 def _assert_snapshot(kind: str, case_id: str, text: str) -> None:
@@ -176,8 +184,10 @@ def test_the_command_line_output_is_unchanged(
 
 
 @pytest.mark.parametrize("case", MCP_CASES, ids=[c.id for c in MCP_CASES])
-def test_the_mcp_tool_result_is_unchanged(case: Case, env: Env, tmp_path: Path) -> None:
-    _assert_snapshot("mcp", case.id, _run_mcp(case, env, tmp_path))
+def test_the_mcp_tool_result_is_unchanged(
+    case: Case, env: Env, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _assert_snapshot("mcp", case.id, _run_mcp(case, env, tmp_path, capsys))
 
 
 # -- the two interfaces agree -----------------------------------------------------------------

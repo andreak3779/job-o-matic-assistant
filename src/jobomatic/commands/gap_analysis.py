@@ -6,18 +6,17 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+from jobomatic import bootstrap
 from jobomatic.applications import outputs
-from jobomatic.commands.support import (
-    load_profile_or_none,
-    print_wrote,
-    require_path,
-)
-from jobomatic.fit.engine import LOW_CONFIDENCE_MESSAGE, SkillMatch, rate_parsed_jd
+from jobomatic.commands.support import logged_messages, require_path
+from jobomatic.fit.engine import LOW_CONFIDENCE_MESSAGE, FitResult, SkillMatch, rate_parsed_jd
 from jobomatic.fit.parser import parse_jd
 from jobomatic.fit.soft_requirements import LABELS
+from jobomatic.results import CommandResult, emit, failure, guarded, ok
 
 _STATUS_LABELS = {
     "match": "✅ Match",
@@ -347,6 +346,49 @@ def _render_report(
     return "\n".join(lines)
 
 
+@dataclass(frozen=True)
+class GapAnalysisData:
+    """The rating the report was written for; the report itself is the file in ``written``."""
+
+    title: str
+    company: str
+    fit: FitResult
+
+
+def run(jd_text: str, out: Path | None = None) -> CommandResult[GapAnalysisData]:
+    """Write the gap analysis for ``jd_text``: to ``out``, or to the posting's own folder."""
+    return guarded(lambda: _run(jd_text, out))
+
+
+def _run(jd_text: str, out: Path | None) -> CommandResult[GapAnalysisData]:
+    profile = bootstrap.load_profile()
+    parsed = parse_jd(jd_text)
+    result = rate_parsed_jd(parsed, profile)
+
+    located = outputs.locate_application(
+        jd_text,
+        log=False,
+        documents=("gap_analysis",),
+        fit_rating=result.rating,
+        create_folder=out is None,
+    )
+    out_file = out or located.folder / "gap-analysis.md"
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    messages = logged_messages(located)
+    try:
+        out_file.write_text(
+            _render_report(parsed.title, parsed.company, result, parsed.location, parsed.job_id),
+            encoding="utf-8",
+        )
+    except OSError as exc:
+        return failure(f"failed to write {out_file}: {exc}", messages=messages)
+    return ok(
+        GapAnalysisData(parsed.title, parsed.company, result),
+        messages=messages,
+        written=(out_file,),
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gap-analysis", description="Generate a JD gap analysis report"
@@ -365,34 +407,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    profile = load_profile_or_none()
-    if profile is None:
-        return 1
-
-    jd_text = args.jd.read_text(encoding="utf-8")
-    parsed = parse_jd(jd_text)
-    result = rate_parsed_jd(parsed, profile)
-
-    located = outputs.locate_application(
-        jd_text,
-        log=False,
-        documents=("gap_analysis",),
-        fit_rating=result.rating,
-        create_folder=args.out is None,
-    )
-    out_file = args.out or located.folder / "gap-analysis.md"
-    out_file.parent.mkdir(parents=True, exist_ok=True)
-    outputs.report(located)
-    try:
-        out_file.write_text(
-            _render_report(parsed.title, parsed.company, result, parsed.location, parsed.job_id),
-            encoding="utf-8",
-        )
-    except OSError as exc:
-        print(f"ERROR: failed to write {out_file}: {exc}", file=sys.stderr)
-        return 1
-    print_wrote(out_file)
-    return 0
+    return emit(run(args.jd.read_text(encoding="utf-8"), args.out))
 
 
 if __name__ == "__main__":

@@ -110,7 +110,15 @@ def _unlogged_folder(company: str | None, title: str) -> Path | None:
     return matches[0] if matches else None
 
 
-def report(located: Located) -> None:
-    """Say which log entry a document was filed under, when this call wrote one."""
+def logged_note(located: Located) -> str | None:
+    """The line saying which log entry a document was filed under, when this call wrote one."""
     if located.logged and located.app_id:
-        print(f"Logged as drafted (not applied): application {located.app_id}")
+        return f"Logged as drafted (not applied): application {located.app_id}"
+    return None
+
+
+def report(located: Located) -> None:
+    """Print ``logged_note`` (for the commands that have not moved to structured results)."""
+    note = logged_note(located)
+    if note:
+        print(note)

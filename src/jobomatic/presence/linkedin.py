@@ -26,11 +26,11 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
-from datetime import date
 from pathlib import Path
+from typing import Any
 
-from jobomatic import bootstrap, paths
+from jobomatic import paths
+from jobomatic.presence.draft import DraftData, write_draft
 from jobomatic.presence.skill_text import derive_skill_terms
 from jobomatic.presence.skill_text import fenced_blocks as _fenced_blocks
 from jobomatic.presence.skill_text import section_text as _section_text
@@ -38,7 +38,8 @@ from jobomatic.presence.skill_text import substitute_fragments as _substitute_fr
 from jobomatic.profile.cert_status import cert_status_rows
 from jobomatic.profile.copy_fragments import compute_copy_fragments
 from jobomatic.profile.model import PresenceView, Project, Role
-from jobomatic.provenance import profile_hash, write_sidecar
+from jobomatic.provenance import profile_hash
+from jobomatic.results import CommandResult, emit
 
 ROOT = paths.code_root()
 SKILL_PATH = ROOT / "skills" / "update_linkedin_profile" / "SKILL.md"
@@ -467,33 +468,9 @@ def _build_rich_draft(view: PresenceView, skill_text: str) -> tuple[str, list[st
 # ---------------------------------------------------------------------------
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        prog="generate-linkedin", description="Generate LinkedIn profile copy"
-    )
-    parser.add_argument(
-        "--out", type=Path, help="Output markdown file (default: linkedin-update-draft.md)"
-    )
-    args = parser.parse_args(argv)
-
-    if not SKILL_PATH.is_file():
-        print(f"ERROR: SKILL.md not found: {SKILL_PATH}", file=sys.stderr)
-        return 1
-    try:
-        view = bootstrap.load_presence_view()
-    except FileNotFoundError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
-
-    skill_text = SKILL_PATH.read_text(encoding="utf-8")
-    content, warnings = _build_rich_draft(view, skill_text)
-    out_file = (
-        args.out
-        or paths.output_dir("profiles", platform="linkedin") / f"{date.today().isoformat()}.md"
-    )
-    evidence_sources = [p.name for p in view.projects]
-    raw_inputs_file = out_file.with_name(out_file.stem + ".raw-inputs.json")
-    raw_inputs_content = {
+def _raw_inputs(view: PresenceView) -> dict[str, Any]:
+    """The source data behind the sections that are built with heuristics, written beside the draft."""
+    return {
         "note": (
             "Pre-heuristic source data for the sections of the draft built with "
             "heuristics rather than real judgment: Step 3's portfolio-repo hooks and "
@@ -506,41 +483,29 @@ def main(argv: list[str] | None = None) -> int:
         "technical_skills_categories": _skills_categories(view.technical_skills),
     }
 
-    try:
-        out_file.parent.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        print(f"ERROR: cannot create output directory {out_file.parent}: {exc}", file=sys.stderr)
-        return 1
 
-    try:
-        out_file.write_text(content, encoding="utf-8")
-    except OSError as exc:
-        print(f"ERROR: cannot write output file {out_file}: {exc}", file=sys.stderr)
-        return 1
-
-    if raw_inputs_file is not None:
-        try:
-            raw_inputs_file.write_text(
-                json.dumps(raw_inputs_content, indent=2) + "\n", encoding="utf-8"
-            )
-            print(f"Wrote {raw_inputs_file}")
-        except OSError as exc:
-            print(
-                f"WARNING: could not write raw inputs file {raw_inputs_file}: {exc}",
-                file=sys.stderr,
-            )
-
-    sidecar = write_sidecar(
-        out_file,
+def run(out: Path | None = None) -> CommandResult[DraftData]:
+    """Write the linkedin profile draft and its sidecar (ADR 0028)."""
+    return write_draft(
+        platform="linkedin",
         script="generate_linkedin.py",
-        profile=view,
-        inputs=[],
-        evidence_sources=evidence_sources,
-        warnings=warnings,
+        skill_path=SKILL_PATH,
+        build=_build_rich_draft,
+        out=out,
+        evidence_sources=lambda view: [p.name for p in view.projects],
+        raw_inputs=_raw_inputs,
     )
-    print(f"Wrote {out_file}")
-    print(f"Wrote {sidecar}")
-    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="generate-linkedin", description="Generate LinkedIn profile copy"
+    )
+    parser.add_argument(
+        "--out", type=Path, help="Output markdown file (default: linkedin-update-draft.md)"
+    )
+    args = parser.parse_args(argv)
+    return emit(run(args.out))
 
 
 if __name__ == "__main__":

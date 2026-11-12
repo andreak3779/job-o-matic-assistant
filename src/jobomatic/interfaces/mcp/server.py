@@ -20,7 +20,7 @@ import os
 import re
 import tempfile
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import date
 from importlib import resources
 from pathlib import Path
@@ -42,11 +42,13 @@ from jobomatic import paths, results
 from jobomatic.commands import applications as applications_commands
 from jobomatic.commands import constraints as constraints_command
 from jobomatic.commands import fit_check as fit_check_command
+from jobomatic.commands import gap_analysis as gap_analysis_command
 from jobomatic.commands import profile as profile_commands
 from jobomatic.commands import search as search_command
 from jobomatic.commands.support import vault_write_lock
 from jobomatic.interfaces.cli.main import main as cli_main
 from jobomatic.interfaces.mcp import access, skill_prompts
+from jobomatic.presence import github, job_board, jobgether, linkedin, pluralsight
 
 # Icons shown by MCP clients that display them. The server runs over stdio and hosts nothing, so
 # each icon is sent as a data: URI. (file name, MIME type, sizes). The gauge icon is used rather
@@ -211,12 +213,21 @@ def _artifact_content_blocks(
     inline-text behavior, since their content is meant to be read/discussed
     in the conversation itself.
     """
+    return _attachment_blocks(
+        (Path(match.group(1).strip()) for match in _WROTE_RE.finditer(stdout_text)),
+        embed_text_as_resource=embed_text_as_resource,
+    )
+
+
+def _attachment_blocks(
+    files: Iterable[Path], embed_text_as_resource: bool = False
+) -> list[ContentBlock]:
+    """The content of each file a command wrote, as blocks (see ``_artifact_content_blocks``)."""
     blocks: list[ContentBlock] = []
-    for match in _WROTE_RE.finditer(stdout_text):
-        path = Path(match.group(1).strip())
-        # Only attach files this server was allowed to write: the "Wrote <path>"
-        # line can be influenced by job-description text, and must not be a way
-        # to make the server read back an arbitrary file.
+    for path in files:
+        # Only attach files this server was allowed to write: whatever names a file (a printed
+        # line that a posting can influence, or a command's own list) must not be a way to make
+        # the server read back an arbitrary file.
         policy = _policy()
         if access.resolve(path, policy.write_roots, policy.denied) is None:
             continue
@@ -256,6 +267,19 @@ def _artifact_content_blocks(
             # Don't let one unreadable artifact (permissions, race, odd
             # encoding) take down attachments that already succeeded.
             blocks.append(TextContent(type="text", text=f"[could not attach {path.name}: {exc}]"))
+    return blocks
+
+
+def _tool_blocks(
+    result: results.CommandResult[Any],
+    render: Callable[[Any], str] | None = None,
+    *,
+    embed_text_as_resource: bool = False,
+) -> list[ContentBlock]:
+    """A command's result as the blocks a document tool returns: its text, then each file it wrote
+    (``result.written``), or a tool error when the command did not succeed."""
+    blocks: list[ContentBlock] = [TextContent(type="text", text=_tool_text(result, render))]
+    blocks.extend(_attachment_blocks(result.written, embed_text_as_resource=embed_text_as_resource))
     return blocks
 
 
@@ -318,7 +342,14 @@ def _posting_text(jd: str) -> str:
         raise ToolError(f"could not read the job description {path}: {exc}") from exc
 
 
-def _tool_text(result: results.CommandResult[Any], render: Callable[[Any], str]) -> str:
+def _checked_out(out: str | None) -> Path | None:
+    """The ``out`` argument of a tool as a path this server may write to, or None."""
+    return Path(_checked_path(out, write=True, label="out")) if out else None
+
+
+def _tool_text(
+    result: results.CommandResult[Any], render: Callable[[Any], str] | None = None
+) -> str:
     """A command's result as the text a tool returns: what the command line prints, or a tool
     error when the command did not succeed."""
     text = results.console(result, render)
@@ -345,20 +376,13 @@ def gap_analysis(jd: str, out: str | None = None) -> list[ContentBlock]:
     """jd: path to a job description markdown file, or the job description
     text itself (e.g. pasted or attached in the chat). out: optional output
     markdown path."""
-    with _jd_path(jd) as jd_path:
-        argv = ["gap-analysis", jd_path]
-        if out:
-            argv.extend(["--out", _checked_path(out, write=True, label="out")])
-        return _run_cli_with_artifacts(argv)
+    return _tool_blocks(gap_analysis_command.run(_posting_text(jd), _checked_out(out)))
 
 
 @mcp.tool(description="Generate LinkedIn profile copy", structured_output=False)
 def generate_linkedin(out: str | None = None) -> list[ContentBlock]:
     """out: optional output markdown path."""
-    argv = ["generate-linkedin"]
-    if out:
-        argv.extend(["--out", _checked_path(out, write=True, label="out")])
-    return _run_cli_with_artifacts(argv, embed_text_as_resource=True)
+    return _tool_blocks(linkedin.run(_checked_out(out)), embed_text_as_resource=True)
 
 
 @mcp.tool(
@@ -367,37 +391,25 @@ def generate_linkedin(out: str | None = None) -> list[ContentBlock]:
 )
 def generate_github(out: str | None = None) -> list[ContentBlock]:
     """out: optional output markdown path."""
-    argv = ["generate-github"]
-    if out:
-        argv.extend(["--out", _checked_path(out, write=True, label="out")])
-    return _run_cli_with_artifacts(argv, embed_text_as_resource=True)
+    return _tool_blocks(github.run(_checked_out(out)), embed_text_as_resource=True)
 
 
 @mcp.tool(description="Generate Jobgether profile copy", structured_output=False)
 def generate_jobgether(out: str | None = None) -> list[ContentBlock]:
     """out: optional output markdown path."""
-    argv = ["generate-jobgether"]
-    if out:
-        argv.extend(["--out", _checked_path(out, write=True, label="out")])
-    return _run_cli_with_artifacts(argv, embed_text_as_resource=True)
+    return _tool_blocks(jobgether.run(_checked_out(out)), embed_text_as_resource=True)
 
 
 @mcp.tool(description="Generate Indeed & ZipRecruiter profile copy", structured_output=False)
 def generate_job_board(out: str | None = None) -> list[ContentBlock]:
     """out: optional output markdown path."""
-    argv = ["generate-job-board"]
-    if out:
-        argv.extend(["--out", _checked_path(out, write=True, label="out")])
-    return _run_cli_with_artifacts(argv, embed_text_as_resource=True)
+    return _tool_blocks(job_board.run(_checked_out(out)), embed_text_as_resource=True)
 
 
 @mcp.tool(description="Generate Pluralsight profile copy", structured_output=False)
 def generate_pluralsight(out: str | None = None) -> list[ContentBlock]:
     """out: optional output markdown path."""
-    argv = ["generate-pluralsight"]
-    if out:
-        argv.extend(["--out", _checked_path(out, write=True, label="out")])
-    return _run_cli_with_artifacts(argv, embed_text_as_resource=True)
+    return _tool_blocks(pluralsight.run(_checked_out(out)), embed_text_as_resource=True)
 
 
 def _letter_argv(
