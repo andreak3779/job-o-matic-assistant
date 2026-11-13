@@ -1,0 +1,5 @@
+{% macro messages(shown) %}
+  {% for m in shown.alerts %}<p class="alert {{ m.level }}" role="alert"><strong>{{ "Problem" if m.level == "error" else "Warning" }}:</strong> {{ m.text }}</p>{% endfor %}
+  {% for m in shown.info %}<p class="alert error" role="alert">{{ m.text }}</p>{% endfor %}
+  {% for m in shown.notes %}<p class="note">{{ m.text }}</p>{% endfor %}
+{% endmacro %}
