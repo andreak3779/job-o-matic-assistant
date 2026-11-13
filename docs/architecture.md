@@ -1,7 +1,7 @@
 # job-o-matic-assistant — architecture
 
 A deterministic job-search toolkit. One command line (`jobo`), one MCP server for Claude Desktop,
-and a set of small modules behind them. The core commands (rating, gate, document generation) make
+an optional local web page (`jobo web`), and a set of small modules behind them. The core commands (rating, gate, document generation) make
 no language-model calls: every rating and every document can be traced back to the profile, the
 posting and the rule files. The optional exceptions are listed in [LIMITS.md](LIMITS.md).
 
@@ -80,6 +80,7 @@ graph TD
 | --- | --- | --- |
 | `interfaces.cli` | The `jobo` command line | One file per command group, `main.py` dispatches |
 | `interfaces.mcp` | The MCP server for Claude Desktop | One tool per command; each calls the command's `run()` and returns its text and the files it wrote, so both interfaces hit the same code and neither uses the other ([ADR 0002](adr/0002-mcp-thin-adapter-over-cli.md), [0020](adr/0020-mcp-server-for-claude-desktop.md), [0028](adr/0028-structured-command-results-for-cli-and-mcp.md)) |
+| `interfaces.web` | The local web page, `jobo web` (optional `web` extra) | Flask pages that call the commands' `run()` and render the typed result. It listens on `127.0.0.1` only, behind a one-use launch token, a `Host` check, a form token and a strict Content-Security-Policy; no path ever comes from the browser, and it uses neither the command line nor the MCP server ([ADR 0025](adr/0025-simple-web-ui.md)) |
 | `commands` | One command each for the documents (resume, cover letter, cold outreach, job-site letter, thank-you, interview prep), gap analysis, fit check, the applications log, constraints, the profile, evidence search, learning import and learning plans | Each has a `run()` that returns a `CommandResult` and a thin `main()`; each is independent and shares only `commands.support` |
 | `results` | What a command returns: a status, a typed payload, messages and the files written; the single boundary that turns a failure a user can cause into a result; the text a result prints as | Used by the commands, the gate, the presence generators and both interfaces |
 | `gate` | Decides whether documents may be generated: location, fit rating, duplicate, pay | Run inside the commands, before anything is written, so a rule holds whoever asks |
@@ -185,6 +186,9 @@ All placement decisions are in `jobomatic.paths` ([ADR 0015](adr/0015-single-out
 
 - **Terminal:** `jobo <command>` (or `python -m jobomatic <command>`). See [GETTING_STARTED.md](../GETTING_STARTED.md).
 - **Claude Code:** the skills in `.claude/skills/` run the same commands.
+- **Browser:** `jobo web` (after `bash scripts/setup.sh --web`) opens a local page for the fit check, the
+  applications list, the Pluralsight import and the document downloads. It is the project's only
+  network listener: loopback, opt-in and stopped with Ctrl+C ([ADR 0025](adr/0025-simple-web-ui.md)).
 - **Claude Desktop:** `jobo-mcp` (or `python -m jobomatic.interfaces.mcp.server`) over stdio, either
   directly from the virtualenv or in a Podman container with the vault bind-mounted at `/vault`
   ([ADR 0005](adr/0005-container-data-via-bind-mount.md)). Only cloud-safe evidence kinds are

@@ -1,6 +1,6 @@
 # 0025 — Simple web UI: standalone pages and a local web UI for the MCP tools, in the job-o-matic look
 
-**Status:** Accepted. Being built in the order of "Follow-ups"; "As built" is added when it is done.
+**Status:** Accepted. Built; see "As built".
 The Pluralsight import page
 ([`templates/pluralsight_import_template.html`](../../templates/pluralsight_import_template.html))
 worked before this record but did not use the brand.
@@ -334,4 +334,50 @@ the generators never do, only the skills do, in conversation. The file policy is
     letters and the learning plan. A new MCP tool fails the test until someone decides.
 11. **`web` is an optional extra everywhere.** CI installs it so the matrix tests it; `setup.sh`
     takes `--web` to add it; `jobo web` without Flask prints the one command that fixes it.
+
+## As built
+
+Built in nine commits on one branch, in the order of "Follow-ups", security before pages.
+
+- **The look.** `branding/tokens.css` is the source; the landing page and the Pluralsight page
+  embed verbatim copies and `tests/test_look.py` compares them. The contrast test checks 26 text and
+  background pairs in light and dark, and asserts the ADR's four figures to one decimal. It found the
+  light teal could not be a button's fill with white text (3.9:1), so buttons use the darker teal.
+  The Pluralsight page keeps its parsing and its import file; its `FORMAT` and `VERSION` are now
+  tested against the Python reader, and its three selects and its search box, which had no labels, have
+  them. The landing page's links use the darker teal. Checked in headless Chromium in light, dark and
+  at 380 px wide.
+- **The extra.** `web = ["flask>=3.1,<4"]`; the lock gains Flask 3.1.3 and its five new dependencies;
+  CI installs it on 3.11 to 3.14; `setup.sh --web` opts in; `jobo web` without Flask prints the command
+  that fixes it. Two contracts keep Flask inside the interface and the interface independent of the
+  command line and the MCP server (37 contracts now).
+- **The guards** (`guards.py`, one `before_request` and one `after_request`). Tested with Flask's test
+  client and a real server on a real socket; each guard was mutation-checked (twelve mutations of the
+  guards, nine of the template rules). Run for real with `curl`: a request with no cookie, with a
+  foreign `Host`, a reused launch token and a cross-origin POST are each refused; the server listens on
+  `127.0.0.1` only; its log never holds the token.
+- **The pages.** `/fit` (the fit and the duplicate check), `/profile`, `/applications` (a status
+  control never offers "applied"; "Mark applied…" asks first), `/pluralsight` (a dry run, then Apply
+  from a held upload) and `/documents` (the gate, an override box only when the result names one, the
+  self-identification notice, downloads by issued id). Each has tests of what it renders and refuses,
+  and mutation checks of its main rule. The documents page has no company field: the command's
+  `company` argument does not change where files are kept, so a field for it would have promised
+  something that does not happen.
+- **htmx.** Version 2.0.11 from the registry tarball, checked against its integrity value;
+  `static/VENDORED.md` records the steps and the SHA-256, which a test pins. In a real headless browser
+  against the real server, with the Content-Security-Policy on, it loaded, a same-origin request
+  swapped in its result and a request to another origin was never made. A full page load makes six
+  requests, all to the server itself.
+- **Parity.** `tests/test_web_parity.py` maps every MCP tool to a page or to `NOT_IN_WEB`, and checks
+  that each page calls the commands its tools call.
+- **Found on the way and fixed.** The snapshot tests failed every evening after 19:00 in a time zone
+  five hours behind UTC, because sidecar timestamps are UTC and the tests hid only the local date (CI
+  runs in UTC and never saw it); this mattered once the suite became the push hook. The private-value
+  scan read a short word in the minified htmx file as an employer name, so `scripts/pii-allowlist.txt`
+  lists that one path, and a test holds the list to it while the file's hash is pinned. The scan also
+  stopped a test from containing a figure that equals the author's real salary minimum.
+- **Known limits.** The Flask development server is not hardened; one person on loopback is the case
+  it handles. Keyboard behaviour is covered by focus styles and labels, not by a browser test. The
+  standalone Pluralsight page cannot be served from the web UI, because its inline script is exactly
+  what the Content-Security-Policy forbids; the import page says where it is.
 

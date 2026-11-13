@@ -1,6 +1,8 @@
 # 0004 — stdio transport only — no network-facing MCP server
 
-**Status:** Accepted (revisit if a LAN setup is built)
+**Status:** Accepted (revisit if a LAN setup is built). Still true of the MCP server. [ADR 0025](0025-simple-web-ui.md)
+adds a separate, opt-in local web page that listens on `127.0.0.1` only, with its own guards; it is not an
+MCP transport.
 
 ## Context
 
