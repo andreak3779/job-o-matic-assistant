@@ -17,6 +17,7 @@ from werkzeug.exceptions import HTTPException
 
 from jobomatic.interfaces.web import (
     applications_page,
+    documents_page,
     fit_page,
     guards,
     pluralsight_page,
@@ -52,6 +53,7 @@ class Page:
 PAGES = (
     Page("fit_page", "Fit check"),
     Page("applications_page", "Applications"),
+    Page("documents_page", "Documents"),
     Page("pluralsight_page", "Pluralsight import"),
     Page("profile_page", "Profile check"),
 )
@@ -74,6 +76,7 @@ def create_app(*, launch_token: str, pages: tuple[Page, ...] = PAGES) -> Flask:
     guards.install(app)
     fit_page.register(app)
     applications_page.register(app)
+    documents_page.register(app)
     pluralsight_page.register(app)
     profile_page.register(app)
 
