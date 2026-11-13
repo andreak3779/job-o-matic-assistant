@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import messages %}
+{% block title %}Documents{% endblock %}
+{% block main %}
+<h1>Documents</h1>
+<p class="sub">A tailored resume and cover letter for one posting, as Word files you read, change and send yourself. The same gate applies as in the command line and in Claude Desktop: it refuses a weak fit, a repeat application, a location that is ruled out, and pay below your minimum.</p>
+
+<p class="alert note" role="note"><strong>About self-identification.</strong> These documents never include self-identification. If a posting invites you to self-identify, decide per posting and add it yourself; this tool does not add it.</p>
+
+<form method="post" action="{{ url_for('documents_generate') }}" class="panel">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="posting">Job posting (paste the text)</label>
+  <textarea id="posting" name="posting" rows="12" required>{{ posting }}</textarea>
+  {% for name in confirmed %}<input type="hidden" name="{{ name }}" value="on">{% endfor %}
+  {% if asked %}
+  <fieldset class="override">
+    <legend>The gate refused. You can confirm past this one.</legend>
+    <label class="check" for="override-{{ asked }}"><input id="override-{{ asked }}" type="checkbox" name="{{ asked }}"> {{ overrides[asked][1] }}</label>
+  </fieldset>
+  {% endif %}
+  <div class="row"><button type="submit">Generate the documents</button></div>
+  {% if problem %}<p class="alert error" role="alert">{{ problem }}</p>{% endif %}
+</form>
+
+{% for title, step in steps %}
+<section class="panel" aria-labelledby="step-{{ loop.index }}">
+  <h2 id="step-{{ loop.index }}">{{ title }}: {{ {"ok": "written", "refused": "refused", "error": "failed"}[step.status] }}</h2>
+  {% if step.refused and not step.override %}<p class="alert error" role="alert"><strong>This cannot be confirmed past.</strong> It is not a decision the page can leave to you.</p>{% endif %}
+  {{ messages(step) }}
+  {% for m in step.logs %}<p class="note">{{ m.text }}</p>{% endfor %}
+  {% if step.data and step.data.fit %}<p>Fit: <strong>{{ step.data.fit.rating }}</strong>. {{ step.data.fit.rationale }}</p>{% endif %}
+</section>
+{% endfor %}
+
+{% if downloads %}
+<section class="panel" aria-labelledby="dl-h">
+  <h2 id="dl-h">Your files</h2>
+  <ul>{% for d in downloads %}<li><a href="{{ url_for('download', download_id=d.id) }}">{{ d.label }}</a> <span class="sub">{{ d.name }}</span></li>{% endfor %}</ul>
+  <p class="sub">The files are also in your vault's <code>outputs/</code> folder. Check them before you send them.</p>
+</section>
+{% endif %}
+{% endblock %}

@@ -43,3 +43,7 @@ form.filters label { margin: 0; }
 .status { font-weight: 700; }
 .action { display: inline-block; margin-top: 6px; font-weight: 700; }
 .alert.note { border-left-color: var(--accent-text); color: var(--text); }
+fieldset.override { border: 2px solid var(--warn); border-radius: 10px; margin: 14px 0 0; padding: 10px 14px; }
+fieldset.override legend { font-weight: 700; color: var(--warn); padding: 0 6px; }
+label.check { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; margin: 0; }
+label.check input { margin-top: 5px; width: 1.1rem; height: 1.1rem; }
