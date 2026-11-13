@@ -12,7 +12,7 @@ A rule-based job-search toolkit for one person's search. It rates a job posting 
 
 **What this is**
 
-- A command line (`jobo`), an MCP server for Claude Desktop, and skills for Claude Code, all running the same code.
+- A command line (`jobo`), an MCP server for Claude Desktop, skills for Claude Code and an optional local web page (`jobo web`), all running the same code.
 - Deterministic: the same posting and profile always give the same rating and the same document content. The core commands make no language-model calls; the optional exceptions are listed in [docs/LIMITS.md](docs/LIMITS.md).
 - A single-user tool, and a case study in building AI-assisted software with tests, gates and written decisions ([how it was built](docs/HOW_THIS_WAS_BUILT.md)).
 
