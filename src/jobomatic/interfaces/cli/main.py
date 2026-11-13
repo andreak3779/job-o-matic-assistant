@@ -270,6 +270,21 @@ def _interview_prep(
     return cast(int, interview_main(args))
 
 
+def _web(port: int, *, open_browser: bool) -> int:
+    """``jobo web`` (ADR 0025). Flask is an optional extra, so it is imported only here."""
+    try:
+        from jobomatic.interfaces.web import launch
+    except ImportError:
+        print(
+            "ERROR: jobo web needs Flask, which is an optional extra. Install it with:\n"
+            "  bash scripts/setup.sh --web\n"
+            '(or, in the project\'s virtual environment: pip install -e ".[web]")',
+            file=sys.stderr,
+        )
+        return 1
+    return launch.serve(port=port, open_browser=open_browser)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run ``jobo``. A missing or invalid vault is the first thing a new install hits, so it is a
     one-line error with the way out, not a traceback."""
@@ -508,6 +523,17 @@ def _run(argv: list[str] | None = None) -> int:
     )
     dir_parser.add_argument("jd", type=Path, help="Path to job description markdown file")
 
+    web_parser = subparsers.add_parser(
+        "web",
+        help="Open the local web page (needs the web extra; listens on 127.0.0.1 only)",
+    )
+    web_parser.add_argument(
+        "--port", type=int, default=0, help="Port to listen on (default: one the system chooses)"
+    )
+    web_parser.add_argument(
+        "--no-browser", action="store_true", help="Print the address instead of opening a browser"
+    )
+
     applications_cli.register(subparsers)
     profile_cli.register(subparsers)
     learning_cli.register(subparsers)
@@ -516,6 +542,8 @@ def _run(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    if args.command == "web":
+        return _web(args.port, open_browser=not args.no_browser)
     if args.command in applications_cli.COMMANDS:
         return applications_cli.run(args)
     if args.command == "generate-profile-resume":
