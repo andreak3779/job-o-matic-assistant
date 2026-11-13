@@ -15,7 +15,13 @@ from pathlib import Path
 from flask import Flask, abort, render_template, send_file, send_from_directory
 from werkzeug.exceptions import HTTPException
 
-from jobomatic.interfaces.web import applications_page, fit_page, guards, profile_page
+from jobomatic.interfaces.web import (
+    applications_page,
+    fit_page,
+    guards,
+    pluralsight_page,
+    profile_page,
+)
 from jobomatic.interfaces.web.downloads import Downloads
 
 BRANDING = Path(__file__).resolve().parents[2] / "branding"
@@ -46,6 +52,7 @@ class Page:
 PAGES = (
     Page("fit_page", "Fit check"),
     Page("applications_page", "Applications"),
+    Page("pluralsight_page", "Pluralsight import"),
     Page("profile_page", "Profile check"),
 )
 
@@ -67,6 +74,7 @@ def create_app(*, launch_token: str, pages: tuple[Page, ...] = PAGES) -> Flask:
     guards.install(app)
     fit_page.register(app)
     applications_page.register(app)
+    pluralsight_page.register(app)
     profile_page.register(app)
 
     @app.context_processor
