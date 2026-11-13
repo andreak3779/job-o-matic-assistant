@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_macros.html" import messages %}
+{% block title %}Pluralsight import{% endblock %}
+{% block main %}
+<h1>Pluralsight import</h1>
+<p class="sub">Add newly completed Pluralsight courses and labs to your learning history. You see what would change first, and nothing is saved until you press Apply.</p>
+
+<form method="post" action="{{ url_for('pluralsight_preview') }}" enctype="multipart/form-data" class="panel">
+  <h2>1. Choose the file</h2>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="export">Import file (.json) or a saved Pluralsight history page (.html)</label>
+  <input id="export" name="export" type="file" accept=".json,.html,.htm,application/json,text/html" required>
+  <p class="sub">To make an import file from a table you copied, open <code>templates/pluralsight_import_template.html</code> from this project in your browser. It reads the table on your computer and gives you the file to choose here.</p>
+  <div class="row"><button type="submit">Show what would change</button></div>
+  {% if problem %}<p class="alert error" role="alert">{{ problem }}</p>{% endif %}
+</form>
+
+{% if preview %}
+<section class="panel" aria-labelledby="preview-h">
+  <h2 id="preview-h">2. What would change</h2>
+  {{ messages(preview) }}
+  {% if preview.data %}
+  {% set d = preview.data %}{% set plan = d.plan %}
+  <p>{{ d.batch.items|length }} completed item(s) read from <strong>{{ d.batch.source }}</strong>.</p>
+  {% for w in d.batch.warnings %}<p class="alert warning" role="note">{{ w }}</p>{% endfor %}
+  <p><strong>{{ plan.new|length }} new, {{ plan.changed|length }} changed, {{ plan.rekeyed|length }} re-keyed,</strong> {{ plan.unchanged }} unchanged{% if plan.absent %}, {{ plan.absent|length }} stored but not in this file{% endif %}.</p>
+  {% if plan.new %}
+  <h3>New</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th scope="col">Title</th><th scope="col">Kind</th><th scope="col">Completed</th><th scope="col">Topics</th></tr></thead>
+    <tbody>{% for item in plan.new[:shown_items] %}
+      <tr><td>{{ item.title }}</td><td>{{ item.kind.value }}</td><td>{{ item.completed_on.isoformat() if item.completed_on else "no date" }}</td><td>{{ item.topics|join(", ") or "none matched" }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% if plan.new|length > shown_items %}<p class="sub">…and {{ plan.new|length - shown_items }} more.</p>{% endif %}
+  {% endif %}
+  {% if plan.rekeyed %}<h3>Same title, different id (kept as one item with the new id)</h3><ul>{% for r in plan.rekeyed %}<li>{{ r.title }}: {{ r.old_id }} → {{ r.new_id }}</li>{% endfor %}</ul>{% endif %}
+  {% if plan.changed %}<h3>Changed</h3><ul>{% for change in plan.changed %}{% for f in change.fields %}<li>{{ change.title }}: {{ f.name }}: {{ f.old }} → {{ f.new }}</li>{% endfor %}{% endfor %}</ul>{% endif %}
+  {% if plan.unclassified %}<h3>New items that matched no topic rule</h3><ul>{% for item_id in plan.unclassified %}<li>{{ item_id }}</li>{% endfor %}</ul>{% endif %}
+  {% for line in d.credential_lines %}{% if line.strip() %}<p class="note">{{ line.strip() }}</p>{% endif %}{% endfor %}
+  {% if not plan.has_changes %}<p>There is nothing new to save.</p>{% endif %}
+  {% endif %}
+</section>
+{% if upload_id %}
+<form method="post" action="{{ url_for('pluralsight_apply') }}" class="panel">
+  <h2>3. Save it</h2>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="upload_id" value="{{ upload_id }}">
+  <p>This adds the new items to your learning history and keeps a copy of the file.</p>
+  <div class="row"><button type="submit">Apply</button></div>
+</form>
+{% endif %}
+{% endif %}
+
+{% if saved %}
+<section class="panel" aria-labelledby="saved-h">
+  <h2 id="saved-h">Saved</h2>
+  {{ messages(saved) }}
+  {% if saved.data %}
+  <p>{{ saved.data.plan.new|length }} new item(s) saved{% if saved.data.kept %}; the file is kept as <code>{{ saved.data.kept }}</code>{% endif %}.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
