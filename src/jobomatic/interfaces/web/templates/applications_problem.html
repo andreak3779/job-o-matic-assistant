@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Could not change it{% endblock %}
+{% block main %}
+<h1>Could not change it</h1>
+<p class="alert error" role="alert">{{ text }}</p>
+<p><a href="{{ url_for('applications_page') }}">Back to the applications</a></p>
+{% endblock %}

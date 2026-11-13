@@ -1,0 +1,1 @@
+src/jobomatic/interfaces/web/static/htmx.min.js

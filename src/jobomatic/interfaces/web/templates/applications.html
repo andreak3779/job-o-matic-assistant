@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Applications{% endblock %}
+{% block main %}
+<h1>Applications</h1>
+<p class="sub">The log of what you drafted and sent. The log only ever grows: a change adds to it.</p>
+
+{% for m in get_flashed_messages() %}<p class="alert note" role="status">{{ m }}</p>{% endfor %}
+
+<form method="get" action="{{ url_for('applications_page') }}" class="panel filters">
+  <label for="f-status">Status</label>
+  <select id="f-status" name="status">
+    <option value="">Any</option>
+    {% for s in statuses %}<option value="{{ s }}"{% if s == status %} selected{% endif %}>{{ s }}</option>{% endfor %}
+  </select>
+  <label for="f-company">Company</label>
+  <input id="f-company" name="company" type="text" value="{{ company }}">
+  <button type="submit">Filter</button>
+</form>
+
+{% for m in listed.alerts %}<p class="alert error" role="alert">{{ m.text }}</p>{% endfor %}
+{% for m in listed.info %}<p class="alert error" role="alert">{{ m.text }}</p>{% endfor %}
+
+{% if listed.data %}
+{% if listed.data.rows %}
+<div class="tablewrap"><table>
+  <thead><tr><th scope="col">Company</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Next step</th><th scope="col">Updated</th><th scope="col">Change</th></tr></thead>
+  <tbody>
+  {% for row in listed.data.rows %}{% include "_application_row.html" %}{% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p>No applications match.</p>{% endif %}
+{% endif %}
+{% endblock %}

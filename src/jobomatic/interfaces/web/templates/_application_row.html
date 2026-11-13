@@ -1,0 +1,21 @@
+<tr id="row-{{ row.id }}">
+  <td>{{ row.company }}</td>
+  <td>{{ row.title }}</td>
+  <td><span class="status">{{ row.status }}</span></td>
+  <td>{{ row.next_step or "" }}</td>
+  <td>{{ row.updated }}</td>
+  <td>
+    <form method="post" action="{{ url_for('application_status', application_id=row.id) }}" class="inline"
+          hx-post="{{ url_for('application_status', application_id=row.id) }}" hx-target="closest tr" hx-swap="outerHTML">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label for="status-{{ row.id }}" class="visually-hidden">New status for {{ row.company }}, {{ row.title }}</label>
+      <select id="status-{{ row.id }}" name="status">
+        {% for s in settable %}<option value="{{ s }}"{% if s == row.status %} selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+      <label for="next-{{ row.id }}" class="visually-hidden">Next step for {{ row.company }}, {{ row.title }}</label>
+      <input id="next-{{ row.id }}" name="next_step" type="text" value="{{ row.next_step or '' }}" placeholder="Next step">
+      <button type="submit" class="secondary">Update</button>
+    </form>
+    {% if not row.submitted %}<a class="action" href="{{ url_for('application_applied_confirm', application_id=row.id) }}">Mark applied…</a>{% endif %}
+  </td>
+</tr>
