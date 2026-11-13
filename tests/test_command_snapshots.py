@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import os
 import re
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
@@ -81,13 +81,14 @@ def _normalize(text: str, tmp_path: Path) -> str:
     ]
     for old, new in paths_to_hide:
         text = _replace_path(text, old, new)
-    for old, new in [
-        (today.isoformat(), "<TODAY>"),
-        (today.strftime("%B %Y"), "<MONTH-YEAR>"),
-    ]:
-        text = text.replace(old, new)
-    # The sidecar files record when they were made, to the second.
-    text = re.sub(r"<TODAY>T\d\d:\d\d:\d\d(\.\d+)?Z", "<NOW>", text)
+    # The sidecar files record when they were made, to the second, in UTC. After 19:00 in a time
+    # zone five hours behind, UTC's date is already tomorrow's, so match any date here.
+    text = re.sub(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z", "<NOW>", text)
+    # Folder names and letters use the local date; the UTC one is hidden too, in case a run
+    # straddles UTC midnight.
+    for day in {today, datetime.now(UTC).date()}:
+        text = text.replace(day.isoformat(), "<TODAY>")
+    text = text.replace(today.strftime("%B %Y"), "<MONTH-YEAR>")
     # ...and how they were run, and a hash of the profile they were made from.
     text = re.sub(r'"command": ".*"', '"command": "<COMMAND>"', text)
     return re.sub(r'"profile_hash": "[0-9a-f]+"', '"profile_hash": "<HASH>"', text)
