@@ -224,6 +224,11 @@ def test_a_request_over_the_limit_is_refused_with_a_page(signed_in) -> None:  # 
     assert "Too large" in reply.get_data(as_text=True)
 
 
+def test_the_browsers_own_favicon_request_is_answered_after_sign_in(app: Flask, signed_in) -> None:  # type: ignore[no-untyped-def]
+    assert signed_in.get("/favicon.ico", base_url=BASE).status_code == 200
+    assert app.test_client().get("/favicon.ico", base_url=BASE).status_code == 403
+
+
 def test_only_the_named_branding_files_can_be_fetched(signed_in) -> None:  # type: ignore[no-untyped-def]
     assert signed_in.get("/brand/tokens.css", base_url=BASE).status_code == 200
     assert signed_in.get("/brand/job-o-matic-icon.svg", base_url=BASE).status_code == 200

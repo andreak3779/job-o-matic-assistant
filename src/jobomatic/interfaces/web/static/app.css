@@ -35,3 +35,11 @@ table { border-collapse: collapse; width: 100%; font-size: .95rem; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 thead th { color: var(--muted); font-weight: 700; white-space: nowrap; }
 tbody th { font-weight: 600; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); border: 0; white-space: nowrap; }
+form.inline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+form.inline select, form.inline input[type=text], form.filters select, form.filters input[type=text] { background: var(--bg); color: var(--text); border: 2px solid var(--muted); border-radius: 10px; padding: 6px 8px; font: inherit; }
+form.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+form.filters label { margin: 0; }
+.status { font-weight: 700; }
+.action { display: inline-block; margin-top: 6px; font-weight: 700; }
+.alert.note { border-left-color: var(--accent-text); color: var(--text); }
