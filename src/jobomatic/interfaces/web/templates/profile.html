@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import messages %}
+{% block title %}Profile check{% endblock %}
+{% block main %}
+<h1>Profile check</h1>
+<p class="sub">Load the profile and list anything wrong with it. Nothing is changed.</p>
+<form method="post" action="{{ url_for('profile_check_page') }}" class="panel">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="row"><button type="submit">Check the profile</button></div>
+</form>
+{% if checked %}
+<section class="panel" aria-labelledby="result-h">
+  <h2 id="result-h">{{ "The profile is valid" if checked.ok else "The profile has problems" }}</h2>
+  {% if checked.data %}
+  {% set d = checked.data %}
+  <p>{{ d.roles }} roles, {{ d.certifications }} certifications, {{ d.projects }} projects, {{ d.stories }} stories.</p>
+  {% if d.issues or d.drift %}
+  <ul>
+    {% for i in d.issues %}<li><strong>{{ i.level|capitalize }}</strong> in {{ i.where }}: {{ i.message }}</li>{% endfor %}
+    {% for m in d.drift %}<li><strong>Warning</strong>: {{ m }}</li>{% endfor %}
+  </ul>
+  {% else %}<p>No warnings.</p>{% endif %}
+  {% endif %}
+  {{ messages(checked) }}
+</section>
+{% endif %}
+{% endblock %}

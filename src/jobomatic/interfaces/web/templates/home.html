@@ -7,7 +7,5 @@
 <ul class="cards">
   {% for page in pages %}<li><a href="{{ url_for(page.endpoint) }}">{{ page.label }}</a></li>{% endfor %}
 </ul>
-{% else %}
-<p>No pages are switched on yet.</p>
 {% endif %}
 {% endblock %}

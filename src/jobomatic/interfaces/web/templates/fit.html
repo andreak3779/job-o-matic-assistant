@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import messages %}
+{% block title %}Fit check{% endblock %}
+{% block main %}
+<h1>Fit check</h1>
+<p class="sub">Paste a job posting. You get the rating, the reasons and whether you already applied. Nothing is saved.</p>
+
+<form method="post" action="{{ url_for('fit_check_page') }}" class="panel">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="posting">Job posting (paste the text)</label>
+  <textarea id="posting" name="posting" rows="12" required>{{ posting }}</textarea>
+  <div class="row"><button type="submit">Check fit</button></div>
+  {% if problem %}<p class="alert error" role="alert">{{ problem }}</p>{% endif %}
+</form>
+
+{% if fit %}
+<section class="panel" aria-labelledby="rating-h">
+  {% if fit.data %}
+  {% set d = fit.data %}
+  <h2 id="rating-h">{{ d.title }} <span class="sub">at {{ d.company }}</span></h2>
+  <p><span class="rating {{ rating_class.get(d.fit.rating, '') }}">{{ d.fit.rating }}</span>
+    {% if d.fit.skill_rating and d.fit.skill_rating != d.fit.rating %}<span class="sub">(skills alone: {{ d.fit.skill_rating }})</span>{% endif %}</p>
+  <p>{{ d.fit.rationale }}</p>
+  {{ messages(fit) }}
+  {% if d.fit.low_confidence %}<p class="alert warning" role="alert"><strong>Warning:</strong> More than half of the required skills show no evidence. Either the posting is a poor match or it was misread; read it yourself before relying on this rating.</p>{% endif %}
+  {% if d.fit.location_disqualifiers %}<h3>Location</h3><ul>{% for x in d.fit.location_disqualifiers %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.fit.location_flags %}<ul>{% for x in d.fit.location_flags %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+
+  {% for title, rows in (("Required skills", d.fit.required), ("Nice to have", d.fit.nice_to_have)) %}
+  {% if rows %}
+  <h3>{{ title }}</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th scope="col">Skill</th><th scope="col">Evidence</th><th scope="col">Where</th></tr></thead>
+    <tbody>{% for m in rows %}
+      <tr><th scope="row">{{ m.skill }}{% if m.core %} <span class="sub">(core)</span>{% endif %}</th>
+        <td><span aria-hidden="true">{{ status_words[m.status][0] }}</span> {{ status_words[m.status][1] }}</td>
+        <td>{{ m.evidence }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  {% endfor %}
+
+  {% if d.fit.unscored_required %}<h3>Required lines not scored</h3><ul>{% for x in d.fit.unscored_required %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.fit.terms_to_confirm %}<h3>Words to confirm</h3><ul>{% for word, line in d.fit.terms_to_confirm %}<li><strong>{{ word }}</strong>: {{ line }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.fit.possible_typos %}<h3>Possible typos in the posting</h3><ul>{% for word, term, line in d.fit.possible_typos %}<li><strong>{{ word }}</strong> may be {{ term }}: {{ line }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.fit.unknown_names %}<h3>Names to check</h3><ul>{% for word, term, line in d.fit.unknown_names %}<li><strong>{{ word }}</strong> is close to {{ term }}: {{ line }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.fit.soft_requirements %}<h3>Also asked for (not scored)</h3><ul>{% for s in d.fit.soft_requirements %}<li><strong>{{ s.kind }}</strong>: {{ s.line }} <span class="sub">{{ s.note }}</span></li>{% endfor %}</ul>{% endif %}
+
+  <h3>Pay</h3>
+  {% if d.salary is none %}<p class="sub">The pay screen could not be run.</p>
+  {% elif d.salary.posted or d.salary.below_minimum or d.salary.flags %}
+    <ul>{% for x in d.salary.posted %}<li>Posted: {{ x }}</li>{% endfor %}
+    {% for x in d.salary.below_minimum %}<li><strong>Below your minimum:</strong> {{ x }}</li>{% endfor %}
+    {% for x in d.salary.flags %}<li>{{ x }}</li>{% endfor %}</ul>
+    {% if not d.constraints_configured %}<p class="sub">No minimums are set, so nothing was compared.</p>{% endif %}
+  {% else %}<p class="sub">The posting states no pay.</p>{% endif %}
+  {% else %}
+  <h2 id="rating-h">The fit could not be checked</h2>
+  {{ messages(fit) }}
+  {% endif %}
+</section>
+{% endif %}
+
+{% if duplicate %}
+<section class="panel" aria-labelledby="dup-h">
+  <h2 id="dup-h">Have you applied before?</h2>
+  {% if duplicate.data %}
+  {% set c = duplicate.data.check %}
+  <p><strong>{{ c.verdict|capitalize }}.</strong> {{ c.summary() }}</p>
+  {% for note in c.notes %}<p class="alert warning" role="note">{{ note }}</p>{% endfor %}
+  {% if c.verdict == "related" and c.related %}
+  <div class="tablewrap"><table>
+    <thead><tr><th scope="col">Company</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Updated</th></tr></thead>
+    <tbody>{% for a in c.related %}<tr><td>{{ a.company }}</td><td>{{ a.title }}</td><td>{{ a.status }}</td><td>{{ a.updated }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  {% endif %}
+  {{ messages(duplicate) }}
+</section>
+{% endif %}
+{% endblock %}

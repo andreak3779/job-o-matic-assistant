@@ -15,7 +15,7 @@ from pathlib import Path
 from flask import Flask, abort, render_template, send_file, send_from_directory
 from werkzeug.exceptions import HTTPException
 
-from jobomatic.interfaces.web import guards
+from jobomatic.interfaces.web import fit_page, guards, profile_page
 from jobomatic.interfaces.web.downloads import Downloads
 
 BRANDING = Path(__file__).resolve().parents[2] / "branding"
@@ -43,7 +43,13 @@ class Page:
     label: str
 
 
-def create_app(*, launch_token: str, pages: tuple[Page, ...] = ()) -> Flask:
+PAGES = (
+    Page("fit_page", "Fit check"),
+    Page("profile_page", "Profile check"),
+)
+
+
+def create_app(*, launch_token: str, pages: tuple[Page, ...] = PAGES) -> Flask:
     app = Flask(__name__)
     app.config.update(
         SECRET_KEY=secrets.token_bytes(32),  # new for every launch, so no session outlives it
@@ -58,6 +64,8 @@ def create_app(*, launch_token: str, pages: tuple[Page, ...] = ()) -> Flask:
     )
     app.extensions["downloads"] = Downloads()
     guards.install(app)
+    fit_page.register(app)
+    profile_page.register(app)
 
     @app.context_processor
     def shared() -> dict[str, object]:

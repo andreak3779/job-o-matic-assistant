@@ -16,3 +16,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 ul.cards { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
 ul.cards li { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 16px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+form.panel, section.panel { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+label { display: block; font-weight: 700; margin-bottom: 6px; }
+textarea { width: 100%; min-height: 200px; font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--bg); color: var(--text); border: 2px solid var(--muted); border-radius: 10px; padding: 8px; resize: vertical; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+button { background: var(--accent-text); color: var(--accent-ink); border: 2px solid var(--accent-text); border-radius: 10px; padding: 8px 16px; font: inherit; font-weight: 700; cursor: pointer; }
+button.secondary { background: transparent; color: var(--accent-text); }
+h2 { font-size: 1.2rem; margin: 0 0 8px; } h3 { font-size: 1rem; margin: 18px 0 6px; }
+.sub { color: var(--muted); font-weight: 400; }
+.rating { display: inline-block; padding: 4px 14px; border-radius: 10px; border: 3px solid var(--navy); color: var(--fit-ink); font-weight: 800; font-size: 1.15rem; background: var(--surface); }
+.rating.strong { background: var(--fit-strong); } .rating.good { background: var(--fit-good); } .rating.worth { background: var(--fit-worth); }
+.rating.stretch { background: var(--fit-stretch); } .rating.pass { background: var(--fit-pass); }
+.alert { border-left: 6px solid var(--err); padding: 8px 12px; background: var(--bg); border-radius: 0 10px 10px 0; }
+.alert.warning { border-left-color: var(--warn); }
+.note { color: var(--muted); }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { color: var(--muted); font-weight: 700; white-space: nowrap; }
+tbody th { font-weight: 600; }
