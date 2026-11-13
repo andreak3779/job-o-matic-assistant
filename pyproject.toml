@@ -463,6 +463,13 @@ type = "forbidden"
 source_modules = ["jobomatic.interfaces.web"]
 forbidden_modules = ["jobomatic.interfaces.cli", "jobomatic.interfaces.mcp"]
 
+[[tool.importlinter.contracts]]
+name = "Neither the MCP server nor the command line (except main, which starts it) uses the web interface"
+type = "forbidden"
+source_modules = ["jobomatic.interfaces.mcp", "jobomatic.interfaces.cli"]
+forbidden_modules = ["jobomatic.interfaces.web"]
+ignore_imports = ["jobomatic.interfaces.cli.main -> jobomatic.interfaces.web.*"]
+
 # Third-party libraries: only direct imports count here (a module using a command that uses docx is fine).
 [[tool.importlinter.contracts]]
 name = "python-docx is used only by the document adapters and the commands that build documents"
@@ -522,3 +529,14 @@ source_modules = ["jobomatic"]
 forbidden_modules = ["mcp"]
 allow_indirect_imports = true
 ignore_imports = ["jobomatic.interfaces.mcp.* -> mcp"]
+
+[[tool.importlinter.contracts]]
+name = "Flask and its parts are used only by the web interface"
+type = "forbidden"
+source_modules = ["jobomatic"]
+forbidden_modules = ["flask", "jinja2", "werkzeug", "markupsafe", "itsdangerous"]
+allow_indirect_imports = true
+ignore_imports = [
+    "jobomatic.interfaces.web.* -> flask",
+    "jobomatic.interfaces.web.* -> werkzeug",
+]

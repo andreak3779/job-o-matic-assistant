@@ -1,0 +1,18 @@
+/* The look comes from tokens.css (branding, ADR 0025). This file only lays it out. */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+a { color: var(--accent-text); }
+header.brand { background: var(--sun); color: var(--navy); border-bottom: 5px solid var(--navy); }
+header.brand .inner { max-width: 1100px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+header.brand a.mark { display: flex; align-items: center; gap: 12px; color: var(--navy); text-decoration: none; }
+header.brand .name { font-weight: 800; font-size: 1.1rem; }
+header.brand nav { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+header.brand nav a { color: var(--navy); font-weight: 700; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+footer.page { max-width: 1100px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .9rem; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; line-height: 1.2; }
+p.sub { color: var(--muted); margin: 0 0 20px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+ul.cards { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+ul.cards li { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 16px; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

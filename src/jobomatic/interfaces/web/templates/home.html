@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block main %}
+<h1>Job-o-matic assistant</h1>
+<p class="sub">A screen for the same tools the command line and Claude Desktop use. The rules are the same: the gate refuses what it refuses.</p>
+{% if pages %}
+<ul class="cards">
+  {% for page in pages %}<li><a href="{{ url_for(page.endpoint) }}">{{ page.label }}</a></li>{% endfor %}
+</ul>
+{% else %}
+<p>No pages are switched on yet.</p>
+{% endif %}
+{% endblock %}
