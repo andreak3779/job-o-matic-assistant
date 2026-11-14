@@ -452,6 +452,13 @@ def test_an_ambiguous_word_is_listed_once_to_confirm_and_never_scored() -> None:
         # label lines, plain or bold
         ("Role: Web Developer\nCompany: Example Co\n", "Web Developer", "Example Co"),
         ("**Job Title:** QA Analyst\n**Company:** Example Co\n", "QA Analyst", "Example Co"),
+        # a "#" inside a heading-style title or company (C#, F#) is part of the name
+        (
+            "# Company\nExample Co\n# Position\nSenior Developer (C#/MS-SQL) - Western Canada\n",
+            "Senior Developer (C#/MS-SQL)",
+            "Example Co",
+        ),
+        ("# Company\nC# Shop\n# Position\nWeb Developer\n", "Web Developer", "C# Shop"),
         # "About <Company>" on its own line, when nothing better is given
         ("Great opportunity\n\nAbout Example Co\nWe build things.\n", "Unknown Role", "Example Co"),
     ],
