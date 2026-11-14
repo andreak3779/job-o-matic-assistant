@@ -180,8 +180,10 @@ def skill_match_terms(skill: str) -> list[str]:
     """
     normalized = _normalize(skill)
     terms = _expand_terms(normalized)
-    # Also expand any multi-token phrase into its component tokens for matching
-    terms.extend(_split_compound(normalized))
+    # Also expand any multi-token phrase into its component tokens for matching; each piece
+    # gets its aliases too, so "vulnerability assessments / pen tests" finds "penetration testing"
+    for piece in _split_compound(normalized):
+        terms.extend(_expand_terms(piece))
     return list(dict.fromkeys(terms))
 
 

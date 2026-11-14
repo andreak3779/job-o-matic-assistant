@@ -886,3 +886,17 @@ def test_conjoined_terms_refuses_anything_it_would_have_to_reinterpret(sentence)
 )
 def test_conjoined_terms_does_not_split_a_description_into_a_list(sentence):
     assert conjoined_terms(sentence) is None
+
+
+def test_a_web_security_sentence_is_reduced_to_its_security_terms():
+    terms = extract_skill_terms(
+        "Understanding of web application security best practices, including preparing for "
+        "and interpreting vulnerability assessments and pen tests"
+    )
+    assert {"web application security", "vulnerability assessments / pen tests"} <= set(terms)
+
+
+def test_each_piece_of_a_slash_row_is_alias_expanded() -> None:
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert "penetration testing" in skill_match_terms("vulnerability assessments / pen tests")
