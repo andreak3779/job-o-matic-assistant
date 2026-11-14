@@ -256,13 +256,14 @@ _BULLET_RE = re.compile(r"^[-•]|^\d+[.)]")
 
 # Postings saved as label/value pairs under their own headings, e.g.
 # "# Company\nExample Corp\n\n# Position\nSoftware Developer". "Postion" is
-# accepted because it is a common typo in hand-saved JD files.
+# accepted because it is a common typo in hand-saved JD files. The value may not start with "#"
+# (that would be the next heading) but may contain one ("C#").
 _POSITION_HEADING_RE = re.compile(
-    r"^#+[ \t]*(?:position|postion|job[ \t]*title|role|title)[ \t]*\n+[ \t]*([^\n#]+)",
+    r"^#+[ \t]*(?:position|postion|job[ \t]*title|role|title)[ \t]*\n+[ \t]*([^\n#][^\n]*)",
     re.IGNORECASE | re.MULTILINE,
 )
 _COMPANY_HEADING_RE = re.compile(
-    r"^#+[ \t]*company[ \t]*\n+[ \t]*([^\n#]+)", re.IGNORECASE | re.MULTILINE
+    r"^#+[ \t]*company[ \t]*\n+[ \t]*([^\n#][^\n]*)", re.IGNORECASE | re.MULTILINE
 )
 _TITLE_H1_RE = re.compile(r"(?:^#\s+)([^\n]+)", re.IGNORECASE | re.MULTILINE)
 # "Role: Web Developer" / "**Company:** Example Co": the label must start the line and end in a
