@@ -251,7 +251,16 @@ def test_soft_skill_lines_do_not_use_up_the_first_five_required_lines():
 
 @pytest.mark.parametrize(
     "line",
-    ["Strong analytical skills", "Excellent verbal skills", "A self-starter", "Proactive attitude"],
+    [
+        "Strong analytical skills",
+        "Excellent verbal skills",
+        "A self-starter",
+        "Proactive attitude",
+        # real posting wording: a hyphenated phrase, a pair, and a language line
+        "Superlative organizational and time-management skills, including independent "
+        "management of deadlines.",
+        "Excellent written and spoken English.",
+    ],
 )
 def test_the_phrases_added_for_adr_0023_are_recognised(line):
     from jobomatic.fit.soft_skills import is_soft_skill
@@ -262,3 +271,16 @@ def test_the_phrases_added_for_adr_0023_are_recognised(line):
 def test_a_soft_skill_entry_is_labelled_and_never_carries_years():
     entry = soft_skill("Excellent communication")
     assert (entry.kind, entry.minimum_years) == ("soft skill", None)
+
+
+def test_a_posting_that_ends_its_requirements_with_qualities_lists_them_instead_of_scoring_them():
+    parsed = parse_jd(
+        "# Position\nWeb Developer\n\nRequirements:\n"
+        "- 5+ years of professional experience with C# web development.\n"
+        "- Superlative organizational and time-management skills, including independent "
+        "management of deadlines.\n"
+        "- Excellent written and spoken English.\n"
+    )
+    assert not [r for r in parsed.required if "english" in r or "organizational" in r]
+    lines = [s.line for s in parsed.soft_requirements if s.kind == "soft skill"]
+    assert len(lines) == 2

@@ -1,5 +1,5 @@
 {
-  "description": "Phrases that mark a requirement line as a soft skill (ADR 0023). A line that holds one of these and names no known skill is listed in the Soft requirements block and never scored; a line that also names a skill keeps scoring that skill. A soft-skill line is never a core requirement (ADR 0021). Matched as lowercase substrings. Edit this list freely; it is the single source.",
+  "description": "Phrases that mark a requirement line as a soft skill (ADR 0023). A line that holds one of these and names no known skill is listed in the Soft requirements block and never scored; a line that also names a skill keeps scoring that skill. A soft-skill line is never a core requirement (ADR 0021). Matched as lowercase substrings, with hyphens read as spaces (time-management matches time management). Edit this list freely; it is the single source.",
   "phrases": [
     "communication",
     "interpersonal",
@@ -12,8 +12,8 @@
     "work independently",
     "fast-paced",
     "time management",
-    "organizational skills",
-    "organisational skills",
+    "organizational",
+    "organisational",
     "attention to detail",
     "adaptab",
     "self-motivated",
@@ -23,6 +23,12 @@
     "analytical",
     "verbal",
     "written and verbal",
+    "written and spoken",
+    "spoken and written",
+    "written english",
+    "spoken english",
+    "fluent in english",
+    "fluency in english",
     "self-starter",
     "proactive",
     "initiative"
