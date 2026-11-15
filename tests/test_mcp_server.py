@@ -183,6 +183,23 @@ def test_generate_resume_writes_docx(tmp_path: Path) -> None:
     assert base64.b64decode(resources[0].resource.blob) == out_file.read_bytes()
 
 
+def test_a_document_result_tells_the_model_to_hand_the_file_to_the_user(tmp_path: Path) -> None:
+    """Claude Desktop gives an attachment to the model, not the person, so the result says what to do
+    with it and where the original is. The command's own text stays the first block, unchanged."""
+    out_file = tmp_path / "resume.docx"
+    blocks = generate_resume(str(STRONG_FIXTURE_JD), company="SampleCo", out=str(out_file))
+    notes = [b.text for b in _text_blocks(blocks) if "Attached to this result" in b.text]
+    assert len(notes) == 1
+    assert "resume.docx" in notes[0]
+    assert "does not see an attachment unless you give it" in notes[0]
+    assert "Attached to this result" not in _text_blocks(blocks)[0].text
+
+
+def test_a_markdown_result_has_no_handoff_note(tmp_path: Path) -> None:
+    blocks = gap_analysis(str(FIXTURE_JD), out=str(tmp_path / "GapAnalysis.md"))
+    assert not any("Attached to this result" in b.text for b in _text_blocks(blocks))
+
+
 def test_generate_resume_accepts_inline_jd_text(tmp_path: Path) -> None:
     out_file = tmp_path / "resume.docx"
     jd_text = STRONG_FIXTURE_JD.read_text(encoding="utf-8")

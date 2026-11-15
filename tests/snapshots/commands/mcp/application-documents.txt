@@ -4,6 +4,8 @@ Fit Rating: Strong — All 9 required skills covered (0 course/portfolio-only); 
 Logged as drafted (not applied): application <TODAY>_northgate-insurance-group_senior-full-stack-net-developer
 Wrote <SCRATCH>/vault/outputs/applications/<TODAY>_northgate-insurance-group_senior-full-stack-net-developer/resume.docx
 Wrote <SCRATCH>/vault/outputs/applications/<TODAY>_northgate-insurance-group_senior-full-stack-net-developer/resume.docx.meta.json
+--- text
+Attached to this result: resume.docx. The user does not see an attachment unless you give it to them: save it where the user can open it (a folder shared with this chat) or present it, and name the file. If you cannot, say so plainly and do not claim it was delivered; the same file is already saved on the user's computer at the path in the 'Wrote' line above (in their vault's outputs/ folder).
 --- resource name=resume.docx mime=application/vnd.openxmlformats-officedocument.wordprocessingml.document kind=blob
 non-empty
 --- text
@@ -24,6 +26,8 @@ Fit Rating: Strong — All 9 required skills covered (0 course/portfolio-only); 
 Logged as drafted (not applied): application <TODAY>_northgate-insurance-group_senior-full-stack-net-developer
 Wrote <SCRATCH>/vault/outputs/applications/<TODAY>_northgate-insurance-group_senior-full-stack-net-developer/cover-letter.docx
 Wrote <SCRATCH>/vault/outputs/applications/<TODAY>_northgate-insurance-group_senior-full-stack-net-developer/cover-letter.docx.meta.json
+--- text
+Attached to this result: cover-letter.docx. The user does not see an attachment unless you give it to them: save it where the user can open it (a folder shared with this chat) or present it, and name the file. If you cannot, say so plainly and do not claim it was delivered; the same file is already saved on the user's computer at the path in the 'Wrote' line above (in their vault's outputs/ folder).
 --- resource name=cover-letter.docx mime=application/vnd.openxmlformats-officedocument.wordprocessingml.document kind=blob
 non-empty
 --- text

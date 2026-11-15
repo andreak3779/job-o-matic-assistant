@@ -239,9 +239,34 @@ def _tool_blocks(
 ) -> list[ContentBlock]:
     """A command's result as the blocks a document tool returns: its text, then each file it wrote
     (``result.written``), or a tool error when the command did not succeed."""
-    blocks: list[ContentBlock] = [TextContent(type="text", text=_tool_text(result, render))]
-    blocks.extend(_attachment_blocks(result.written, embed_text_as_resource=embed_text_as_resource))
-    return blocks
+    text = _tool_text(result, render)
+    attachments = _attachment_blocks(result.written, embed_text_as_resource=embed_text_as_resource)
+    binary = [
+        str(block.resource.uri).rsplit("/", 1)[-1]
+        for block in attachments
+        if isinstance(block, EmbeddedResource) and isinstance(block.resource, BlobResourceContents)
+    ]
+    blocks: list[ContentBlock] = [TextContent(type="text", text=text)]
+    if binary:
+        # A block of its own, so the first one stays exactly what the command line prints.
+        blocks.append(TextContent(type="text", text=_handoff_note(binary)))
+    return [*blocks, *attachments]
+
+
+def _handoff_note(names: list[str]) -> str:
+    """Tell the model what to do with an attached file, because the user does not see it unless it does.
+
+    A client such as Claude Desktop hands a binary attachment to the model (saved in its own
+    workspace), not to the person. Without this note the model says "saved" and the person gets
+    nothing. The original is already in the vault on the person's own computer, so there is
+    always a fallback."""
+    return (
+        f"Attached to this result: {', '.join(names)}. The user does not see an attachment unless "
+        "you give it to them: save it where the user can open it (a folder shared with this "
+        "chat) or present it, and name the file. If you cannot, say so plainly and do not "
+        "claim it was delivered; the same file is already saved on the user's computer at the "
+        "path in the 'Wrote' line above (in their vault's outputs/ folder)."
+    )
 
 
 def _looks_like_path(jd: str) -> bool:
