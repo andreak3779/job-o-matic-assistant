@@ -166,7 +166,9 @@ flowchart TD
 3. **Generate.** The command writes into the vault's `outputs/` and records the posting as drafted.
    Nothing is logged as applied automatically.
 4. **Return.** The MCP tools send back the real content, not just a path: DOCX and PDF as
-   embedded resources (an attachment in Claude Desktop), reports as text.
+   embedded resources, reports as text. A client gives an embedded file to the model, not to the
+   person (tested in Claude Desktop, Nov 2026), so the result also says to hand the file over and
+   where the original is.
 
 ## Where files go
 

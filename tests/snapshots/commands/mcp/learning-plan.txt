@@ -1,5 +1,7 @@
 status: ok
 --- text
 Wrote <TMP>/out/plan.pdf
+--- text
+Attached to this result: plan.pdf. The user does not see an attachment unless you give it to them: save it where the user can open it (a folder shared with this chat) or present it, and name the file. If you cannot, say so plainly and do not claim it was delivered; the same file is already saved on the user's computer at the path in the 'Wrote' line above (in their vault's outputs/ folder).
 --- resource name=plan.pdf mime=application/pdf kind=blob
 non-empty

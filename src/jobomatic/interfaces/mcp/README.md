@@ -113,10 +113,9 @@ How that content comes back depends on the tool:
   `generate_jobgether`, `generate_job_board`, `generate_pluralsight`) — their
   markdown draft *is* the deliverable, so every artifact they write (the
   draft plus its provenance sidecars) comes back as a text `EmbeddedResource`
-  (`text/markdown` or `application/json`). MCP clients like Claude Desktop
-  render an `EmbeddedResource` as an attachment, so the draft shows up as a
-  document rather than getting dumped into the chat transcript as a wall of
-  text.
+  (`text/markdown` or `application/json`). In Claude Desktop the model
+  receives that as plain text (tested Nov 2026); it does not show as a
+  download card.
 - **Everything else that produces markdown/text/JSON** (gap analyses,
   provenance `.meta.json` sidecars from other tools) comes back as inline
   text — that content is meant to be read and discussed directly in the
@@ -124,6 +123,16 @@ How that content comes back depends on the tool:
 - **DOCX and PDF artifacts** (resumes, cover letters, thank-you notes,
   learning plans, etc.) come back as a base64-encoded `EmbeddedResource`
   with the correct MIME type, same as before.
+
+  **A client gives that attachment to the model, not to the person.** In
+  Claude Desktop the model saves it in its own workspace (tested Nov 2026,
+  both DOCX and PDF), and nothing shows the person a file unless the model
+  hands it over. So the result carries a second text block, after the
+  command's own output, naming the attached files and telling the model to
+  give them to the user, or to say plainly that it can't and point to the
+  vault path in the `Wrote` line. A bare path or `resource_link` does not
+  reach a remote client at all: it cannot read this machine's `/tmp` or the
+  vault.
 
 ## Fit gate
 
