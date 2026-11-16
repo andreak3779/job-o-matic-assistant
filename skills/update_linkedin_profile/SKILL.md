@@ -8,7 +8,7 @@ description: >
   every updatable field, character limits, and a diff of current vs target state.
 ---
 
-> **Placeholders.** `<home city, province>`, `<github-user>` and `<linkedin-user>` stand for the candidate's own details. Fill them at generation time from `python -m jobomatic profile show contact` (location) and `profile show facts` (links); never write real values into this file.
+> **Placeholders.** `<home city, province>`, `<github-user>` and `<linkedin-user>` stand for the candidate's own details. Fill them at generation time from `python -m jobomatic profile show contact` (location) and `profile show facts` (links); never write real values into this file. The employer names in the templates (Acme Software, Globex Industrial, Example Pharmacy) are stand-ins too: swap them for the real employers listed in the vault's `profile/employer-names.json` (`generate-linkedin` does this and warns if one is left), and say "the home city" as the real city.
 
 # LinkedIn Profile Update Skill
 
