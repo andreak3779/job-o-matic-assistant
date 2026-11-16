@@ -28,10 +28,12 @@ from jobomatic.presence.github import (
 )
 from jobomatic.presence.linkedin import (
     _cert_summary,
+    _fill_personal_details,
     _headline,
     _is_sparse,
     _project_hook,
     _step0_headline,
+    _step3_5_experience_sync,
     _step4_skills,
     _step5_certifications,
     _trim_bullets,
@@ -300,3 +302,44 @@ def test_github_pin_candidates_skip_private_repos() -> None:
     draft, _ = github_build_draft(view, _GITHUB_SKILL_TEXT)
     assert "PublicRepo" in draft
     assert "SecretRepo" not in draft
+
+
+def test_linkedin_template_stand_ins_are_replaced_from_the_vault() -> None:
+    """The skill's templates carry stand-in employers and "the home city"; the draft must show the
+    candidate's own (the demo vault maps them to fictional ones)."""
+    warnings: list[str] = []
+    text = _fill_personal_details(
+        "At Acme Software I built it. At Globex Industrial I fixed it. At Example Pharmacy I cut it. "
+        "I'm based in the home city. Location: <home city, province>.",
+        warnings,
+        "Step 1 About",
+    )
+    assert "Meridian Benefits Group" in text
+    assert "Aerotech Industries Ltd." in text
+    assert "Riverside Pharmacy Ltd." in text
+    assert "Acme Software" not in text
+    assert "the home city" not in text and "<home city, province>" not in text
+    assert warnings == []
+
+
+def test_linkedin_warns_when_a_stand_in_cannot_be_replaced(tmp_vault: Path) -> None:
+    """With no employer map in the vault, a stand-in left in the copy must be reported, not shipped."""
+    warnings: list[str] = []
+    text = _fill_personal_details("At Acme Software I built it.", warnings, "Step 1 About")
+    assert "Acme Software" in text
+    assert len(warnings) == 1
+    assert "Acme Software" in warnings[0] and "employer-names.json" in warnings[0]
+
+
+def test_linkedin_experience_bullets_have_no_markdown_bold() -> None:
+    """The resume renders ``**bold**``; LinkedIn shows the asterisks literally."""
+    role = SimpleNamespace(
+        title="Dev",
+        company="Co",
+        location="Springfield, MD",
+        dates="2020 – 2021",
+        bullets=["Cut the run from 8 hours to 1 — a **7× improvement** in C#"],
+    )
+    section, _ = _step3_5_experience_sync([role], ["C#"])  # type: ignore[list-item]
+    assert "7× improvement" in section
+    assert "**7×" not in section and "improvement**" not in section
