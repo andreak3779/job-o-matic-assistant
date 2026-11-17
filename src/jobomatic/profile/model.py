@@ -72,8 +72,11 @@ class Identity(Record):
 
     default_visibility: ClassVar[Visibility] = Visibility.PUBLIC
 
+    # The name is on every public page the drafts are written for (GitHub, LinkedIn, the job
+    # boards), so the drafts may use it. Contact details below are never public.
+    name: str = Field(json_schema_extra=PUBLIC)
+
     # Contact: never on public surfaces.
-    name: str = Field(json_schema_extra=PRIVATE)
     email: str = Field(json_schema_extra=PRIVATE)
     phone: str = Field(json_schema_extra=PRIVATE)
     location: str = Field(default="", json_schema_extra=PRIVATE)
@@ -310,6 +313,7 @@ class PresenceView(BaseModel):
     projects: list[Project] = Field(default_factory=list)
     roles: list[Role] = Field(default_factory=list)
     coursework_summary: str | None = None
+    name: str = ""
     linkedin: str = ""
     github: str = ""
     pluralsight: str = ""

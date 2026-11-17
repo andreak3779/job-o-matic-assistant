@@ -352,6 +352,23 @@ def test_user_name_placeholders_are_filled_from_the_public_links() -> None:
     assert warnings == []
 
 
+def test_name_placeholders_are_filled_from_the_public_name() -> None:
+    view = _make_view().model_copy(update={"name": "Sarah Ashford"})
+    warnings: list[str] = []
+    text = fill_personal_details(
+        "## Hi, I'm <first-name>\n| Name | <full-name> |", warnings, "The draft", view
+    )
+    assert text == "## Hi, I'm Sarah\n| Name | Sarah Ashford |"
+    assert warnings == []
+
+
+def test_a_name_placeholder_with_no_name_is_reported() -> None:
+    warnings: list[str] = []
+    text = fill_personal_details("| Name | <full-name> |", warnings, "The draft", _make_view())
+    assert "<full-name>" in text
+    assert len(warnings) == 1 and "<full-name>" in warnings[0]
+
+
 def test_a_user_name_placeholder_with_no_link_is_reported() -> None:
     warnings: list[str] = []
     text = fill_personal_details(

@@ -61,7 +61,6 @@ def test_public_view_has_only_public_data() -> None:
     for secret in (
         "sarah.ashford.dev@example.com",
         "555-0142",
-        "Sarah Ashford",
         "Northwind",
         "Lakeshore",
         "kubernetes",
@@ -71,6 +70,9 @@ def test_public_view_has_only_public_data() -> None:
     ):
         assert secret not in text, secret
     assert view["identity"]["headline"] == "Full-Stack .NET Developer"
+    assert (
+        view["identity"]["name"] == "Sarah Ashford"
+    )  # the name is public; contact details are not
     assert [c["code"] for c in view["certifications"]] == ["AZ-900", "AI-200"]
     assert [r["company"] for r in view["roles"]] == ["Acme Health"]
     assert view["certifications"][1]["domain_coverage"] == [{"domain": "RAG", "status": "Partial"}]
@@ -89,7 +91,7 @@ def test_presence_view_is_typed_and_holds_only_public_data() -> None:
         assert secret not in text
 
 
-def test_the_profile_links_are_public_but_email_and_phone_are_not() -> None:
+def test_the_profile_name_and_links_are_public_but_email_and_phone_are_not() -> None:
     profile = sample_profile()
     links = {
         "linkedin": "https://www.linkedin.com/in/sarah-dev",
@@ -99,9 +101,11 @@ def test_the_profile_links_are_public_but_email_and_phone_are_not() -> None:
     profile = profile.model_copy(update={"identity": profile.identity.model_copy(update=links)})
     shown = public_data(profile)["identity"]
     assert {k: shown[k] for k in links} == links
-    assert not {"email", "phone", "name", "location"} & shown.keys()
+    assert not {"email", "phone", "location"} & shown.keys()
+    assert shown["name"] == "Sarah Ashford"
     view = presence_view(profile)
     assert (view.linkedin, view.github, view.pluralsight) == tuple(links.values())
+    assert view.name == "Sarah Ashford"
 
 
 def test_profile_read_helpers() -> None:

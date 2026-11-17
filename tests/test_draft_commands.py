@@ -57,7 +57,8 @@ def test_no_draft_ships_a_template_stand_in(module, platform: str, tmp_path: Pat
     text = out.read_text(encoding="utf-8")
     for stand_in in ("Acme Software", "Globex Industrial", "Example Pharmacy", "the home city"):
         assert stand_in not in text, stand_in
-    assert not re.findall(r"<(?:[a-z]+-user|home city, province)>", text)
+    assert "the candidate" not in text.lower()
+    assert not re.findall(r"<(?:[a-z]+-user|first-name|full-name|home city, province)>", text)
 
 
 def test_linkedin_writes_its_raw_inputs_first(tmp_path: Path) -> None:

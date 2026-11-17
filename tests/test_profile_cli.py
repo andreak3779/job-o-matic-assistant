@@ -26,8 +26,9 @@ def test_demo_vault_loads_and_has_no_issues() -> None:
 def test_demo_vault_public_view_hides_private_data() -> None:
     profile = YamlVaultProfile(DEMO_PROFILE).load()
     text = presence_view(profile).model_dump_json()
-    for secret in (profile.identity.email, profile.identity.phone, profile.identity.name):
+    for secret in (profile.identity.email, profile.identity.phone):
         assert secret not in text
+    assert profile.identity.name in text  # the name is public (ADR 0018); contact details are not
     assert "Northwind Traders" not in text  # the legacy employer
     assert "Lakeshore" not in text  # education is private
     assert "Meridian Benefits Group" in text  # a role inside the resume window
