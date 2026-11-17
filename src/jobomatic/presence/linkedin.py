@@ -31,6 +31,7 @@ from typing import Any
 
 from jobomatic import paths
 from jobomatic.presence.draft import DraftData, write_draft
+from jobomatic.presence.personal_details import fill_personal_details
 from jobomatic.presence.skill_text import derive_skill_terms
 from jobomatic.presence.skill_text import fenced_blocks as _fenced_blocks
 from jobomatic.presence.skill_text import section_text as _section_text
@@ -77,60 +78,6 @@ def _static_featured_links() -> list[tuple[str, str]]:
     if not path.is_file():
         return []
     return [(str(title), str(url)) for title, url in json.loads(path.read_text(encoding="utf-8"))]
-
-
-# Employer names used in SKILL.md's templates. The skill is committed to a public repo, so it
-# carries stand-in names; the candidate's real ones live in the vault (``profile/employer-names.json``,
-# ``{"Acme Software": "Real Employer Inc.", ...}``).
-DEMO_EMPLOYERS = ("Acme Software", "Globex Industrial", "Example Pharmacy")
-EMPLOYER_NAMES_FILENAME = "employer-names.json"
-
-
-def _employer_names() -> dict[str, str]:
-    """Stand-in -> real employer names from the vault, or ``{}`` when the file is absent."""
-    path = paths.profile_dir() / EMPLOYER_NAMES_FILENAME
-    if not path.is_file():
-        return {}
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return {str(k): str(v) for k, v in data.items()}
-
-
-def _home_location() -> str:
-    """``"City, ST"`` from the vault's location preferences, or ``""`` when not set."""
-    path = paths.profile_dir() / "location-preferences.json"
-    if not path.is_file():
-        return ""
-    home = json.loads(path.read_text(encoding="utf-8")).get("home", {})
-    city = str(home.get("label", "")).strip()
-    abbreviations = home.get("province_abbreviations") or []
-    province = (
-        str(abbreviations[0]).upper() if abbreviations else str(home.get("province_label", ""))
-    )
-    return ", ".join(part for part in (city, province) if part)
-
-
-def _fill_personal_details(text: str, warnings: list[str], where: str) -> str:
-    """Replace the template's stand-in employers and home city with the candidate's own.
-
-    A stand-in or ``<...>`` placeholder that survives is reported, so a draft never goes out with
-    "Acme Software" or "the home city" in it without a warning saying so.
-    """
-    for stand_in, real in _employer_names().items():
-        text = text.replace(stand_in, real)
-    location = _home_location()
-    if location:
-        text = text.replace("<home city, province>", location).replace("the home city", location)
-    leftovers = [name for name in DEMO_EMPLOYERS if name in text]
-    leftovers += re.findall(r"<[a-z][^<>\n]*>", text)
-    if "the home city" in text:
-        leftovers.append("the home city")
-    if leftovers:
-        warnings.append(
-            f"{where} still has template stand-ins ({', '.join(sorted(set(leftovers)))}); add the "
-            f"employers to profile/{EMPLOYER_NAMES_FILENAME} and the home city to "
-            "profile/location-preferences.json"
-        )
-    return text
 
 
 def _plain(text: str) -> str:
@@ -221,7 +168,7 @@ def _step1_about(skill_text: str, fragments: dict[str, str]) -> tuple[str, list[
         warnings.append("Step 1 — could not find About template in SKILL.md")
         return "", warnings
     about = _substitute_fragments(blocks[0].strip("\n"), fragments)
-    about = _fill_personal_details(about, warnings, "Step 1 About")
+    about = fill_personal_details(about, warnings, "Step 1 About")
     if len(about) > 2600:
         warnings.append(
             f"Step 1 About is {len(about)} chars — over the 2,600 limit, trim before pasting"
@@ -248,7 +195,7 @@ def _step0_headline(skill_text: str, view: PresenceView) -> tuple[str, list[str]
 def _step2_open_to_work(skill_text: str) -> tuple[str, list[str]]:
     section = _section_text(skill_text, "Step 2 — Open to Work Banner") or ""
     warnings: list[str] = []
-    return _fill_personal_details(section.strip(), warnings, "Step 2 Open to Work"), warnings
+    return fill_personal_details(section.strip(), warnings, "Step 2 Open to Work"), warnings
 
 
 def _step3_experience_entry(
@@ -278,7 +225,7 @@ def _step3_experience_entry(
         else:
             lines.append(line)
     text = _substitute_fragments("\n".join(lines).strip("\n"), fragments)
-    text = _fill_personal_details(text, warnings, "Step 3 Experience entry")
+    text = fill_personal_details(text, warnings, "Step 3 Experience entry")
     if len(text) > 2000:
         warnings.append(
             f"Step 3 Experience entry is {len(text)} chars — over the 2,000 limit, trim before pasting"

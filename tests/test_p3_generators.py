@@ -26,9 +26,9 @@ from jobomatic.presence.github import (
 from jobomatic.presence.github import (
     _step2_status as github_step2_status,
 )
+from jobomatic.presence.job_board import _step2_summary as job_board_step2_summary
 from jobomatic.presence.linkedin import (
     _cert_summary,
-    _fill_personal_details,
     _headline,
     _is_sparse,
     _project_hook,
@@ -38,6 +38,7 @@ from jobomatic.presence.linkedin import (
     _step5_certifications,
     _trim_bullets,
 )
+from jobomatic.presence.personal_details import fill_personal_details
 
 
 def _make_view(
@@ -308,7 +309,7 @@ def test_linkedin_template_stand_ins_are_replaced_from_the_vault() -> None:
     """The skill's templates carry stand-in employers and "the home city"; the draft must show the
     candidate's own (the demo vault maps them to fictional ones)."""
     warnings: list[str] = []
-    text = _fill_personal_details(
+    text = fill_personal_details(
         "At Acme Software I built it. At Globex Industrial I fixed it. At Example Pharmacy I cut it. "
         "I'm based in the home city. Location: <home city, province>.",
         warnings,
@@ -325,10 +326,23 @@ def test_linkedin_template_stand_ins_are_replaced_from_the_vault() -> None:
 def test_linkedin_warns_when_a_stand_in_cannot_be_replaced(tmp_vault: Path) -> None:
     """With no employer map in the vault, a stand-in left in the copy must be reported, not shipped."""
     warnings: list[str] = []
-    text = _fill_personal_details("At Acme Software I built it.", warnings, "Step 1 About")
+    text = fill_personal_details("At Acme Software I built it.", warnings, "Step 1 About")
     assert "Acme Software" in text
     assert len(warnings) == 1
     assert "Acme Software" in warnings[0] and "employer-names.json" in warnings[0]
+
+
+def test_job_board_summary_names_the_candidates_own_employers() -> None:
+    """The Indeed/ZipRecruiter summary template carries stand-in employers too (the demo vault maps
+    them to fictional ones); none may reach the draft."""
+    skill = (
+        "## Step 2 — Summary / About\n\n```\n"
+        "Built APIs at Acme Software and Globex Industrial. Based in <home city, province>.\n```\n"
+    )
+    summary, warnings = job_board_step2_summary(skill, {})
+    assert "Meridian Benefits Group" in summary and "Aerotech Industries Ltd." in summary
+    assert "Acme Software" not in summary and "<home city, province>" not in summary
+    assert warnings == []
 
 
 def test_linkedin_experience_bullets_have_no_markdown_bold() -> None:
