@@ -19,6 +19,7 @@ from pathlib import Path
 
 from jobomatic import paths
 from jobomatic.presence.draft import DraftData, write_draft
+from jobomatic.presence.personal_details import fill_personal_details
 from jobomatic.presence.resume_freshness import resume_freshness_lines
 from jobomatic.presence.skill_text import (
     curated_tags,
@@ -42,7 +43,9 @@ def _step1_headline(skill_text: str, fragments: dict[str, str]) -> tuple[str, li
     blocks = fenced_blocks(section)
     if not blocks:
         return "", ["Step 1 — could not find Headline template in SKILL.md"]
-    return substitute_fragments(blocks[0].strip("\n"), fragments), []
+    headline = substitute_fragments(blocks[0].strip("\n"), fragments)
+    warnings: list[str] = []
+    return fill_personal_details(headline, warnings, "Step 1 Headline"), warnings
 
 
 def _step2_summary(skill_text: str, fragments: dict[str, str]) -> tuple[str, list[str]]:
@@ -53,6 +56,7 @@ def _step2_summary(skill_text: str, fragments: dict[str, str]) -> tuple[str, lis
         warnings.append("Step 2 — could not find Summary/About template in SKILL.md")
         return "", warnings
     summary = substitute_fragments(blocks[0].strip("\n"), fragments)
+    summary = fill_personal_details(summary, warnings, "Step 2 Summary/About")
     if len(summary) > 1500:
         warnings.append(
             f"Step 2 Summary/About is {len(summary)} chars — over the ~1,500-char practical "
@@ -78,8 +82,10 @@ def _step3_skills(skill_text: str, technical_skills: dict[str, list[str]]) -> tu
     ]
 
 
-def _step4_job_preferences(skill_text: str) -> str:
-    return (section_text(skill_text, "Step 4 — Job Preferences") or "").strip()
+def _step4_job_preferences(skill_text: str) -> tuple[str, list[str]]:
+    warnings: list[str] = []
+    text = (section_text(skill_text, "Step 4 — Job Preferences") or "").strip()
+    return fill_personal_details(text, warnings, "Step 4 Job Preferences"), warnings
 
 
 def _build_draft(view: PresenceView, skill_text: str) -> tuple[str, list[str]]:
@@ -96,7 +102,8 @@ def _build_draft(view: PresenceView, skill_text: str) -> tuple[str, list[str]]:
     warnings.extend(w)
     skills, w = _step3_skills(skill_text, view.technical_skills)
     warnings.extend(w)
-    preferences = _step4_job_preferences(skill_text)
+    preferences, w = _step4_job_preferences(skill_text)
+    warnings.extend(w)
 
     sections = [
         "<!-- GENERATED DRAFT — regenerate via the generate_job_board MCP tool / "
