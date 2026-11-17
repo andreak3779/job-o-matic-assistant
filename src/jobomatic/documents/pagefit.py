@@ -10,10 +10,11 @@ bullet of a role is the one to drop, and the oldest role gives up bullets before
 
 1. at most ``MAX_SKILL_LINES`` skill categories (the first ones: they are ordered by relevance);
 2. long skill lists shortened, never inside a parenthesis;
-3. bullets: a self-directed role (no employer) first, down to 2 and then 1 bullet while employers
-   still keep 4 or more; then the oldest employer first, down to a floor that falls from 5 to 2;
+3. bullets: a self-directed role (no employer) first, down to 2 while employers still keep 5 or
+   more; then the oldest employer first, down to a floor that falls from 5 to 2;
 4. the roles older than the ``RECENT_ROLES`` most recent go to 2 bullets first; as a last resort 5
-   skill lines of 5 items, one bullet for those older roles, and only then 2 for the recent ones.
+   skill lines of 5 items, one bullet for the self-directed role and for those older roles, and only
+   then 2 for the recent ones.
 
 A role is never dropped, and a recent role never goes below ``MIN_BULLETS``. If that still does
 not fit, the content is refused (ADR 0007) instead of producing a resume that runs onto a third
@@ -49,9 +50,7 @@ _NAME = 16.0
 _HEADING_BEFORE = 19.5
 _HEADING_AFTER = 14.6
 _NEXT_JOB_BEFORE = 16.0
-_CALIBRATION = (
-    1.03  # measured: the raw estimate runs 1-5% above LibreOffice's real height at 0.44 em
-)
+_CALIBRATION = 1.0  # measured: the raw estimate already runs 0-3% above LibreOffice's real height
 _SAFETY = 0.97  # keep 3% of the budget free so a small estimate error cannot spill a line
 _LATER_PAGE_HEADER_PT = (
     26.0  # the compact header (one or two lines) and its gap push the body down on later pages
@@ -212,12 +211,12 @@ def fit_resume(content: TailoredResume, max_pages: int = RESUME_MAX_PAGES) -> Ta
         lambda c: _cap_bullets(c, 2, limit, own_work_only=True),
         lambda c: _cap_skill_items(c, 12),
         lambda c: _cap_bullets(c, 4, limit),
-        lambda c: _cap_bullets(c, 1, limit, own_work_only=True),
         lambda c: _cap_skill_items(c, 9),
         lambda c: _cap_bullets(c, 3, limit),
         lambda c: _cap_skill_items(c, 6),
         lambda c: _cap_bullets(c, MIN_BULLETS, limit, from_index=RECENT_ROLES),
         lambda c: _cap_skill_lines(c, LAST_RESORT_SKILL_LINES, 5),
+        lambda c: _cap_bullets(c, 1, limit, own_work_only=True),
         lambda c: _cap_bullets(c, 1, limit, from_index=RECENT_ROLES),
         lambda c: _cap_bullets(c, MIN_BULLETS, limit),
     ]
