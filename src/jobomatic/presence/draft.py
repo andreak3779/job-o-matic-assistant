@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from jobomatic import bootstrap, paths
+from jobomatic.presence.personal_details import fill_personal_details
 from jobomatic.profile.model import PresenceView
 from jobomatic.provenance import write_sidecar
 from jobomatic.results import CommandResult, Message, failure, guarded, ok
@@ -64,6 +65,13 @@ def _write_draft(
         return failure(f"SKILL.md not found: {skill_path}")
     view = bootstrap.load_presence_view()
     content, warnings = build(view, skill_path.read_text(encoding="utf-8"))
+    # Every draft gets the final fill, so a generator that forgot a template's stand-ins (or
+    # its ``<github-user>``) cannot ship them. A generator that already filled and reported its
+    # own leftovers is not reported twice.
+    leftovers: list[str] = []
+    content = fill_personal_details(content, leftovers, "The draft", view)
+    if not any("template stand-ins" in w for w in warnings):
+        warnings.extend(leftovers)
 
     out_file = (
         out or paths.output_dir("profiles", platform=platform) / f"{date.today().isoformat()}.md"

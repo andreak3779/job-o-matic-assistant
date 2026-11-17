@@ -89,6 +89,21 @@ def test_presence_view_is_typed_and_holds_only_public_data() -> None:
         assert secret not in text
 
 
+def test_the_profile_links_are_public_but_email_and_phone_are_not() -> None:
+    profile = sample_profile()
+    links = {
+        "linkedin": "https://www.linkedin.com/in/sarah-dev",
+        "github": "https://github.com/sarah-dev",
+        "pluralsight": "https://app.pluralsight.com/profile/sarah-dev",
+    }
+    profile = profile.model_copy(update={"identity": profile.identity.model_copy(update=links)})
+    shown = public_data(profile)["identity"]
+    assert {k: shown[k] for k in links} == links
+    assert not {"email", "phone", "name", "location"} & shown.keys()
+    view = presence_view(profile)
+    assert (view.linkedin, view.github, view.pluralsight) == tuple(links.values())
+
+
 def test_profile_read_helpers() -> None:
     profile = sample_profile()
     assert [r.company for r in profile.resume_roles] == ["Acme Health"]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -44,6 +45,19 @@ def test_a_generator_defaults_to_the_vaults_profile_folder(module, platform: str
     result = module.run()
     expected = paths.output_dir("profiles", platform=platform) / f"{date.today().isoformat()}.md"
     assert result.data is not None and result.data.draft == expected
+
+
+@pytest.mark.parametrize("module, platform", GENERATORS)
+def test_no_draft_ships_a_template_stand_in(module, platform: str, tmp_path: Path) -> None:
+    """The skills' templates carry stand-in employers, a home city and ``<github-user>``-style
+    placeholders; every generator's draft must come out with the candidate's own, and no warning."""
+    out = tmp_path / "draft.md"
+    result = module.run(out)
+    assert result.data is not None and result.data.warnings == ()
+    text = out.read_text(encoding="utf-8")
+    for stand_in in ("Acme Software", "Globex Industrial", "Example Pharmacy", "the home city"):
+        assert stand_in not in text, stand_in
+    assert not re.findall(r"<(?:[a-z]+-user|home city, province)>", text)
 
 
 def test_linkedin_writes_its_raw_inputs_first(tmp_path: Path) -> None:

@@ -332,6 +332,38 @@ def test_linkedin_warns_when_a_stand_in_cannot_be_replaced(tmp_vault: Path) -> N
     assert "Acme Software" in warnings[0] and "employer-names.json" in warnings[0]
 
 
+def test_user_name_placeholders_are_filled_from_the_public_links() -> None:
+    view = _make_view().model_copy(
+        update={
+            "github": "https://github.com/sarahashford-dev/",
+            "linkedin": "https://www.linkedin.com/in/sarah-ashford-dev",
+        }
+    )
+    warnings: list[str] = []
+    text = fill_personal_details(
+        "https://github.com/<github-user> and https://www.linkedin.com/in/<linkedin-user>",
+        warnings,
+        "The draft",
+        view,
+    )
+    assert text == (
+        "https://github.com/sarahashford-dev and https://www.linkedin.com/in/sarah-ashford-dev"
+    )
+    assert warnings == []
+
+
+def test_a_user_name_placeholder_with_no_link_is_reported() -> None:
+    warnings: list[str] = []
+    text = fill_personal_details(
+        "https://app.pluralsight.com/profile/<pluralsight-user>",
+        warnings,
+        "The draft",
+        _make_view().model_copy(update={"github": "https://github.com/sarahashford-dev"}),
+    )
+    assert "<pluralsight-user>" in text
+    assert len(warnings) == 1 and "<pluralsight-user>" in warnings[0]
+
+
 def test_job_board_summary_names_the_candidates_own_employers() -> None:
     """The Indeed/ZipRecruiter summary template carries stand-in employers too (the demo vault maps
     them to fictional ones); none may reach the draft."""
