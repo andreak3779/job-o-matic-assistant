@@ -2,8 +2,9 @@
 
 The skills are committed to a public repo, so their templates carry stand-in names
 ("Acme Software", "the home city"). The candidate's real ones live in the vault
-(``profile/employer-names.json`` and ``profile/location-preferences.json``), and the user names
-in ``<github-user>``-style placeholders come from the profile's public links. ``write_draft`` runs
+(``profile/employer-names.json`` and ``profile/location-preferences.json``), and the name
+and user names in ``<full-name>`` and ``<github-user>``-style placeholders come from the profile's
+public name and links. ``write_draft`` runs
 this over every presence draft, so no generator can ship a stand-in unreported.
 """
 
@@ -50,15 +51,20 @@ def _username(url: str) -> str:
 
 
 def _link_usernames(view: PresenceView | None) -> dict[str, str]:
-    """``{"<github-user>": "jane", ...}`` for the links the profile has."""
+    """``{"<github-user>": "jane", "<first-name>": "Jane", ...}`` for what the profile has."""
     if view is None:
         return {}
+    names = {
+        "<full-name>": view.name.strip(),
+        "<first-name>": view.name.split()[0] if view.name.split() else "",
+    }
     links = {
         "<github-user>": view.github,
         "<linkedin-user>": view.linkedin,
         "<pluralsight-user>": view.pluralsight,
     }
-    return {token: _username(url) for token, url in links.items() if _username(url)}
+    filled = {token: _username(url) for token, url in links.items() if _username(url)}
+    return {**filled, **{token: name for token, name in names.items() if name}}
 
 
 def fill_personal_details(
@@ -85,7 +91,7 @@ def fill_personal_details(
         warnings.append(
             f"{where} still has template stand-ins ({', '.join(sorted(set(leftovers)))}); add the "
             f"employers to profile/{EMPLOYER_NAMES_FILENAME}, the home city to "
-            "profile/location-preferences.json and the GitHub, LinkedIn and Pluralsight links "
+            "profile/location-preferences.json and the name and GitHub, LinkedIn and Pluralsight links "
             "to profile/identity.yaml"
         )
     return text

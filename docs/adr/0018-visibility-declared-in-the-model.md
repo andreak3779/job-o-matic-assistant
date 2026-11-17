@@ -41,10 +41,10 @@ Considered and rejected:
   changing the rules.
 - Making something public that was never public is a code change to the
   model, which gets reviewed, rather than an edit to a data file.
-- The candidate's own LinkedIn, GitHub and Pluralsight links are public fields (changed
-  2026-11-17): the drafts for those sites link to them, and they are on the resume already. They
-  reach the generators as `PresenceView.linkedin|github|pluralsight`, which fill the
-  `<github-user>`-style placeholders in the skills' templates. Email, phone, name and location stay
-  private.
+- The candidate's own name and LinkedIn, GitHub and Pluralsight links are public fields (changed
+  2026-11-17): the drafts for those sites show them, and they are on the resume already. They
+  reach the generators as `PresenceView.name|linkedin|github|pluralsight`, which fill the
+  `<full-name>`, `<first-name>` and `<github-user>`-style placeholders in the skills' templates.
+  Email, phone and location stay private.
 - `pii_guard` still scans everything generated for public profiles; this ADR
   only decides what goes into it.

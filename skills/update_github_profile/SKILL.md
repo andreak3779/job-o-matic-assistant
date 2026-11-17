@@ -8,7 +8,7 @@ description: >
   with character limits enforced.
 ---
 
-> **Placeholders.** `<home city, province>`, `<github-user>` and `<linkedin-user>` stand for the candidate's own details. Fill them at generation time from `python -m jobomatic profile show contact` (location) and `profile show facts` (links); never write real values into this file.
+> **Placeholders.** `<home city, province>`, `<github-user>`, `<linkedin-user>`, `<first-name>` and `<full-name>` stand for the candidate's own details. Fill them at generation time from `python -m jobomatic profile show contact` (location) and `profile show facts` (links); never write real values into this file.
 
 # GitHub Profile Update Skill
 
@@ -84,7 +84,7 @@ Full-stack dev | C# · ASP.NET Core · Angular · Azure · SQL | CI/CD · GitHub
 If the repo already exists, edit the existing `README.md`.
 
 ```markdown
-## Hi, I'm the candidate 👋
+## Hi, I'm <first-name> 👋
 
 Full-stack developer with 10+ years building enterprise applications.
 
@@ -108,7 +108,7 @@ Full-stack developer with 10+ years building enterprise applications.
 
 | Field | Value |
 |---|---|
-| Name | The candidate |
+| Name | <full-name> |
 | Location | <home city, province> |
 | Website | https://<github-user>.github.io/Resume_Site/ |
 | LinkedIn | https://www.linkedin.com/in/<linkedin-user> |

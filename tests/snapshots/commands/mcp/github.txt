@@ -4,7 +4,7 @@ Wrote <TMP>/out/gh.md
 Wrote <TMP>/out/gh.md.meta.json
 --- resource name=gh.md mime=text/markdown kind=text
 <!-- GENERATED DRAFT — regenerate via the generate_github MCP tool / update_github_profile skill.
-     Reflects the public profile data (hash 1a4d74b6f4e2). -->
+     Reflects the public profile data (hash 4de2d4b4b8f6). -->
 
 # GitHub Profile Update Draft
 

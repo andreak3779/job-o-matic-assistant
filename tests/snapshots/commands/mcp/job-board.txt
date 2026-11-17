@@ -4,7 +4,7 @@ Wrote <TMP>/out/jb.md
 Wrote <TMP>/out/jb.md.meta.json
 --- resource name=jb.md mime=text/markdown kind=text
 <!-- GENERATED DRAFT — regenerate via the generate_job_board MCP tool / update_job_board_profiles skill.
-     Reflects the public profile data (hash 1a4d74b6f4e2). -->
+     Reflects the public profile data (hash 4de2d4b4b8f6). -->
 
 # Indeed & ZipRecruiter Profile Update Draft
 

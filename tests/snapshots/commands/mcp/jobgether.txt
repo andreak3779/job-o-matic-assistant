@@ -4,7 +4,7 @@ Wrote <TMP>/out/jg.md
 Wrote <TMP>/out/jg.md.meta.json
 --- resource name=jg.md mime=text/markdown kind=text
 <!-- GENERATED DRAFT — regenerate via the generate_jobgether MCP tool / update_jobgether_profile skill.
-     Reflects the public profile data (hash 1a4d74b6f4e2). -->
+     Reflects the public profile data (hash 4de2d4b4b8f6). -->
 
 # Jobgether Profile Update Draft
 
