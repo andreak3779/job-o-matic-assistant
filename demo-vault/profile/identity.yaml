@@ -2,6 +2,9 @@ name: Sarah Ashford
 email: sarah.ashford.dev@example.com
 phone: (410) 555-0142
 location: Springfield, MD
+linkedin: https://www.linkedin.com/in/sarah-ashford-dev
+github: https://github.com/sarahashford-dev
+pluralsight: https://app.pluralsight.com/profile/sarahashford-dev
 headline: '**Senior Full-Stack .NET Developer | Enterprise Applications | 8+ Years**'
 summary: Full-stack .NET developer with a track record of modernizing legacy enterprise systems into service-oriented,
   cloud-hosted applications. Comfortable owning a feature from database schema through Angular UI through

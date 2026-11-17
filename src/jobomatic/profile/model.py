@@ -77,9 +77,12 @@ class Identity(Record):
     email: str = Field(json_schema_extra=PRIVATE)
     phone: str = Field(json_schema_extra=PRIVATE)
     location: str = Field(default="", json_schema_extra=PRIVATE)
-    linkedin: str = Field(default="", json_schema_extra=PRIVATE)
-    github: str = Field(default="", json_schema_extra=PRIVATE)
-    pluralsight: str = Field(default="", json_schema_extra=PRIVATE)
+
+    # Profile links: the candidate's own pages on the very sites the drafts are written for, so
+    # the drafts may link to them (the generators fill ``<github-user>`` and the like from these).
+    linkedin: str = Field(default="", json_schema_extra=PUBLIC)
+    github: str = Field(default="", json_schema_extra=PUBLIC)
+    pluralsight: str = Field(default="", json_schema_extra=PUBLIC)
 
     headline: str = Field(json_schema_extra=PUBLIC)
     summary: str = Field(json_schema_extra=PUBLIC)
@@ -307,6 +310,9 @@ class PresenceView(BaseModel):
     projects: list[Project] = Field(default_factory=list)
     roles: list[Role] = Field(default_factory=list)
     coursework_summary: str | None = None
+    linkedin: str = ""
+    github: str = ""
+    pluralsight: str = ""
 
     @property
     def technical_skills(self) -> dict[str, list[str]]:

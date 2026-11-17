@@ -69,6 +69,9 @@ def presence_view(profile: Profile) -> PresenceView:
         projects=[Project.model_validate(p) for p in data.get("projects", [])],
         roles=[Role.model_validate(r) for r in data.get("roles", [])],
         coursework_summary=data.get("coursework_summary"),
+        linkedin=data["identity"].get("linkedin", ""),
+        github=data["identity"].get("github", ""),
+        pluralsight=data["identity"].get("pluralsight", ""),
     )
 
 

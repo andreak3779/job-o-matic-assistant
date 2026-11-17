@@ -2,8 +2,9 @@
 
 The skills are committed to a public repo, so their templates carry stand-in names
 ("Acme Software", "the home city"). The candidate's real ones live in the vault
-(``profile/employer-names.json`` and ``profile/location-preferences.json``). Shared by the
-presence generators whose copy names an employer or the home city (LinkedIn, Indeed/ZipRecruiter).
+(``profile/employer-names.json`` and ``profile/location-preferences.json``), and the user names
+in ``<github-user>``-style placeholders come from the profile's public links. ``write_draft`` runs
+this over every presence draft, so no generator can ship a stand-in unreported.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import json
 import re
 
 from jobomatic import paths
+from jobomatic.profile.model import PresenceView
 
 # Employer names used in the skills' templates; ``employer-names.json`` maps each to a real one:
 # ``{"Acme Software": "Real Employer Inc.", ...}``.
@@ -42,14 +44,36 @@ def _home_location() -> str:
     return ", ".join(part for part in (city, province) if part)
 
 
-def fill_personal_details(text: str, warnings: list[str], where: str) -> str:
-    """Replace the template's stand-in employers and home city with the candidate's own.
+def _username(url: str) -> str:
+    """The last path segment of a profile URL: ``https://github.com/jane/`` -> ``jane``."""
+    return url.strip().rstrip("/").rsplit("/", 1)[-1]
+
+
+def _link_usernames(view: PresenceView | None) -> dict[str, str]:
+    """``{"<github-user>": "jane", ...}`` for the links the profile has."""
+    if view is None:
+        return {}
+    links = {
+        "<github-user>": view.github,
+        "<linkedin-user>": view.linkedin,
+        "<pluralsight-user>": view.pluralsight,
+    }
+    return {token: _username(url) for token, url in links.items() if _username(url)}
+
+
+def fill_personal_details(
+    text: str, warnings: list[str], where: str, view: PresenceView | None = None
+) -> str:
+    """Replace the template's stand-in employers, home city and user names with the candidate's own.
 
     A stand-in or ``<...>`` placeholder that survives is reported, so a draft never goes out with
-    "Acme Software" or "the home city" in it without a warning saying so.
+    "Acme Software" or "the home city" in it without a warning saying so. User names are filled
+    only when ``view`` is given.
     """
     for stand_in, real in _employer_names().items():
         text = text.replace(stand_in, real)
+    for token, user in _link_usernames(view).items():
+        text = text.replace(token, user)
     location = _home_location()
     if location:
         text = text.replace("<home city, province>", location).replace("the home city", location)
@@ -60,7 +84,8 @@ def fill_personal_details(text: str, warnings: list[str], where: str) -> str:
     if leftovers:
         warnings.append(
             f"{where} still has template stand-ins ({', '.join(sorted(set(leftovers)))}); add the "
-            f"employers to profile/{EMPLOYER_NAMES_FILENAME} and the home city to "
-            "profile/location-preferences.json"
+            f"employers to profile/{EMPLOYER_NAMES_FILENAME}, the home city to "
+            "profile/location-preferences.json and the GitHub, LinkedIn and Pluralsight links "
+            "to profile/identity.yaml"
         )
     return text

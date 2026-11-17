@@ -4,7 +4,7 @@ Wrote <TMP>/out/ps.md
 Wrote <TMP>/out/ps.md.meta.json
 --- resource name=ps.md mime=text/markdown kind=text
 <!-- GENERATED DRAFT — regenerate via the generate_pluralsight MCP tool / update_pluralsight_profile skill.
-     Reflects the public profile data (hash 33ac30321d87). -->
+     Reflects the public profile data (hash 1a4d74b6f4e2). -->
 
 # Pluralsight Profile Update Draft
 
