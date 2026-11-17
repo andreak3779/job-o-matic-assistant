@@ -96,7 +96,7 @@ def test_the_bullets_kept_are_the_first_and_most_relevant_ones() -> None:
 
 
 def test_the_oldest_roles_lose_bullets_before_the_newest() -> None:
-    counts = _bullets(pagefit.fit_resume(_resume()))
+    counts = _bullets(pagefit.fit_resume(_resume(roles=7)))
     assert counts == sorted(counts, reverse=True)  # newest first: never fewer than an older role
     assert counts[0] > counts[-1]
 
@@ -112,6 +112,14 @@ def test_a_self_directed_role_gives_up_bullets_before_any_employer() -> None:
     counts = _bullets(fitted)
     assert fitted.experience[0].company == ""
     assert counts[0] <= min(counts[1:])
+
+
+def test_a_self_directed_role_keeps_two_bullets_while_employers_keep_three_or_more() -> None:
+    # The self-directed role goes down to one bullet only as a last resort, so spare room on the
+    # page is not left empty (the general resume lost its Pluralsight bullet that way).
+    counts = _bullets(pagefit.fit_resume(_resume(roles=8, bullets=14, own_work=True)))
+    assert counts[0] == 2
+    assert min(counts[1:]) >= 3
 
 
 def test_a_skill_list_is_never_cut_inside_a_parenthesis() -> None:
