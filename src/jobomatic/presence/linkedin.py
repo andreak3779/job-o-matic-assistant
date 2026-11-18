@@ -52,7 +52,7 @@ TOP_5_SKILLS = ["C#", "ASP.NET Core", "Angular", "Microsoft Azure", "CI/CD"]
 PORTFOLIO_HOOKS = {
     "CookingTime": ".NET 10 Blazor legacy migration, 118 automated tests, 80% coverage, blocking CI gate",
     "MoviesApp": "Angular SSR + ASP.NET Core, containerized with Docker Compose",
-    "career-fit-assistant": "Python MCP server",
+    "job-o-matic-assistant": "Python MCP server and CLI with tests and CI gates",
     "ai-job-search-workflow": "Claude API + Python job-application automation",
     "Resume_Site": "GitHub Actions CI/CD",
     "awk_linux_scripts": "Linux maintenance scripts",
