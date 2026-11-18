@@ -81,7 +81,7 @@ I'm a full-stack developer with 10+ years of enterprise experience in C#, ASP.NE
 
 A lot of my work has been modernizing legacy systems, and I've done it at three employers: ASP.NET Web Forms to Angular, MS Access to ASP.NET Web Forms on SQL Server, and a Clipper application to SQL Server. At Globex Industrial I built a real-time C#/ASP.NET Core API that fixed data mismatches between HubSpot and Dynamics 365 Sales. At Example Pharmacy I cut a drug data SSIS process from 8 hours to 1.
 
-{cert_status_short}. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed {github_copilot_course_count} GitHub Copilot courses and {leadership_course_count} leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with 118 automated tests, 80% coverage and a blocking CI gate, and career-fit-assistant, a Python MCP server.
+{cert_status_short}. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed {github_copilot_course_count} GitHub Copilot courses and {leadership_course_count} leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with 118 automated tests, 80% coverage and a blocking CI gate, and job-o-matic-assistant, a Python MCP server.
 
 Core stack:
 Backend: C#, ASP.NET Core (Web API, MVC), .NET Framework, Entity Framework Core, REST API design
