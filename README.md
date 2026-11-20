@@ -179,6 +179,8 @@ The suite covers profile loading, the fit engine, JD parsing, and CLI smoke test
 1. **Lint, contracts and types**, on Python 3.11 only (none of these can differ by interpreter): `ruff check` and `ruff format --check`, `lint-imports` (the architecture rules: module layers, core/adapter boundaries, library boundaries) and `mypy src`.
 2. **Tests**, the `pytest` suite on each supported Python: **3.11, 3.12, 3.13 and 3.14**. `requires-python` is `>=3.11` with no upper bound; a new Python release is a line in the matrix and in the classifiers, and a test fails if only one is edited.
 
+Dependabot opens a weekly pull request for the Python pins and one for the Actions, with major Python updates ignored ([ADR 0034](docs/adr/0034-dependabot-for-the-lock-and-the-actions.md)); CI is the gate.
+
 Only editable installs (the kind `scripts/setup.sh` makes) are supported: the code finds `skills/`, `reference/`, `templates/` and `demo-vault/` next to the checkout.
 
 CI has no access to the private vault, so tests use a throwaway vault built from the fictional demo data. Checks that need the real vault (`profile validate`, `scripts/check_skill_hardcoding.py`) run in the commit hook; the golden-output comparison (`scripts/golden_outputs.py compare`) is run by hand after a refactor.

@@ -47,3 +47,4 @@ status below says so.
 | [0031](0031-one-canonical-skills-location.md) | One canonical location for the skills, so the MCP server does not depend on symlinks | Accepted |
 | [0032](0032-tiered-git-hooks.md) | Tiered git hooks: a fast check on commit, the full suite on push and in CI | Accepted |
 | [0033](0033-python-version-support-and-ci-matrix.md) | Which Python versions are supported, and what CI tests | Accepted |
+| [0034](0034-dependabot-for-the-lock-and-the-actions.md) | Dependabot keeps the lock file and the Actions current | Accepted |
