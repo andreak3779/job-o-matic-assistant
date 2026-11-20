@@ -44,7 +44,7 @@ pycparser==3.0
 pydantic==2.13.5
 pydantic_core==2.46.5
 Pygments==2.21.0
-PyJWT==2.13.0
+PyJWT==2.15.1
 pytest-cov==7.1.0
 pytest==9.1.1
 python-docx==1.2.0

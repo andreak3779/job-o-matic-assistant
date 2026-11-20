@@ -1,6 +1,6 @@
 # 0034 — Dependabot keeps the lock file and the Actions current
 
-**Status:** Accepted. Not yet confirmed against a real Dependabot run; see "To confirm".
+**Status:** Accepted. Confirmed against the first Dependabot run (2026-11-20); see "What the first run showed".
 
 ## Context
 
@@ -33,15 +33,23 @@ because Dependabot regenerated a lock with a different SDK. Both lessons are use
 7. **The Actions stay pinned by tag.** Pinning them to commit SHAs is a separate change, not part of
    this one. Dependabot updates tag-pinned Actions too.
 
-## To confirm
+## What the first run showed
 
-- **Whether Dependabot reads `requirements-lock.txt`.** The file has a non-standard name and is a
-  constraints file. If Dependabot only reads the ranges in `pyproject.toml`, the pip block would not
-  move the pins. The first run's log will show which files it found, and this ADR is updated with the
-  answer.
-- **Whether an updated pin can fail the install.** The lock was incomplete once (ADR 0033), and a test
-  keeps it in step with `pyproject.toml`. A Dependabot pull request that breaks the install would be
-  caught by CI, which is what the gate is for.
+- **Dependabot reads `requirements-lock.txt`.** Despite the non-standard name and the constraints
+  format, its pull requests bump the pins in that file, so the pip block does move them.
+- **Turning on vulnerability alerts found real advisories in the pins:** 64 alerts across Pillow,
+  soupsieve, opentelemetry-api and PyJWT, including one critical (Pillow) and one critical (PyJWT).
+  Dependabot opened security pull requests for the first three; they were merged and the alerts closed.
+  PyJWT was not covered by an automatic pull request at the time, so it was bumped by hand to 2.15.1.
+- **Security pull requests are not held back by the major-version ignore.** Pillow 12 to 13 and
+  soupsieve 2 to 4 came through as majors because they were security updates. CI passed on all of them.
+- **The Actions block opened major bumps** (checkout 4 to 7, setup-python 5 to 7, deploy-pages 4 to 5),
+  because only minor and patch updates are grouped and majors are not ignored for Actions. The release
+  notes were read before merging; none of the breaking changes applied to these workflows.
+- **`pages.yml` is not exercised by a pull request.** Its changes only run when merged to `main`, so
+  the deploy has to be checked after merging.
+- **Still open:** whether an updated pin can fail the install is covered by CI, which is what the gate
+  is for. The lock was incomplete once (ADR 0033), and a test keeps it in step with `pyproject.toml`.
 
 ## Consequences
 
