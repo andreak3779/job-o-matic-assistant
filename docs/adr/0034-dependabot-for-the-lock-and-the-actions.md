@@ -34,8 +34,11 @@ because Dependabot regenerated a lock with a different SDK. Both lessons are use
    has been published for a week, so a yanked or compromised release is more likely to be noticed first.
    Dependabot's built-in default is 3 days. Security updates are never delayed by it. Added after the first
    grouped update, which was made by hand with the same rule.
-8. **The Actions stay pinned by tag.** Pinning them to commit SHAs is a separate change, not part of
-   this one. Dependabot updates tag-pinned Actions too.
+8. **The Actions are pinned to full commit SHAs**, with the release in a trailing comment
+   (`actions/checkout@<sha> # v7.0.1`). A tag can be moved to point at different code; a SHA cannot.
+   Each SHA is the commit the tag pointed to when it was pinned, so nothing changed at the time. This
+   started as tag pins (`@v4`, `@v5`, see Context) and was changed in a follow-up. Dependabot updates
+   the SHA and the comment together.
 
 ## What the first run showed
 
