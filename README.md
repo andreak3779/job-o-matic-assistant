@@ -36,7 +36,7 @@ jobo generate-resume tests/fixtures/data-engineer-jd.md   # refused: the skills 
 
 The second command exits with status 2 and a `REFUSED:` message. The refusal is the point of the tool.
 
-**Stack.** Python, because this is command-line and MCP tooling. My .NET work is in [CookingTime](https://github.com/andreak3779/CookingTime), a .NET 10 migration with Clean Architecture and tests. Sample output for a fictional person is in [samples/](samples/README.md).
+**Stack.** Python, because this is command-line and MCP tooling. My .NET work is in [CookingTime](https://github.com/andreak3779/CookingTime), a legacy WinForms calculator rebuilt as a .NET 10 Blazor WebAssembly app. It has layered tests, a CI coverage gate, written decision records and a [hands-on walkthrough](https://github.com/andreak3779/CookingTime/blob/main/docs/WALKTHROUGH.md). Sample output for a fictional person is in [samples/](samples/README.md).
 
 **Status.** Pre-1.0, as the note at the top says: it works for its author's live job search, and its interfaces can still change. The decisions behind it are in [docs/adr/](docs/adr/), what it guarantees in [docs/TRUTHFULNESS.md](docs/TRUTHFULNESS.md), and where its edges are in [docs/LIMITS.md](docs/LIMITS.md) and [docs/SCOPE.md](docs/SCOPE.md).
 
