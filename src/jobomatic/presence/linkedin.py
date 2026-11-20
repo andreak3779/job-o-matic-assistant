@@ -50,7 +50,7 @@ TOP_5_SKILLS = ["C#", "ASP.NET Core", "Angular", "Microsoft Azure", "CI/CD"]
 # projects" bullet. Projects not listed here fall back to their first stack
 # items (see ``_project_hook``) and raise a warning so a curated hook gets added.
 PORTFOLIO_HOOKS = {
-    "CookingTime": ".NET 10 Blazor legacy migration, 118 automated tests, 80% coverage, blocking CI gate",
+    "CookingTime": ".NET 10 Blazor legacy migration, layered tests, blocking CI coverage gate",
     "MoviesApp": "Angular SSR + ASP.NET Core, containerized with Docker Compose",
     "job-o-matic-assistant": "Python MCP server and CLI with tests and CI gates",
     "ai-job-search-workflow": "Claude API + Python job-application automation",

@@ -166,7 +166,7 @@ def test_project_hook_uses_curated_hook_and_flags_unknown_projects() -> None:
     known = SimpleNamespace(name="CookingTime", stack=["C#"])
     hook, curated = _project_hook(known)
     assert curated is True
-    assert "118 automated tests" in hook
+    assert "layered tests" in hook
 
     unknown = SimpleNamespace(name="NewRepo", stack=["Go", "gRPC", "Postgres", "Docker"])
     hook, curated = _project_hook(unknown)

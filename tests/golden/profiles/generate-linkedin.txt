@@ -25,10 +25,10 @@ I'm a full-stack developer with 10+ years of enterprise experience in C#, ASP.NE
 
 A lot of my work has been modernizing legacy systems, and I've done it at three employers: ASP.NET Web Forms to Angular, MS Access to ASP.NET Web Forms on SQL Server, and a Clipper application to SQL Server. At Globex Industrial I built a real-time C#/ASP.NET Core API that fixed data mismatches between HubSpot and Dynamics 365 Sales. At Example Pharmacy I cut a drug data SSIS process from 8 hours to 1.
 
-AZ-900 Certified · AI-200 in progress. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed 5 GitHub Copilot courses and 3 leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with 118 automated tests, 80% coverage and a blocking CI gate, and career-fit-assistant, a Python MCP server.
+AZ-900 Certified · AI-200 in progress. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed 5 GitHub Copilot courses and 3 leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with layered unit, component and integration tests, a blocking CI coverage gate and a review against the OWASP Top 10, and career-fit-assistant, a Python MCP server and command-line toolkit with import-linter layer contracts and a CI test matrix across Python 3.11 to 3.14.
 
 Core stack:
-Backend: C#, ASP.NET Core (Web API, MVC), .NET Framework, Entity Framework Core, REST API design
+Backend: C#, ASP.NET Core (Web API, MVC), Blazor, .NET Framework, Entity Framework Core, REST API design
 Frontend: Angular, TypeScript, RxJS, NgRx, Angular Material
 Database: Microsoft SQL Server, T-SQL, stored procedures, query optimization, SSIS, SSRS
 Cloud: Azure (Functions, App Services, Monitor, Entra ID), AZ-900 certified
@@ -36,7 +36,7 @@ DevOps and testing: GitLab CI/CD, Azure DevOps, GitHub Actions, Docker, xUnit, M
 
 Open to software developer and full-stack .NET roles. Remote in Canada preferred. I'm based in the home city.
 ```
-_1729 / 2,600 chars_
+_1901 / 2,600 chars_
 
 ## Step 2 — Open to Work Banner
 *(Profile → Open to → Finding a new job)*
@@ -56,7 +56,7 @@ Upskilling and expanding portfolio while actively seeking a full-stack .NET deve
 
 - 10 Pluralsight courses completed and 2 more in progress, plus 1 hands-on labs (1 completed, 0 in progress) — 13 total across Azure, ASP.NET Core, Angular, GitHub Copilot, DevOps, Python, and leadership.
 - AZ-900 Certified · AI-200 in progress.
-- Building portfolio projects on GitHub: CookingTime (.NET 10 Blazor legacy migration, 118 automated tests, 80% coverage, blocking CI gate).
+- Building portfolio projects on GitHub: CookingTime (.NET 10 Blazor legacy migration, layered tests, blocking CI coverage gate).
 - Deepened GitHub Copilot expertise: enterprise deployment, AI agents, secure development, CI/CD integration, and automated test generation.
 - Designed AI-assisted workflows using prompt engineering and structured instruction systems to produce gap analyses, learning plans, and tailored application documents.
 ```
