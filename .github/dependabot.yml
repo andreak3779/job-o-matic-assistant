@@ -1,8 +1,8 @@
 # Dependabot (ADR 0034): keep the pinned Python dependencies and the GitHub Actions current.
 #
 # Everything here is pinned on purpose: requirements-lock.txt holds exact versions (a pip
-# constraints file; CI installs with `-c requirements-lock.txt`) and the Actions are pinned by tag.
-# That makes the build reproducible, and it also means nothing upgrades itself. Dependabot opens
+# constraints file; CI installs with `-c requirements-lock.txt`) and the Actions are pinned to
+# commit SHAs. That makes the build reproducible, and it also means nothing upgrades itself. Dependabot opens
 # the pull request; CI is the gate (install with the lock, the suite on Python 3.11 to 3.14, ruff,
 # import contracts, mypy); a person reviews and merges.
 #
