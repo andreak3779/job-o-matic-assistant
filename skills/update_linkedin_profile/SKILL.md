@@ -81,10 +81,10 @@ I'm a full-stack developer with 10+ years of enterprise experience in C#, ASP.NE
 
 A lot of my work has been modernizing legacy systems, and I've done it at three employers: ASP.NET Web Forms to Angular, MS Access to ASP.NET Web Forms on SQL Server, and a Clipper application to SQL Server. At Globex Industrial I built a real-time C#/ASP.NET Core API that fixed data mismatches between HubSpot and Dynamics 365 Sales. At Example Pharmacy I cut a drug data SSIS process from 8 hours to 1.
 
-{cert_status_short}. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed {github_copilot_course_count} GitHub Copilot courses and {leadership_course_count} leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with 118 automated tests, 80% coverage and a blocking CI gate, and job-o-matic-assistant, a Python MCP server.
+{cert_status_short}. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed {github_copilot_course_count} GitHub Copilot courses and {leadership_course_count} leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with layered unit, component and integration tests, a blocking CI coverage gate and a review against the OWASP Top 10, and job-o-matic-assistant, a Python MCP server and command-line toolkit with import-linter layer contracts and a CI test matrix across Python 3.11 to 3.14.
 
 Core stack:
-Backend: C#, ASP.NET Core (Web API, MVC), .NET Framework, Entity Framework Core, REST API design
+Backend: C#, ASP.NET Core (Web API, MVC), Blazor, .NET Framework, Entity Framework Core, REST API design
 Frontend: Angular, TypeScript, RxJS, NgRx, Angular Material
 Database: Microsoft SQL Server, T-SQL, stored procedures, query optimization, SSIS, SSRS
 Cloud: Azure (Functions, App Services, Monitor, Entra ID), AZ-900 certified
@@ -313,9 +313,9 @@ Portfolio Projects table changes):
    AI-assisted job application workflow: analyzes job descriptions, generates
    ATS-safe tailored resumes and cover letters, and produces phased learning plans.
 2. CookingTime — https://github.com/<github-user>/CookingTime
-   20-year-old WinForms cooking-time calculator refactored into a modern .NET 10
-   Blazor WebAssembly app; 118 automated tests at 80% line coverage with a
-   blocking CI gate.
+   Legacy WinForms cooking-time calculator rebuilt as a .NET 10 Blazor
+   WebAssembly app, with layered tests, a blocking CI coverage gate and written
+   decision records.
 3. Resume_Site — https://github.com/<github-user>/Resume_Site
    Responsive static resume website, automatically deployed to GitHub Pages via
    GitHub Actions on push.
