@@ -40,7 +40,8 @@ because Dependabot regenerated a lock with a different SDK. Both lessons are use
 - **Turning on vulnerability alerts found real advisories in the pins:** 64 alerts across Pillow,
   soupsieve, opentelemetry-api and PyJWT, including one critical (Pillow) and one critical (PyJWT).
   Dependabot opened security pull requests for the first three; they were merged and the alerts closed.
-  PyJWT was not covered by an automatic pull request at the time, so it was bumped by hand to 2.15.1.
+  Its PyJWT pull request (to 2.15.0) came later, once those freed its slots (the limit is 3 open pull
+  requests per ecosystem), so the pins were bumped to the newest patch, 2.15.1, in a separate change.
 - **Security pull requests are not held back by the major-version ignore.** Pillow 12 to 13 and
   soupsieve 2 to 4 came through as majors because they were security updates. CI passed on all of them.
 - **The Actions block opened major bumps** (checkout 4 to 7, setup-python 5 to 7, deploy-pages 4 to 5),
