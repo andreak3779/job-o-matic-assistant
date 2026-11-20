@@ -88,9 +88,15 @@ If the repo already exists, edit the existing `README.md`.
 
 Full-stack developer with 10+ years building enterprise applications.
 
-**Core stack:** C# · ASP.NET Core · Angular · Azure · SQL Server
+**Core stack:** C# · ASP.NET Core · Blazor · Angular · Azure · SQL Server
 
-**Currently:** {cert_status_short} · Open to work
+**Currently:** {cert_status_short} · Building portfolio projects · Open to work
+
+**Featured projects:**
+- [CookingTime](https://github.com/<github-user>/CookingTime) — a legacy WinForms calculator rebuilt as a .NET 10 Blazor WebAssembly app, with layered tests, a CI coverage gate and written decision records.
+- [job-o-matic-assistant](https://github.com/<github-user>/job-o-matic-assistant) — a rule-based job-search toolkit in Python: one code base behind a CLI, an MCP server and a local web page.
+
+Both were built with AI coding tools, with tests, CI gates and written decisions around the AI's work.
 
 **Links:**
 - 🌐 [Resume](https://<github-user>.github.io/Resume_Site/)

@@ -13,7 +13,7 @@ Wrote <TMP>/out/gh.md.meta.json
 |---|---|
 | Bio | 160 chars |
 | Status | 80 chars (emoji + text) |
-... (84 lines in all)
+... (90 lines in all)
 --- resource name=gh.md.meta.json mime=application/json kind=text
 {
   "generated_at": "<NOW>",
