@@ -16,15 +16,15 @@
 
 ## Step 1 — Bio
 ```
-Full-stack dev | C# · ASP.NET Core · Angular · Azure · SQL | CI/CD · GitHub Actions · Copilot | AZ-900 Certified · AI-200 in progress
+Full-stack dev | C# · ASP.NET Core · Blazor · Angular · Azure · SQL | CI/CD · GitHub Actions · Copilot | AZ-900 Certified · AI-200 in progress
 ```
-_133 / 160 chars_
+_142 / 160 chars_
 
 ## Step 2 — Status
 ```
-🚀 Open to work | .NET · Angular · Azure | Building portfolio
+🚀 Open to work | .NET · Blazor · Angular · Azure | Building portfolio
 ```
-_60 / 80 chars_
+_69 / 80 chars_
 
 **Settings:**
 - Emoji: 🚀

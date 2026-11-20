@@ -51,7 +51,7 @@ description: >
 *(Profile → Edit profile → Bio · 160 char max)*
 
 ```
-Full-stack dev | C# · ASP.NET Core · Angular · Azure · SQL | CI/CD · GitHub Actions · Copilot | {cert_status_short}
+Full-stack dev | C# · ASP.NET Core · Blazor · Angular · Azure · SQL | CI/CD · GitHub Actions · Copilot | {cert_status_short}
 ```
 *(recount before saving — must stay under 160 chars; trim "Copilot" first if over. Taglines omit "10+ yrs" on purpose; the README below keeps it)*
 
@@ -64,9 +64,9 @@ Full-stack dev | C# · ASP.NET Core · Angular · Azure · SQL | CI/CD · GitHub
 *(Click profile picture → Set status · 80 char max)*
 
 ```
-🚀 Open to work | .NET · Angular · Azure | Building portfolio
+🚀 Open to work | .NET · Blazor · Angular · Azure | Building portfolio
 ```
-*(61 chars)*
+*(69 chars)*
 
 **Settings:**
 - Emoji: 🚀
