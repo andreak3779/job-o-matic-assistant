@@ -12,6 +12,9 @@
 #     behaviour and is a deliberate migration; raise it by hand when wanted. Security updates are
 #     separate and are not held back by this.
 #   - At most 3 open pull requests per ecosystem.
+#   - A 7-day cooldown: a version is not proposed until it has been published for a week. A
+#     brand-new release can be yanked or found to be compromised; waiting gives the ecosystem
+#     time to notice. Security updates are not delayed by it.
 #
 # Not covered: the Dockerfile base image (`python:3.11-slim`). 3.11 is the supported floor
 # (ADR 0033), so a bump to a newer tag would be a decision, not an update.
@@ -24,6 +27,8 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
     groups:
       python-minor-patch:
         patterns:
@@ -45,6 +50,8 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns:
