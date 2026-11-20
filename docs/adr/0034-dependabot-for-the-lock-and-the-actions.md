@@ -30,7 +30,11 @@ because Dependabot regenerated a lock with a different SDK. Both lessons are use
    `dependencies` and `ci` labels exist so Dependabot can apply them.
 6. **The Dockerfile is left out.** Its base image is `python:3.11-slim` and 3.11 is the supported floor
    (ADR 0033). A bump to a newer tag would change what is supported, which is a decision and not an update.
-7. **The Actions stay pinned by tag.** Pinning them to commit SHAs is a separate change, not part of
+7. **A 7-day cooldown** (`cooldown: default-days: 7`) on both ecosystems: a version is not proposed until it
+   has been published for a week, so a yanked or compromised release is more likely to be noticed first.
+   Dependabot's built-in default is 3 days. Security updates are never delayed by it. Added after the first
+   grouped update, which was made by hand with the same rule.
+8. **The Actions stay pinned by tag.** Pinning them to commit SHAs is a separate change, not part of
    this one. Dependabot updates tag-pinned Actions too.
 
 ## What the first run showed
