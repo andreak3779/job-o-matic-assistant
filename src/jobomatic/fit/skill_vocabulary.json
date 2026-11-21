@@ -9,7 +9,7 @@
     "terraform", "bicep", "arm templates", "pulumi", "ansible", "infrastructure as code", "iac",
     "docker", "kubernetes", "k8s", "helm", "containers", "ci/cd", "ci", "cd", "github actions", "gitlab ci", "gitlab", "jenkins", "octopus deploy", "teamcity", "git", "github", "bitbucket", "nginx", "linux", "unix", "devops", "devsecops", "observability", "opentelemetry", "prometheus", "grafana", "kql", "datadog", "splunk", "logging", "monitoring",
     "sql server", "postgresql", "postgres", "mysql", "oracle", "sqlite", "db2", "sybase", "mongodb", "redis", "dynamodb", "cassandra", "elasticsearch", "neo4j", "nosql", "pgvector", "kafka", "rabbitmq", "activemq", "sqs", "message queue", "message queues", "messaging", "databricks", "snowflake", "spark", "airflow", "dagster", "prefect", "ssis", "ssrs", "ssas", "power bi", "etl", "data pipelines", "data warehouse", "data modeling",
-    "graphql", "grpc", "api", "rest api", "restful", "odata", "openapi", "swagger", "json", "xml", "websockets", "api design", "api gateway",
+    "graphql", "grpc", "api", "rest api", "restful", "odata", "openapi", "swagger", "json", "xml", "soap", "wsdl", "wcf", "websockets", "api design", "api gateway",
     "microservices", "microservice", "event-driven", "event driven", "distributed systems", "domain-driven design", "ddd", "cqrs", "event sourcing", "clean architecture", "hexagonal architecture", "soa", "service-oriented architecture", "multi-tenant", "saas", "solid", "design patterns", "oop", "object-oriented", "dependency injection", "system design", "software architecture",
     "tdd", "bdd", "unit testing", "integration testing", "end-to-end testing", "e2e testing", "automated testing", "test automation", "testing", "xunit", "nunit", "mstest", "moq", "jest", "jasmine", "karma", "selenium", "cypress", "playwright", "specflow", "bunit",
     "agile", ".net maui", "oracle apex", "oracle pro*c", "mulesoft", "ollama", "copilot studio", "ai builder", "release management", "production support", "workflow automation", "automated workflow", "business process automation", "process automation", "sdlc", "software development lifecycle", "software development life cycle", "product development lifecycle", "product development life cycle", "pdlc", "scrum", "kanban", "jira", "confluence", "code review", "code reviews", "pair programming", "mentoring",
@@ -35,7 +35,7 @@
     "ai enabled automation": ["ai", "workflow automation"]
   },
   "caps_only_description": "Terms that are also ordinary English words and count as a skill only when the posting writes them in capitals: 'Solid understanding of CI/CD' is an adjective, 'SOLID principles' is the skill. Every term must also be in 'terms'.",
-  "caps_only": ["solid"],
+  "caps_only": ["solid", "soap"],
   "list_only_description": "Terms that are also ordinary English words and count as a skill only when written with a capital first letter, directly next to another vocabulary term in a list ('Java, Go, GraphQL', 'Go or Rust'). 'Go' alone, or 'go to market', is not the language. Every term must also be in 'terms'.",
   "list_only": ["go"],
   "kind_nouns_description": "Terms that name a KIND of tool and, written right after a more specific term, add nothing: 'OAuth authentication' asks for OAuth, not OAuth and authentication. On their own they still count ('Experience with authentication'). Every term must also be in 'terms'.",

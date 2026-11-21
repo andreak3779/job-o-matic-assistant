@@ -333,7 +333,7 @@ def test_solid_counts_as_a_skill_only_when_written_in_capitals(
 
 
 def test_the_shipped_caps_only_terms_are_known_terms() -> None:
-    assert load_caps_only() == {"solid"}
+    assert load_caps_only() == {"solid", "soap"}
 
 
 @pytest.mark.parametrize(
