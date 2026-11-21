@@ -224,7 +224,7 @@ def test_render_check_pages_fails_loudly_and_keeps_the_file(
 
     monkeypatch.setattr(bootstrap, "page_counter", lambda: _FakeCounter(3))
     assert main(_render_args(tmp_path, "resume")) == 1
-    assert "at most 2" in capsys.readouterr().out
+    assert "at most 2" in capsys.readouterr().err
     assert (tmp_path / "resume.docx").is_file()
 
 
@@ -240,7 +240,7 @@ def test_render_check_pages_without_libreoffice_is_an_error_not_a_skip(
 
     monkeypatch.setattr(bootstrap, "page_counter", lambda: _Missing())
     assert main(_render_args(tmp_path, "cover-letter")) == 1
-    assert "LibreOffice was not found" in capsys.readouterr().out
+    assert "LibreOffice was not found" in capsys.readouterr().err
 
 
 def test_generate_resume_is_trimmed_to_the_budget(tmp_path: Path) -> None:

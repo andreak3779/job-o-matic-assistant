@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from jobomatic.documents import budget as b
+
 
 class _Content(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -90,16 +92,34 @@ class ResumeJob(_Content):
     company: str = Field(default="", description="Empty for self-directed work")
     location: str = Field(default="")
     dates: str = Field(default="")
-    bullets: list[str] = Field(description="Most relevant first")
+    bullets: list[str] = Field(
+        description=(
+            f"At most {b.JOB_BULLETS}, most relevant first, each {b.BULLET_WORDS} words or fewer: "
+            "one fact and its result"
+        )
+    )
 
 
 class TailoredResume(_Content):
     """A resume for one posting (or the platform-ready one): 1 to 2 pages, ATS-safe."""
 
     contact: ResumeContact
-    tagline: str = Field(min_length=1, description="Role and top skills, e.g. 'Role | A · B · C'")
-    summary: list[str] = Field(min_length=1, max_length=2)
-    skills: list[SkillLine] = Field(min_length=1, description="5 to 7 lines is typical")
+    tagline: str = Field(
+        min_length=1,
+        description=(
+            f"One line, at most {b.TAGLINE_WORDS} words: your role, then up to three skills "
+            "the posting names, e.g. 'Role | A · B · C'. Never the posting's own phrases."
+        ),
+    )
+    summary: list[str] = Field(
+        min_length=1,
+        max_length=2,
+        description=f"At most {b.SUMMARY_WORDS} words in all: the sentences that speak to this posting",
+    )
+    skills: list[SkillLine] = Field(
+        min_length=1,
+        description=f"At most {b.SKILL_LINES} lines of {b.SKILL_LINE_WORDS} words, the posting's own terms first",
+    )
     experience: list[ResumeJob] = Field(min_length=1, description="Reverse chronological")
     additional_experience: str = Field(default="", description="One undated line, or empty")
     education: list[str] = Field(default_factory=list)
@@ -119,10 +139,31 @@ class TailoredCoverLetter(_Content):
     date: str = Field(default="", description="Empty means today")
     role_title: str = Field(min_length=1)
     company: str = Field(min_length=1)
-    hook: str = Field(min_length=1, description="2 sentences at most, not 'I am writing...'")
-    bring: list[LetterItem] = Field(min_length=1, max_length=5, description="WHAT I BRING")
-    highlights: list[LetterItem] = Field(default_factory=list, max_length=2)
-    closing: str = Field(min_length=1, description="2 sentences at most, with a direct ask")
+    hook: str = Field(
+        min_length=1,
+        description=(
+            f"At most {b.HOOK_SENTENCES} sentences and {b.HOOK_WORDS} words: the role, and your "
+            "strongest fact for it. Not 'I am writing...'"
+        ),
+    )
+    bring: list[LetterItem] = Field(
+        min_length=1,
+        max_length=b.BRING_ITEMS,
+        description=(
+            f"WHAT I BRING: at most {b.BRING_ITEMS} items. Each label is a skill the posting names "
+            f"(under {b.BRING_LABEL_CHARS} characters, shown bold); each body is under "
+            f"{b.BRING_BODY_WORDS} words of evidence"
+        ),
+    )
+    highlights: list[LetterItem] = Field(
+        default_factory=list,
+        max_length=2,
+        description=f"Body {b.HIGHLIGHT_BODY_WORDS} words or fewer",
+    )
+    closing: str = Field(
+        min_length=1,
+        description=f"At most {b.CLOSING_SENTENCES} sentences and {b.CLOSING_WORDS} words, with a direct ask",
+    )
 
 
 KINDS: dict[str, type[_Content]] = {

@@ -14,20 +14,16 @@ from pathlib import Path
 from typing import Any
 
 from jobomatic import bootstrap, paths
-from jobomatic.applications import outputs
+from jobomatic.commands import render as render_command
+from jobomatic.commands.support import Confirmations, add_confirmation_flags
 from jobomatic.documents import service
 from jobomatic.documents.model import KINDS
 from jobomatic.documents.service import DocumentError
+from jobomatic.results import emit
 
 COMMAND = "render"
-_TAILORED = ("resume", "cover-letter")
-_DOCUMENT_KIND = {"resume": "resume", "cover-letter": "cover_letter"}
-_FILE_NAMES = {
-    "resume": "resume.docx",
-    "cover-letter": "cover-letter.docx",
-    "part-time-resume": "resume.docx",
-    "part-time-cover-letter": "cover-letter.docx",
-}
+_TAILORED = render_command.TAILORED_KINDS
+_FILE_NAMES = {"part-time-resume": "resume.docx", "part-time-cover-letter": "cover-letter.docx"}
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
@@ -35,6 +31,14 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
     sub = render.add_subparsers(dest="render_command", required=True)
     schema = sub.add_parser("schema", help="Print the JSON Schema of a kind's content")
     schema.add_argument("kind", choices=sorted(KINDS))
+    draft = sub.add_parser(
+        "draft",
+        help="Print the deterministic content for a posting, to edit and render (resume, cover-letter)",
+    )
+    draft.add_argument("kind", choices=sorted(_TAILORED))
+    draft.add_argument("jd", type=Path, help="Path to job description markdown file")
+    draft.add_argument("--company", help="Company name for the letter (default: from the posting)")
+    add_confirmation_flags(draft, "gaps", "reapply", "below_minimum")
     for kind in sorted(KINDS):
         one = sub.add_parser(kind, help=f"Render {kind.replace('-', ' ')} content to a DOCX")
         one.add_argument("content", type=Path, help="JSON content file")
@@ -51,8 +55,10 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
                 "--jd",
                 type=Path,
                 help="The job description: files the document in that application's folder "
-                "and logs the posting as drafted (never applied)",
+                "and logs the posting as drafted (never applied); the posting is gated "
+                "like generate-resume (fit, duplicate, pay)",
             )
+            add_confirmation_flags(one, "gaps", "reapply", "below_minimum")
         else:
             one.add_argument(
                 "--employer",
@@ -62,15 +68,20 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
 
 def run(args: argparse.Namespace) -> int:
     try:
+        if args.render_command == "schema" and args.kind in _TAILORED:
+            return emit(render_command.schema(args.kind), render_command.render_schema)
         if args.render_command == "schema":
             print(json.dumps(service.schema(args.kind), indent=2))
             return 0
+        if args.render_command == "draft":
+            return _draft(args)
+        if args.render_command in _TAILORED:
+            return _render_tailored(args)
         return _render(
             args.render_command,
             args.content,
             args.out,
             getattr(args, "employer", None),
-            getattr(args, "jd", None),
             getattr(args, "check_pages", False),
         )
     except DocumentError as exc:
@@ -78,12 +89,45 @@ def run(args: argparse.Namespace) -> int:
         return 1
 
 
+def _read(path: Path, label: str) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise DocumentError(f"{label} {path}: {exc}") from exc
+
+
+def _draft(args: argparse.Namespace) -> int:
+    jd_text = _read(args.jd, "job description")
+    return emit(
+        render_command.draft(
+            args.kind, jd_text, company=args.company, confirm=Confirmations.from_args(args)
+        ),
+        render_command.render_draft,
+    )
+
+
+def _render_tailored(args: argparse.Namespace) -> int:
+    content = _read(args.content, "content file")
+    jd_text = _read(args.jd, "job description") if args.jd else None
+    return emit(
+        render_command.run(
+            args.render_command,
+            content,
+            jd_text=jd_text,
+            source=args.jd,
+            out=args.out,
+            check_pages=args.check_pages,
+            confirm=Confirmations.from_args(args),
+            content_name=args.content.name,
+        )
+    )
+
+
 def _render(
     kind: str,
     content_path: Path,
     out: Path | None,
     employer: str | None,
-    jd: Path | None,
     check_pages: bool = False,
 ) -> int:
     try:
@@ -92,7 +136,7 @@ def _render(
         raise DocumentError(f"{content_path}: {exc}") from exc
     content = service.parse_content(kind, text, content_path.name)
     if out is None:
-        out = _default_path(kind, content, employer, jd)
+        out = _default_path(kind, content, employer)
     written = service.render_document(content, bootstrap.document_renderer(kind), out)
     print(f"Wrote {written}")
     if check_pages:
@@ -101,19 +145,7 @@ def _render(
     return 0
 
 
-def _default_path(kind: str, content: Any, employer: str | None, jd: Path | None) -> Path:
-    if kind in _TAILORED:
-        if jd is None:
-            raise DocumentError("give --out, or --jd so the document goes in the posting's folder")
-        try:
-            jd_text = jd.read_text(encoding="utf-8")
-        except OSError as exc:
-            raise DocumentError(f"{jd}: {exc}") from exc
-        located = outputs.locate_application(
-            jd_text, log=True, documents=(_DOCUMENT_KIND[kind],), company=None
-        )
-        outputs.report(located)
-        return located.folder / _FILE_NAMES[kind]
+def _default_path(kind: str, content: Any, employer: str | None) -> Path:
     employer = employer or (content.recipient[1] if kind == "part-time-cover-letter" else None)
     if not employer:
         raise DocumentError("give --out or --employer so the document has a folder")

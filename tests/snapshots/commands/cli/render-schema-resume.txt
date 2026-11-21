@@ -1,0 +1,188 @@
+exit: 0
+--- stdout
+{
+  "$defs": {
+    "ResumeContact": {
+      "additionalProperties": false,
+      "description": "The header lines of a resume or letter. Links are optional.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "email": {
+          "minLength": 1,
+          "title": "Email",
+          "type": "string"
+        },
+        "phone": {
+          "default": "",
+          "title": "Phone",
+          "type": "string"
+        },
+        "location": {
+          "default": "",
+          "title": "Location",
+          "type": "string"
+        },
+        "linkedin": {
+          "default": "",
+          "title": "Linkedin",
+          "type": "string"
+        },
+        "github": {
+          "default": "",
+          "title": "Github",
+          "type": "string"
+        },
+        "pluralsight": {
+          "default": "",
+          "title": "Pluralsight",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "email"
+      ],
+      "title": "ResumeContact",
+      "type": "object"
+    },
+    "ResumeJob": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "company": {
+          "default": "",
+          "description": "Empty for self-directed work",
+          "title": "Company",
+          "type": "string"
+        },
+        "location": {
+          "default": "",
+          "title": "Location",
+          "type": "string"
+        },
+        "dates": {
+          "default": "",
+          "title": "Dates",
+          "type": "string"
+        },
+        "bullets": {
+          "description": "At most 4, most relevant first, each 35 words or fewer: one fact and its result",
+          "items": {
+            "type": "string"
+          },
+          "title": "Bullets",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "bullets"
+      ],
+      "title": "ResumeJob",
+      "type": "object"
+    },
+    "SkillLine": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "skills": {
+          "description": "Comma-separated, most relevant first",
+          "minLength": 1,
+          "title": "Skills",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "skills"
+      ],
+      "title": "SkillLine",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A resume for one posting (or the platform-ready one): 1 to 2 pages, ATS-safe.",
+  "properties": {
+    "contact": {
+      "$ref": "#/$defs/ResumeContact"
+    },
+    "tagline": {
+      "description": "One line, at most 14 words: your role, then up to three skills the posting names, e.g. 'Role | A \u00b7 B \u00b7 C'. Never the posting's own phrases.",
+      "minLength": 1,
+      "title": "Tagline",
+      "type": "string"
+    },
+    "summary": {
+      "description": "At most 60 words in all: the sentences that speak to this posting",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "title": "Summary",
+      "type": "array"
+    },
+    "skills": {
+      "description": "At most 7 lines of 28 words, the posting's own terms first",
+      "items": {
+        "$ref": "#/$defs/SkillLine"
+      },
+      "minItems": 1,
+      "title": "Skills",
+      "type": "array"
+    },
+    "experience": {
+      "description": "Reverse chronological",
+      "items": {
+        "$ref": "#/$defs/ResumeJob"
+      },
+      "minItems": 1,
+      "title": "Experience",
+      "type": "array"
+    },
+    "additional_experience": {
+      "default": "",
+      "description": "One undated line, or empty",
+      "title": "Additional Experience",
+      "type": "string"
+    },
+    "education": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Education",
+      "type": "array"
+    },
+    "certifications": {
+      "description": "Finished lines",
+      "items": {
+        "type": "string"
+      },
+      "title": "Certifications",
+      "type": "array"
+    }
+  },
+  "required": [
+    "contact",
+    "tagline",
+    "summary",
+    "skills",
+    "experience"
+  ],
+  "title": "TailoredResume",
+  "type": "object"
+}
+--- stderr
+

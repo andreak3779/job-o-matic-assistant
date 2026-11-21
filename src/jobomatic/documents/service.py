@@ -11,6 +11,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from jobomatic.documents import skim
 from jobomatic.documents.model import KINDS
 from jobomatic.documents.ports import DocumentRenderer, PageCounter
 
@@ -60,6 +61,16 @@ def parse_content(kind: str, text: str, source: str = "content") -> Any:
                 where += f"[{part}]" if isinstance(part, int) else f"{'.' if where else ''}{part}"
             lines.append(f"  {where or '<root>'}: {err['msg']}")
         raise DocumentError("\n".join(lines)) from exc
+
+
+def ensure_skimmable(content: Any, source: str = "content") -> None:
+    """Refuse content a recruiter could not read in fifteen seconds, naming every field over its
+    budget (``documents.skim``). A kind with no budget passes."""
+    over = skim.problems(content)
+    if over:
+        lines = [f"{source}: too long to skim in 15 seconds; shorten these and render again"]
+        lines += [f"  {line}" for line in over]
+        raise DocumentError("\n".join(lines))
 
 
 def render_document(content: Any, renderer: DocumentRenderer[Any], out_path: Path) -> Path:

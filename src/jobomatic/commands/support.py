@@ -134,9 +134,9 @@ class DocumentData:
 
 def gate_documents(
     jd_text: str, profile: Profile, confirm: Confirmations, notes: list[Message]
-) -> None:
+) -> FitResult | None:
     """The gate for a tailored resume or cover letter: fit, duplicate and pay. A refusal raises
-    ``Refusal``; what passed (the rating, and advice) goes into ``notes``."""
+    ``Refusal``; what passed (the rating, and advice) goes into ``notes``. Returns the fit."""
     result = gate.check_documents(
         jd_text,
         profile,
@@ -147,6 +147,7 @@ def gate_documents(
     if result.fit is not None:
         notes.append(Message("info", f"Fit Rating: {result.fit.rating} — {result.fit.rationale}"))
     notes.extend(Message("note", note) for note in result.notes)
+    return result.fit
 
 
 def gate_letter(jd_text: str, confirm: Confirmations, notes: list[Message]) -> None:
@@ -163,7 +164,7 @@ def gate_location(jd_text: str, notes: list[Message]) -> None:
 def produce_document(
     *,
     make: Callable[[Profile | None, list[Message]], tuple[Path, Path, FitResult | None]],
-    gate_with_profile: Callable[[Profile, list[Message]], None] | None = None,
+    gate_with_profile: Callable[[Profile, list[Message]], object] | None = None,
     gate_without_profile: Callable[[list[Message]], None] | None = None,
 ) -> CommandResult[DocumentData]:
     """Run a document command: gate it, make the document, and describe what happened.

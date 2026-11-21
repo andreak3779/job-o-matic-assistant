@@ -23,7 +23,7 @@ from collections.abc import Callable, Iterable
 from datetime import date
 from importlib import resources
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, Literal, NamedTuple
 
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -49,6 +49,7 @@ from jobomatic.commands import job_site_letter as job_site_command
 from jobomatic.commands import learning_import as learning_import_command
 from jobomatic.commands import learning_plan as learning_plan_command
 from jobomatic.commands import profile as profile_commands
+from jobomatic.commands import render as render_command
 from jobomatic.commands import resume as resume_command
 from jobomatic.commands import search as search_command
 from jobomatic.commands import thank_you as thank_you_command
@@ -520,6 +521,152 @@ def generate_application_documents(
             )
         )
     return blocks
+
+
+_CONTENT_KIND = Literal["resume", "cover-letter"]
+
+
+def _content_text(content: dict[str, Any] | str) -> str:
+    """The content a render tool was given as JSON text: an object as it is sent, or a string."""
+    return content if isinstance(content, str) else json.dumps(content)
+
+
+@mcp.tool(
+    description="Print the JSON Schema of the content render_resume / render_cover_letter take",
+    structured_output=False,
+)
+def render_schema(kind: _CONTENT_KIND) -> str:
+    """kind: "resume" or "cover-letter". The schema lists every field, which are required and
+    each limit (a resume summary is at most 2 lines; a letter has 1-5 "What I Bring" items and
+    at most 2 highlights)."""
+    return _tool_text(render_command.schema(kind), render_command.render_schema)
+
+
+@mcp.tool(
+    description="Draft the content for a tailored resume or cover letter: the profile's own "
+    "material, picked by rule, as JSON to edit and pass to render_resume / render_cover_letter "
+    "(refuses if fit rating is below Good)",
+    structured_output=False,
+)
+def render_draft(
+    kind: _CONTENT_KIND,
+    jd: str,
+    company: str | None = None,
+    confirm_reapply: bool = False,
+    confirm_below_minimum: bool = False,
+    confirm_gaps: bool = False,
+) -> list[ContentBlock]:
+    """kind: "resume" or "cover-letter". jd: path to a job description markdown file, or the
+    job description text itself. company: optional, for the letter. Returns the content as JSON
+    (the first block) that follows render_schema, then what the gate said. This is the only
+    source of the candidate's real employers, dates, bullets and contact details in this client:
+    keep every claim in what you write traceable to it, and never add one that is not there.
+    Gated like generate_resume (fit, duplicate application, pay) and with the same
+    confirmations, which you set only after the user says so. Writes nothing, logs nothing."""
+    posting = _posting(jd)
+    result = render_command.draft(
+        kind,
+        posting.text,
+        company=company or None,
+        confirm=Confirmations(confirm_gaps, confirm_reapply, confirm_below_minimum),
+    )
+    text = results.console(result, render_command.render_draft)
+    if result.status != "ok":
+        raise ToolError(
+            (text.stdout + text.stderr).strip() or f"the command failed ({result.status})"
+        )
+    blocks: list[ContentBlock] = [TextContent(type="text", text=text.stdout.strip())]
+    if text.stderr.strip():
+        blocks.append(TextContent(type="text", text=text.stderr.strip()))
+    return blocks
+
+
+def _render_tool(
+    kind: str,
+    content: dict[str, Any] | str,
+    jd: str,
+    company: str | None,
+    out: str | None,
+    *,
+    confirm_gaps: bool,
+    confirm_reapply: bool,
+    confirm_below_minimum: bool,
+) -> list[ContentBlock]:
+    posting = _posting(jd)
+    result = render_command.run(
+        kind,
+        _content_text(content),
+        jd_text=posting.text,
+        source=posting.source,
+        company=company or None,
+        out=_checked_out(out),
+        confirm=Confirmations(confirm_gaps, confirm_reapply, confirm_below_minimum),
+        content_name=f"{kind} content",
+    )
+    return _tool_blocks(result)
+
+
+@mcp.tool(
+    description="Lay out hand-tailored resume content (JSON) as a DOCX in the posting's "
+    "folder (refuses if fit rating is below Good)",
+    structured_output=False,
+)
+def render_resume(
+    content: dict[str, Any] | str,
+    jd: str,
+    company: str | None = None,
+    out: str | None = None,
+    confirm_reapply: bool = False,
+    confirm_below_minimum: bool = False,
+    confirm_gaps: bool = False,
+) -> list[ContentBlock]:
+    """content: the resume as an object (or JSON text) that follows render_schema("resume"); start
+    from render_draft and tailor it to the posting, using only facts that are in the draft.
+    jd: path to a job description markdown file, or the job description text itself; the
+    document is filed in that posting's folder and logged as a *draft*, never as applied.
+    company: optional filename override. out: optional output DOCX path. Bad content is refused
+    with the field that is wrong, and nothing is written. Gated like generate_resume, with the
+    same confirmations (set only after the user says so). The layout is fixed: if it runs over
+    two pages, cut content."""
+    return _render_tool(
+        "resume",
+        content,
+        jd,
+        company,
+        out,
+        confirm_gaps=confirm_gaps,
+        confirm_reapply=confirm_reapply,
+        confirm_below_minimum=confirm_below_minimum,
+    )
+
+
+@mcp.tool(
+    description="Lay out hand-tailored cover-letter content (JSON) as a DOCX in the posting's "
+    "folder (refuses if fit rating is below Good)",
+    structured_output=False,
+)
+def render_cover_letter(
+    content: dict[str, Any] | str,
+    jd: str,
+    company: str | None = None,
+    out: str | None = None,
+    confirm_reapply: bool = False,
+    confirm_below_minimum: bool = False,
+    confirm_gaps: bool = False,
+) -> list[ContentBlock]:
+    """content: the letter as an object (or JSON text) that follows render_schema("cover-letter");
+    start from render_draft and tailor it, using only facts that are in the draft. It must fit
+    one page: keep each part inside its budget. Other parameters and gates as render_resume."""
+    return _render_tool(
+        "cover-letter",
+        content,
+        jd,
+        company,
+        out,
+        confirm_gaps=confirm_gaps,
+        confirm_reapply=confirm_reapply,
+        confirm_below_minimum=confirm_below_minimum,
+    )
 
 
 @mcp.tool(description="Generate a short cold-call cover-letter DOCX", structured_output=False)

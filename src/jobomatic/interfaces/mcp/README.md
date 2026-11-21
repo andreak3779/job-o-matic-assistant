@@ -33,6 +33,10 @@ it.
 | `generate_resume(jd, company=None, out=None, confirm_reapply=False, confirm_below_minimum=False)` | `generate-resume <jd> [--company] [--out]` — refuses a duplicate application or pay below the minimum unless confirmed |
 | `generate_cover_letter(jd, company=None, out=None, confirm_reapply=False, confirm_below_minimum=False)` | `generate-cover-letter <jd> [--company] [--out]` — same gates as `generate_resume` |
 | `generate_application_documents(jd, company=None, confirm_reapply=False, confirm_below_minimum=False)` | resume + cover-letter in one call, same gates |
+| `render_schema(kind)` | `render schema <resume\|cover-letter>` — the JSON the content must follow |
+| `render_draft(kind, jd, company=None, confirm_*)` | `render draft <kind> <jd>` — the profile's own content, picked by rule, as JSON to edit. The only source of the candidate's facts for hand-tailoring in Desktop. Gated; writes and logs nothing |
+| `render_resume(content, jd, company=None, out=None, confirm_*)` | `render resume <content.json> --jd <jd> [--out]` — lays out content you wrote; files it in the posting's folder, logs a draft. Same gates as `generate_resume` |
+| `render_cover_letter(content, jd, company=None, out=None, confirm_*)` | `render cover-letter <content.json> --jd <jd> [--out]` — same, for the letter |
 | `generate_cold_call(jd, company=None, out=None)` | `generate-cold-call <jd> [--company] [--out]` |
 | `generate_job_site_letter(jd, company=None, out=None, confirm_reapply=False)` | `generate-job-site <jd> [--company] [--out]` |
 | `generate_thank_you(jd, company=None, out=None)` | `generate-thank-you <jd> [--company] [--out]` |
@@ -80,7 +84,7 @@ optional `jd` argument that is appended to the prompt):
 | --- | --- |
 | `job-description-fit` | `fit_check`, `applications_check` |
 | `gap-analysis-job-description` | `gap_analysis` |
-| `create-a-cover-letter-and-tailored-resume-for-job-description` | `generate_application_documents`, `generate_resume`, `generate_cover_letter` |
+| `create-a-cover-letter-and-tailored-resume-for-job-description` | `render_draft`, `render_resume`, `render_cover_letter` (the model writes the content, [ADR 0035](../../../../docs/adr/0035-render-tools-for-claude-desktop.md)); `generate_*` only for a quick rule-based draft |
 | `interview-prep` | `interview_prep`, `profile_summary` |
 | `interview-practice`, `interview-practice-job-description` | `profile_summary`, `fit_check` |
 | `post-interview-thank-you-letter` | `generate_thank_you` |

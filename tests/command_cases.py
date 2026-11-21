@@ -28,6 +28,7 @@ REPO = Path(__file__).resolve().parents[1]
 FIXTURES = REPO / "tests" / "fixtures"
 STRONG = FIXTURES / "strong-fit-jd.md"
 QUEBEC = FIXTURES / "strong-skills-quebec-jd.md"
+DOCUMENTS = FIXTURES / "documents"
 
 COVERED = ("C#", "SQL", "Angular", "Docker", "Git")
 STRETCH_SKILLS = ("Rust", *COVERED, "Python", "Jira")
@@ -414,6 +415,75 @@ CASES: tuple[Case, ...] = (
         "applications_set_status",
         lambda e: server.applications_set_status(_draft_id(), "technical", note="second round"),
         _drafted,
+    ),
+    # Hand-tailored content: the schema, the draft to start from, and the render (ADR 0035).
+    Case(
+        "render-schema-resume",
+        lambda e: ["render", "schema", "resume"],
+        "render_schema",
+        lambda e: server.render_schema("resume"),
+    ),
+    Case(
+        "render-draft-resume",
+        lambda e: ["render", "draft", "resume", str(STRONG)],
+        "render_draft",
+        lambda e: server.render_draft("resume", str(STRONG)),
+        # The tool returns the content alone as its first block and what the gate said after it.
+        same_text=False,
+    ),
+    Case(
+        "render-resume",
+        lambda e: [
+            "render",
+            "resume",
+            str(DOCUMENTS / "resume.json"),
+            "--jd",
+            str(STRONG),
+            "--out",
+            _out(e, "resume.docx"),
+        ],
+        "render_resume",
+        lambda e: server.render_resume(
+            (DOCUMENTS / "resume.json").read_text(encoding="utf-8"),
+            str(STRONG),
+            out=_out(e, "resume.docx"),
+        ),
+    ),
+    Case(
+        "render-resume-refused-stretch",
+        lambda e: [
+            "render",
+            "resume",
+            str(DOCUMENTS / "resume.json"),
+            "--jd",
+            _stretch(e),
+            "--out",
+            _out(e, "resume.docx"),
+        ],
+        "render_resume",
+        lambda e: server.render_resume(
+            (DOCUMENTS / "resume.json").read_text(encoding="utf-8"),
+            _stretch(e),
+            out=_out(e, "resume.docx"),
+        ),
+    ),
+    Case(
+        "render-cover-letter",
+        lambda e: [
+            "render",
+            "cover-letter",
+            str(DOCUMENTS / "cover-letter.json"),
+            "--jd",
+            str(STRONG),
+            "--out",
+            _out(e, "cover-letter.docx"),
+        ],
+        "render_cover_letter",
+        lambda e: server.render_cover_letter(
+            (DOCUMENTS / "cover-letter.json").read_text(encoding="utf-8"),
+            str(STRONG),
+            out=_out(e, "cover-letter.docx"),
+        ),
     ),
     # Learning history and learning plans.
     Case(
