@@ -202,7 +202,7 @@ Hook (strongest match to top JD requirement, NOT "I am writing…") · WHAT I BR
 
 **Top Choice stays out of the cover letter.** It is written as its own file in Step 5.7, so the one-page budget above is unaffected.
 
-When selecting cover letter highlights and WHAT I BRING evidence, check the profile output's Portfolio Projects table for active projects that demonstrate the JD's key requirements — use only what's listed there (e.g. Resume_Site for GitHub Actions CI/CD, ai-job-search-workflow for Python/AI tooling, CookingTime for .NET/Blazor/testing discipline), and confirm each one still appears before citing it, since projects get added or retired. Prefer production employers for highlights, but use portfolio projects as secondary evidence when they directly address a required skill. Do not invent a highlight, metric, or project detail not present in the profile output — cut a bullet rather than fabricate one.
+When selecting cover letter highlights and WHAT I BRING evidence, check the profile output's Portfolio Projects table for active projects that demonstrate the JD's key requirements — use only what's listed there (e.g. Resume_Site for GitHub Actions CI/CD, job-o-matic-assistant for Python/AI tooling, CookingTime for .NET/Blazor/testing discipline), and confirm each one still appears before citing it, since projects get added or retired. Prefer production employers for highlights, but use portfolio projects as secondary evidence when they directly address a required skill. Do not invent a highlight, metric, or project detail not present in the profile output — cut a bullet rather than fabricate one.
 
 ---
 

@@ -120,7 +120,7 @@ Upskilling and expanding portfolio while actively seeking a full-stack .NET deve
 
 - {course_count_sentence} across Azure, ASP.NET Core, Angular, GitHub Copilot, DevOps, Python, and leadership.
 - {cert_status_short}.
-- Building portfolio projects on GitHub — derive the repo list and one-clause hook for each at generation time from the profile output's `## Portfolio Projects` table (name + shortest differentiator from its description), not from a fixed list, so a new or updated repo shows up automatically. Current example: "ai-job-search-workflow (Claude API + Python job-application automation), CookingTime (.NET 10 Blazor legacy migration, 118 automated tests), Resume_Site (GitHub Actions CI/CD), and awk_linux_scripts (hardware inspection + automated update/cleanup scripts)."
+- Building portfolio projects on GitHub — derive the repo list and one-clause hook for each at generation time from the profile output's `## Portfolio Projects` table (name + shortest differentiator from its description), not from a fixed list, so a new or updated repo shows up automatically. Current example: "CookingTime (.NET 10 Blazor legacy migration, 118 automated tests), Resume_Site (GitHub Actions CI/CD), and awk_linux_scripts (hardware inspection + automated update/cleanup scripts)."
 - Deepened GitHub Copilot expertise: enterprise deployment, AI agents, secure development, CI/CD integration, and automated test generation.
 - Designed AI-assisted workflows using prompt engineering and structured instruction systems to produce gap analyses, learning plans, and tailored application documents.
 ```
@@ -309,22 +309,19 @@ Current example (from today's profile — regenerate this list whenever the
 Portfolio Projects table changes):
 
 ```
-1. ai-job-search-workflow — https://github.com/<github-user>/ai-job-search-workflow
-   AI-assisted job application workflow: analyzes job descriptions, generates
-   ATS-safe tailored resumes and cover letters, and produces phased learning plans.
-2. CookingTime — https://github.com/<github-user>/CookingTime
+1. CookingTime — https://github.com/<github-user>/CookingTime
    Legacy WinForms cooking-time calculator rebuilt as a .NET 10 Blazor
    WebAssembly app, with layered tests, a blocking CI coverage gate and written
    decision records.
-3. Resume_Site — https://github.com/<github-user>/Resume_Site
+2. Resume_Site — https://github.com/<github-user>/Resume_Site
    Responsive static resume website, automatically deployed to GitHub Pages via
    GitHub Actions on push.
-4. awk_linux_scripts — https://github.com/<github-user>/awk_linux_scripts
+3. awk_linux_scripts — https://github.com/<github-user>/awk_linux_scripts
    Linux maintenance scripts for terminal-based system administration —
    hardware inspection and automated package update/cleanup workflows for
    Debian-based distributions.
-5. GitHub Profile — https://github.com/<github-user>
-6. Pluralsight Profile — https://app.pluralsight.com/profile/<pluralsight-user>
+4. GitHub Profile — https://github.com/<github-user>
+5. Pluralsight Profile — https://app.pluralsight.com/profile/<pluralsight-user>
 ```
 
 ---
