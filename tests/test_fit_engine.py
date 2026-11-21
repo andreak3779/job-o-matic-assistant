@@ -933,3 +933,11 @@ class TestUmbrellaSkills:
         profile = _minimal_profile(ats_keywords={"cloud": ["docker"]})
         (row,) = rate_fit(required=["docker"], nice_to_have=[], profile=profile).required
         assert row.status == "course" and "via" not in row.evidence
+
+
+def test_an_acronym_posting_line_matches_the_spelled_out_name_and_back():
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert "tfs" in skill_match_terms("Microsoft Team Foundation Server (TFS)")
+    assert ".net framework" in skill_match_terms("Microsoft .NET Platform (4.0 or higher)")
+    assert "dynamics 365" in skill_match_terms("Microsoft Dynamics CRM")

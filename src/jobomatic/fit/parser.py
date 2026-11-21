@@ -242,6 +242,15 @@ _BARE_YEARS_RE = re.compile(r"^(?:years?|yrs?)\s*(?:of\s*)?", re.IGNORECASE)
 _PAREN_YEARS_RE = re.compile(r"\(\d+\+?\s*years?.*\)", re.IGNORECASE)
 # "CI/CD" is one practice, so its slash is not a split point (ADR 0009).
 _SPLIT_COMPOUND_RE = re.compile(r"(?<!(?i:\bci))/(?!(?i:cd\b))|;|\s+or\s+|\s+and\s+")
+# "SQL Server 2008 or later", "Java 11 or higher": the "or" is a version floor, not a second skill.
+_VERSION_FLOOR_RE = re.compile(r"\s+or\s+(?:later|higher|newer|above|greater)\b", re.IGNORECASE)
+# After a comma these words qualify the skill ("Azure experience, strongly preferred") instead of
+# naming another one, so a line holding one is not a list of names.
+_LIST_QUALIFIER_RE = re.compile(
+    r"\b(?:preferred|required|mandatory|essential|desirable|ideally|plus|asset|bonus|nice)\b",
+    re.IGNORECASE,
+)
+_PAREN_GROUP_SPLIT_RE = re.compile(r"\([^()]*\)")
 # A bullet longer than this is a sentence ("Experience building Azure applications
 # using event-driven architectures"), not a skill name ("SQL Server / T-SQL query
 # optimization"). Sentences get skill terms extracted from them (src/jobomatic/fit/terms.py);
@@ -396,6 +405,38 @@ def is_prose_requirement(text: str) -> bool:
     return len(text.split()) >= _PROSE_REQUIREMENT_MIN_WORDS
 
 
+def split_compound(item: str) -> list[str]:
+    """The pieces a short requirement line is made of.
+
+    Splits on "/", ";", "and" and "or" as before, and on commas when the line is a bare list of
+    names ("SSRS, SSIS, Crystal Reports"). Three things are never split:
+
+    * what is inside parentheses: "JavaScript (utilizing JSON and AJAX)" and "Microsoft .NET
+      Platform (4.0 or higher)" are one requirement each, the parenthesis is detail on it;
+    * a version floor: "SQL Server 2008 or later" is SQL Server, and "later" is not a skill;
+    * a sentence, a "Heading: detail" line, or a comma that adds a qualifier ("Azure, preferred"),
+      where the comma is punctuation and not a list.
+    """
+    groups: list[str] = []
+
+    def hide(match: re.Match[str]) -> str:
+        groups.append(match.group(0))
+        return f"\x00{len(groups) - 1}\x00"
+
+    masked = _PAREN_GROUP_SPLIT_RE.sub(hide, item)
+    masked = _VERSION_FLOOR_RE.sub("", masked)
+    pieces = _SPLIT_COMPOUND_RE.split(masked)
+    if (
+        "," in masked
+        and ":" not in masked
+        and not _is_prose(item)
+        and not _LIST_QUALIFIER_RE.search(masked)
+    ):
+        pieces = [part for piece in pieces for part in piece.split(",")]
+    restored = [re.sub(r"\x00(\d+)\x00", lambda m: groups[int(m.group(1))], p) for p in pieces]
+    return [p.strip(" ,./:;") for p in restored]
+
+
 def _split_required_or_nice(
     item: str,
     section: str,
@@ -406,8 +447,7 @@ def _split_required_or_nice(
 ) -> None:
     flat = required if section == "required" else nice
     items = required_items if section == "required" else nice_items
-    pieces = [p.strip(" ,./:;") for p in _SPLIT_COMPOUND_RE.split(item)]
-    pieces = [p for p in pieces if len(p) >= 2]
+    pieces = [p for p in split_compound(item) if len(p) >= 2]
     # A short bullet that is only a choice between same-kind tools ("AWS or Azure",
     # "Entity Framework/Dapper") is one requirement met by either (ADR 0021).
     entries = extract_skill_terms(item)
