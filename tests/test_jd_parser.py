@@ -886,3 +886,45 @@ def test_a_sentence_that_is_not_only_a_list_of_skills_is_handled_as_before(
     bullet: str, expected: list[str]
 ) -> None:
     assert _required(bullet) == expected
+
+
+# -- lists, parentheses and version floors (ADR 0009) -------------------------------------------
+
+
+def _required(*lines: str) -> list[str]:
+    body = "\n".join(f"- {line}" for line in lines)
+    return parse_jd(f"Developer\n\n## Requirements\n{body}\n").required_for_rating
+
+
+def test_a_bare_comma_list_is_one_requirement_per_name():
+    assert _required("SSRS, SSIS, Crystal Reports", "Sharepoint, Sharepoint Online") == [
+        "SSRS",
+        "SSIS",
+        "Crystal Reports",
+        "Sharepoint",
+        "Sharepoint Online",
+    ]
+
+
+def test_a_parenthesis_is_detail_on_its_line_and_is_never_split():
+    assert _required("JavaScript (utilizing JSON and AJAX)") == [
+        "JavaScript (utilizing JSON and AJAX)"
+    ]
+    assert _required("Microsoft .NET Platform (4.0 or higher)") == [
+        "Microsoft .NET Platform (4.0 or higher)"
+    ]
+
+
+def test_a_version_floor_is_not_a_second_skill():
+    assert _required("Microsoft SQL Server 2008 or later") == ["Microsoft SQL Server 2008 or later"]
+    assert _required("Java 11 or higher, Spring") == ["Java 11", "Spring"]
+
+
+def test_a_comma_that_adds_a_qualifier_is_not_a_list():
+    assert _required("Azure experience, strongly preferred") == [
+        "Azure experience, strongly preferred"
+    ]
+
+
+def test_a_heading_with_detail_keeps_its_list():
+    assert _required("Monitoring: Datadog, Splunk") == ["Monitoring: Datadog, Splunk"]

@@ -121,3 +121,26 @@ CI/CD lines only and no rating.
 Interview-prep and thank-you story selection compared skill text to story text as a bare substring,
 so the old split-off row "ci" matched almost any story ("specific"). Matching now treats `-`, `/` and
 spaces alike and also tries the skills named inside a row (`commands/support.py::story_mentions`).
+
+## Addendum: lists, parentheses and version floors (2026-11-20)
+
+A real Indeed posting listed its tools one per line in the forms below, and the parser read all
+three wrongly, so a posting the profile partly covers rated 34% and was refused as a Pass:
+
+- **A comma list** ("SSRS, SSIS, Crystal Reports", "Sharepoint, Sharepoint Online") stayed one
+  phrase that had to match whole, so each name counted as missing. `parser.split_compound` now
+  splits a short bare list on commas. It leaves a line alone when it is a sentence, has a
+  `Heading: detail` colon, or has a comma that adds a qualifier ("Azure experience, strongly
+  preferred").
+- **A parenthesis** ("JavaScript (utilizing JSON and AJAX)", "Microsoft .NET Platform (4.0 or
+  higher)") was cut at the "and" or "or" inside it. What is inside parentheses is never split.
+- **A version floor** ("SQL Server 2008 or later") made "later" a required skill, always a gap.
+  "or later/higher/newer/above" after a version is dropped before splitting.
+- **Spelled-out and acronym names** now meet: `aliases.json` maps "Microsoft Team Foundation
+  Server (TFS)" to `tfs`, ".NET Platform" to ".NET Framework", and "Dynamics CRM" to Dynamics 365.
+  The Dynamics alias is a judgment (365 Sales is the CRM product's current name); remove it if
+  that claim is not wanted.
+
+Measured on the 12 real postings in the vault, no rating changed; the Indeed posting went from 34%
+to 66% coverage and is still a Pass, because three early requirements (MVP, MVC Razor, CSLA) are
+genuine core gaps (ADR 0021).
