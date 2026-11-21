@@ -1072,3 +1072,24 @@ def test_api_work_is_a_skill_not_a_sentence_to_match_whole() -> None:
         "Developer\n\nRequirements\n\n    Experience building APIs and integrating with external systems\n"
     )
     assert "API" in parsed.required_for_rating
+
+
+# ── asterisk bullets (Indeed pastes) ──
+
+
+def test_asterisk_bullets_are_read_as_a_required_list() -> None:
+    parsed = parse_jd(
+        "Developer\n\n## Requirements\n\n* C#\n* Microsoft SQL Server 2008 or later\n* Silverlight\n"
+    )
+    assert parsed.required == ["C#", "Microsoft SQL Server 2008", "Silverlight"]
+
+
+def test_asterisk_bullets_match_dash_bullets() -> None:
+    star = parse_jd("Developer\n\n## Requirements\n\n* C#\n* Docker\n")
+    dash = parse_jd("Developer\n\n## Requirements\n\n- C#\n- Docker\n")
+    assert star.required == dash.required
+
+
+def test_bold_and_italic_lines_are_not_asterisk_bullets() -> None:
+    parsed = parse_jd("Developer\n\n**Requirements:**\n\n- C#\n- Docker\n\n*Apply today*\n")
+    assert parsed.required == ["C#", "Docker"]
