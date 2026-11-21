@@ -8,11 +8,14 @@ from jobomatic.fit.parser import parse_jd
 from jobomatic.fit.soft_requirements import (
     classify,
     classify_optional,
+    education_on_file,
     is_education,
     minimum_years,
     soft_skill,
     title_level,
+    with_education_on_file,
 )
+from jobomatic.profile.model import Education
 
 
 @pytest.mark.parametrize(
@@ -284,3 +287,51 @@ def test_a_posting_that_ends_its_requirements_with_qualities_lists_them_instead_
     assert not [r for r in parsed.required if "english" in r or "organizational" in r]
     lines = [s.line for s in parsed.soft_requirements if s.kind == "soft skill"]
     assert len(lines) == 2
+
+
+# ── the user's education shown beside a posting's education line ──
+
+_DIPLOMA = Education(
+    institution="A College",
+    credential="Programming Diploma",
+    level="diploma",
+    field_of_study="Programming",
+)
+_COURSEWORK = Education(
+    credential="Computer Science (Coursework)",
+    field_of_study="Computer Science",
+    completed=False,
+)
+_LINE = "Formal Certificate, Diploma or Degree with a major in Computer Science"
+
+
+def test_on_file_lists_the_levels_named_the_levels_held_and_each_entry() -> None:
+    text = education_on_file(_LINE, [_DIPLOMA, _COURSEWORK])
+    assert "Posting names certificate, diploma, degree, computer science" in text
+    assert "Programming Diploma (diploma; field: Programming)" in text
+    assert "Computer Science (Coursework) (field: Computer Science; not completed)" in text
+    assert "Named levels held: diploma." in text
+
+
+def test_on_file_never_says_the_requirement_is_met() -> None:
+    text = education_on_file(_LINE, [_DIPLOMA])
+    assert "for you to judge" in text
+    assert "met" not in text.lower().split("judge")[0].split()
+
+
+def test_unfinished_coursework_does_not_count_as_a_level_held() -> None:
+    text = education_on_file("Bachelor's degree in Computer Science", [_COURSEWORK])
+    assert "Named levels held: none on file" in text
+
+
+def test_entries_with_no_level_or_field_are_left_out() -> None:
+    applied_skill = Education(credential="Microsoft Applied Skills: C# classes")
+    assert education_on_file(_LINE, [applied_skill]) == ""
+
+
+def test_only_education_lines_get_the_on_file_text() -> None:
+    soft = classify(_LINE) + classify("5+ years of C# experience")
+    result = with_education_on_file(soft, [_DIPLOMA])
+    by_kind = {s.kind: s.on_file for s in result}
+    assert by_kind["education"] != ""
+    assert by_kind["years"] == ""

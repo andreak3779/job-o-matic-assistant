@@ -124,6 +124,15 @@ class Education(Record):
     institution: str = Field(default="", json_schema_extra=PRIVATE)
     credential: str = Field(json_schema_extra=PRIVATE)
     dates: str | None = Field(default=None, json_schema_extra=PRIVATE)
+    # Optional structure for cross-referencing a posting's education line (fit-check shows it
+    # beside that line and never scores it). Leave unset for entries that are not schooling.
+    level: (
+        Literal["certificate", "diploma", "advanced-diploma", "bachelor", "master", "doctorate"]
+        | None
+    ) = Field(default=None, json_schema_extra=PRIVATE)
+    field_of_study: str | None = Field(default=None, json_schema_extra=PRIVATE)
+    completed: bool = Field(default=True, json_schema_extra=PRIVATE)
+    notes: str | None = Field(default=None, json_schema_extra=PRIVATE)
 
 
 class Part(BaseModel):
