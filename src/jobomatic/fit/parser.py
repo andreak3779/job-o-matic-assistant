@@ -91,7 +91,9 @@ _REQUIRED_HEADING_RE = re.compile(
     r"(?:what|things) we.?re looking for|essential|required skills?|"
     r"(?:required|minimum|basic|key) (?:qualifications?|skills?|experience)|"
     r"desired (?:skills?|qualifications?|experience)|"
-    r"qualifications|you have|who you are)",
+    r"qualifications|you have|who you are|"
+    r"what you bring|you bring|you should (?:get in touch if|have)|about you|"
+    r"your (?:skills|background|experience|profile)|ideal candidate|who we.?re looking for)",
     re.IGNORECASE,
 )
 # A bare "Experience" heading ("Experience", "Relevant Experience:") opens the requirements list.
@@ -184,6 +186,35 @@ def _split_preferably(item: str) -> tuple[str, str] | None:
 _GLUED_BULLET_RE = re.compile(r"(?<=[.!?])-\s+(?=[A-Z])")
 
 
+# Pasted postings run a heading into the text after it with no space or line break: "...the
+# process.Benefits Overview", "What You'll Find HereTo do great work", "About The RoleAcme is".
+# A sentence that ends and is followed at once by a capital word starts a new line; and a known
+# heading followed at once by a capital word is split from what follows it.
+_GLUED_SENTENCE_RE = re.compile(r"(?<=[a-z]{3}[.!?])(?=[A-Z][a-z]{2})")
+_GLUED_HEADING_RE = re.compile(
+    r"^(\W*(?:what you.?ll find here|what you bring|what you.?ll bring|benefits overview|"
+    r"why this role is unique|the tech stack|about the role|responsibilities|qualifications|"
+    r"requirements|nice to haves?))(?=(?-i:[A-Z][a-z]))",
+    re.IGNORECASE,
+)
+
+
+def _split_glued(lines: list[str]) -> list[str]:
+    """``lines`` with each run-together heading or sentence put on a line of its own."""
+    out: list[str] = []
+    for line in lines:
+        if _is_bullet(line.strip()):
+            out.append(line)
+            continue
+        for piece in _GLUED_SENTENCE_RE.sub("\n", line).split("\n"):
+            heading = _GLUED_HEADING_RE.match(piece)
+            if heading:
+                out.extend([heading.group(1), piece[heading.end() :]])
+            else:
+                out.append(piece)
+    return out
+
+
 def _unglue_bullets(lines: list[str]) -> list[str]:
     out: list[str] = []
     for line in lines:
@@ -207,7 +238,9 @@ _SECTION_END_HEADING_RE = re.compile(
     r"what.s in it for you|in return|our offer|we offer|total rewards|life at|"
     r"about (?:us|the company)|our culture|company overview|"
     r"responsibilit(?:y|ies)|what you.?ll do|salary|pay range|how to apply|"
-    r"equal opportunity|culture by|our values|core values|how we work)",
+    r"equal opportunity|culture by|our values|core values|how we work|"
+    r"why (?:this role|you.?ll love)|what you.?ll find|additional perks|"
+    r"^\W*about\s+(?!you\b|the\s+(?:role|job|position|opportunity)\b|this\s+(?:role|job|position)\b))",
     re.IGNORECASE,
 )
 # A label line ("Location: …", "Reports To: …") closes the skills list: what follows is not a skill.
@@ -538,10 +571,11 @@ def parse_jd(text: str) -> ParsedJD:
     required_items: list[str] = []
     nice_items: list[str] = []
     section: str | None = None
+    list_is_marked = False  # the current section's items are bullets or indented lines
     required_line_no = 0
     positional_core: set[str] = set()
 
-    for raw in _unglue_bullets(text.splitlines()):
+    for raw in _unglue_bullets(_split_glued(text.splitlines())):
         stripped = raw.strip()
         lower = stripped.lower()
         if not stripped:
@@ -562,29 +596,47 @@ def parse_jd(text: str) -> ParsedJD:
         # "qualifications", and must not be read as required skills.
         if looks_like_heading and _SOFT_HEADING_RE.search(lower) and "technical" not in lower:
             section = "soft"
+            list_is_marked = False
             continue
         if looks_like_heading and _NICE_HEADING_RE.search(lower):
             section = "nice"
+            list_is_marked = False
             continue
         if looks_like_heading and (
             _REQUIRED_HEADING_RE.search(lower) or _EXPERIENCE_HEADING_RE.match(stripped)
         ):
             section = "required"
+            list_is_marked = False
             continue
         if looks_like_heading and _SECTION_END_HEADING_RE.search(lower):
             section = None
+            list_is_marked = False
             continue
         if (not is_bullet and _LABEL_LINE_END_RE.match(stripped)) or _CLOSING_BOILERPLATE_RE.search(
             stripped
         ):
             section = None
+            list_is_marked = False
             continue
         # Content is either a real bullet, or (for postings that flatten
         # bullets to plain indented sentences when copy-pasted) any
         # non-heading-shaped line — `looks_like_heading` already excludes
         # actual heading lines, so this only picks up prose sentences sitting
         # under a recognized section.
+        # A list whose items are bullets or indented lines ends at the first sentence at the left
+        # margin: "We're hiring across multiple teams..." after the last item is not an item.
+        if (
+            section
+            and list_is_marked
+            and not is_bullet
+            and not is_indented
+            and _SENTENCE_PUNCT_RE.search(stripped)
+        ):
+            section = None
+            list_is_marked = False
+            continue
         if section and (is_bullet or not looks_like_heading):
+            list_is_marked = list_is_marked or is_bullet or is_indented
             raw_item = _BULLET_MARKER_RE.sub("", stripped).strip()
             item = _drop_term_details(_strip_years_prefix(raw_item))
             line_section = section

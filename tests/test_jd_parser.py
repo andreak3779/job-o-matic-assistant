@@ -979,3 +979,96 @@ def test_an_offer_section_heading_ends_the_requirements(heading):
 def test_what_you_will_bring_still_opens_the_requirements():
     parsed = parse_jd("Developer\n\n## What you'll bring\n- C#\n- SQL Server\n")
     assert parsed.required_for_rating == ["C#", "SQL Server"]
+
+
+# -- more headings, run-together headings, qualities and APIs (ADR 0009, 0023) -----------------
+
+
+@pytest.mark.parametrize(
+    "heading",
+    [
+        "✨ What You Bring",
+        "What you bring",
+        "You Should Get In Touch If",
+        "You should have",
+        "About you",
+        "Your background",
+        "The ideal candidate",
+    ],
+)
+def test_more_requirements_headings_open_the_list(heading: str) -> None:
+    parsed = parse_jd(f"Developer\n\n{heading}\n\n    C#\n    SQL Server\n")
+    assert parsed.required_for_rating == ["C#", "SQL Server"]
+
+
+@pytest.mark.parametrize(
+    "heading",
+    ["Why this role is unique", "Why you'll love it", "Benefits Overview", "Additional Perks",
+     "About Acme Corp:", "What You'll Find Here"],
+)  # fmt: skip
+def test_more_closing_headings_end_the_list(heading: str) -> None:
+    parsed = parse_jd(
+        f"Developer\n\nRequirements\n\n    C#\n\n{heading}\n\n    Free snacks\n    Yoga\n"
+    )
+    assert parsed.required_for_rating == ["C#"]
+
+
+def test_about_you_and_about_the_role_do_not_end_the_list() -> None:
+    parsed = parse_jd("Developer\n\nRequirements\n\n    C#\n\nAbout you\n\n    SQL Server\n")
+    assert parsed.required_for_rating == ["C#", "SQL Server"]
+
+
+def test_a_heading_run_into_the_next_sentence_is_split_from_it() -> None:
+    parsed = parse_jd(
+        "Developer\n\nRequirements\n\n    C#\n\n"
+        "What You'll Find HereTo do great work, you need to be well. We offer cake.\n"
+        "    Mind: tools and support\n    Body: health coverage\n"
+    )
+    assert parsed.required_for_rating == ["C#"]
+
+
+def test_a_sentence_run_into_the_next_heading_is_split_from_it() -> None:
+    parsed = parse_jd(
+        "Developer\n\nRequirements\n\n    C#\n\nWe hire across teams.Benefits Overview\n"
+        "    Free snacks\n"
+    )
+    assert parsed.required_for_rating == ["C#"]
+
+
+def test_a_sentence_at_the_left_margin_ends_an_indented_list() -> None:
+    parsed = parse_jd(
+        "Developer\n\nRequirements\n\n    C#\n    SQL Server\n\n"
+        "We hire across several teams and will match you to the best fit.\n"
+    )
+    assert parsed.required_for_rating == ["C#", "SQL Server"]
+
+
+def test_a_flat_list_of_unindented_sentences_still_counts() -> None:
+    parsed = parse_jd("Developer\n\nRequirements\n\nExperience with C# and SQL Server.\n")
+    assert parsed.required_for_rating  # nothing marked the list, so the line is read as before
+
+
+def test_qualities_written_as_sentences_are_listed_not_scored() -> None:
+    parsed = parse_jd(
+        "Developer\n\nRequirements\n\n"
+        "    C#\n"
+        "    You care about outcomes, not just output.\n"
+        "    Strong ownership, with the ability to take vague problems to a shipped solution.\n"
+        "    You are comfortable working across different technical systems and concerns.\n"
+    )
+    assert parsed.required_for_rating == ["C#"]
+    assert len([s for s in parsed.soft_requirements if s.kind == "soft skill"]) == 3
+
+
+def test_a_capability_sentence_with_no_known_skill_is_still_rated() -> None:
+    parsed = parse_jd(
+        "Developer\n\nRequirements\n\n    Experience troubleshooting production issues end-to-end\n"
+    )
+    assert parsed.required_for_rating  # a capability the profile can be searched for, not a quality
+
+
+def test_api_work_is_a_skill_not_a_sentence_to_match_whole() -> None:
+    parsed = parse_jd(
+        "Developer\n\nRequirements\n\n    Experience building APIs and integrating with external systems\n"
+    )
+    assert "API" in parsed.required_for_rating
