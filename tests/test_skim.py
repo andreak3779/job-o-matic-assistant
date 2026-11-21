@@ -148,3 +148,62 @@ def test_a_refusal_is_a_command_error_not_a_crash(tmp_path: Path) -> None:
     data["summary"] = [" ".join(["word"] * (skim.SUMMARY_WORDS + 1))]
     result = render_command.run("resume", json.dumps(data), out=tmp_path / "r.docx")
     assert result.status == "error" and "summary" in result.messages[-1].text
+
+
+# -- the letter hook leads with what the posting's title is about -----------------------------
+
+
+def _match(skill: str, status: str, evidence: str):
+    from jobomatic.fit.engine import SkillMatch
+
+    return SkillMatch(skill, status, evidence)
+
+
+def _hook_for(title: str, required: list):
+    from types import SimpleNamespace
+
+    from jobomatic.commands.cover_letter import _select_evidence
+    from jobomatic.fit.engine import FitResult
+
+    result = FitResult(rating="Strong", required=required, nice_to_have=[], rationale="")
+    spelled = {"devops": "DevOps", "ai": "AI"}  # as the posting wrote them
+    parsed = SimpleNamespace(
+        title=title, required=[spelled.get(m.skill, m.skill) for m in required], nice_to_have=[]
+    )
+    profile = SimpleNamespace(projects=[], resume_roles=[])
+    return _select_evidence(profile, parsed, "Acme", result)["hook"]
+
+
+def test_an_ai_role_opens_on_ai_said_as_portfolio_work_not_on_a_side_skill() -> None:
+    hook = _hook_for(
+        "Senior AI Software Developer",
+        [
+            _match("devops", "match", "Globex Corp: production"),
+            _match("ai", "portfolio", "job-o-matic-assistant: portfolio"),
+        ],
+    )
+    assert hook.startswith("Your Senior AI Software Developer posting asks for AI, ")
+    assert "building with it lately in job-o-matic-assistant" in hook
+    assert "hands-on DevOps experience at Globex Corp" in hook  # production, said as such
+    assert "big part of what I do" not in hook  # portfolio work is not claimed as that
+    assert len(skim.sentences(hook)) <= skim.HOOK_SENTENCES and skim.words(hook) <= skim.HOOK_WORDS
+
+
+def test_production_evidence_for_the_title_skill_keeps_the_plain_hook() -> None:
+    hook = _hook_for(
+        "Senior DevOps Engineer",
+        [
+            _match("ai", "portfolio", "job-o-matic-assistant: portfolio"),
+            _match("devops", "match", "Globex Corp: production"),
+        ],
+    )
+    assert "asks for DevOps, which is a big part of what I do" in hook
+    assert "hands-on experience at Globex Corp" in hook
+
+
+def test_a_title_that_names_no_backed_skill_falls_back_to_production_evidence() -> None:
+    hook = _hook_for(
+        "Software Developer",
+        [_match("testing", "match", "Globex Corp: production")],
+    )
+    assert "asks for Testing" in hook or "asks for testing" in hook
