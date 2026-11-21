@@ -51,6 +51,17 @@ def _display_skill(skill: str, parsed: Any) -> str:
     return f".{skill}" if skill.upper().startswith("NET ") else skill
 
 
+def _tokens(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9#+.]+", text.lower()))
+
+
+def _names_in_title(skill: str, title: str) -> bool:
+    """True when the posting's own title names the skill ("AI" in "Senior AI Software Developer"),
+    or any one part of an "A / B" entry. The title is what the posting is mainly about."""
+    wanted = _tokens(title)
+    return any((t := _tokens(part)) and t <= wanted for part in skill.split(" / "))
+
+
 def _short_label(label: str) -> str:
     """A bold label a reader takes in at a glance: "Claude Code / Claude / GitHub Copilot / Cursor /
     Windsurf" becomes "Claude Code / GitHub Copilot / Cursor" (a name inside another is dropped)."""
@@ -87,14 +98,26 @@ def _select_evidence(
     tracks them as planned learning (never claimed as experience).
     """
     grounded_required = result.grounded_required
-    # The hook names one skill and the evidence for that skill: a short name, production first.
+    # The hook names one skill and the evidence for it. The skill is the one the posting's title
+    # names when the profile backs it (an AI role opens on AI, not on DevOps), else a short named
+    # one with production evidence. Production evidence beats portfolio evidence at each step.
     production = [m for m in grounded_required if m.status == "match"]
+    in_title = [m for m in grounded_required if _names_in_title(m.skill, parsed.title)]
     named = [
         m
         for m in production
         if len(m.skill.split()) <= 2 and _display_skill(m.skill, parsed) != m.skill
     ]
-    top_match = next(iter(named or production or grounded_required), None)
+    top_match = next(
+        iter(
+            [m for m in in_title if m.status == "match"]
+            or in_title
+            or named
+            or production
+            or grounded_required
+        ),
+        None,
+    )
 
     # Portfolio projects that match required skills (alias-aware).
     matching_projects: list[Any] = []
@@ -149,7 +172,23 @@ def _select_evidence(
         )
 
     # Hook: if no verified evidence, use a neutral hook rather than fabricate fit.
-    if top_match:
+    if top_match and top_match.status == "portfolio":
+        # Portfolio work is said as portfolio work: "a big part of what I do" would claim more.
+        project = top_match.evidence.rsplit(":", 1)[0].strip()
+        built = f" in {project}" if project else ""
+        hook = (
+            f"Your {parsed.title} posting asks for {_display_skill(top_match.skill, parsed)}, "
+            f"and I've been building with it lately{built}."
+        )
+        if production:
+            employer = production[0].evidence.rsplit(":", 1)[0].strip()
+            if employer:
+                said = _display_skill(production[0].skill, parsed)
+                hook += (
+                    f" I also have hands-on {said} experience at {employer}, "
+                    "so I could be useful on the team quickly."
+                )
+    elif top_match:
         hook = (
             f"Your {parsed.title} posting asks for {_display_skill(top_match.skill, parsed)}, "
             f"which is a big part of what I do. "
