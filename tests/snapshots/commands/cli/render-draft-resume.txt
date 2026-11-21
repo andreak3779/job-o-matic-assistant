@@ -1,0 +1,116 @@
+exit: 0
+--- stdout
+{
+  "contact": {
+    "name": "Sarah Ashford",
+    "email": "sarah.ashford.dev@example.com",
+    "phone": "(410) 555-0142",
+    "location": "Springfield, MD",
+    "linkedin": "https://www.linkedin.com/in/sarah-ashford-dev",
+    "github": "https://github.com/sarahashford-dev",
+    "pluralsight": "https://app.pluralsight.com/profile/sarahashford-dev"
+  },
+  "tagline": "Senior Full-Stack .NET Developer | C# · ASP.NET Core · Angular",
+  "summary": [
+    "Full-stack .NET developer with a track record of modernizing legacy enterprise systems into service-oriented, cloud-hosted applications. Comfortable owning a feature from database schema through Angular UI through CI/CD pipeline, with particular depth in insurance and manufacturing domains."
+  ],
+  "skills": [
+    {
+      "label": "Backend Development",
+      "skills": "C#, ASP.NET Core, Entity Framework Core, Web API, REST, microservices, .NET Framework, LINQ, dependency injection, event-driven architecture, distributed systems, OOP, design patterns, SOLID principles, secure development, async/await"
+    },
+    {
+      "label": "Frontend & UI",
+      "skills": "Angular (v12+), TypeScript, React frontend development, RxJS, Angular Material, HTML, CSS/SASS, Jest"
+    },
+    {
+      "label": "Database & SQL",
+      "skills": "SQL Server, T-SQL, relational databases, DB2, query optimization, Entity Framework migrations"
+    },
+    {
+      "label": "DevOps & CI/CD",
+      "skills": "Docker, GitLab CI, Azure Pipelines, SonarQube, code review process ownership"
+    },
+    {
+      "label": "Testing",
+      "skills": "xUnit, Moq, xUnit testing, integration testing, Jest, integration testing, test coverage improvement initiatives"
+    },
+    {
+      "label": "Project Management & Agile",
+      "skills": "Scrum, GitHub Copilot, prompt engineering, Terraform on Azure, sprint planning, story pointing, cross-functional stakeholder coordination"
+    },
+    {
+      "label": "Cloud & Azure",
+      "skills": "Azure App Service, Azure Functions, Azure Monitor, monitoring and observability, infrastructure as code, Bicep, Terraform, PowerShell and Python scripting for automation, Azure DevOps Pipelines, Azure Application Insights"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Senior Full-Stack Developer",
+      "company": "Meridian Benefits Group",
+      "location": "Springfield, MD (Hybrid)",
+      "dates": "October 2022 – Present",
+      "bullets": [
+        "Led migration of a legacy ASP.NET Web Forms quote engine to Angular 14 with a layered C#/Entity Framework Core service architecture, reducing quote turnaround time and cutting reported defects by roughly a third",
+        "Built RESTful APIs in ASP.NET Core Web API against SQL Server, optimizing slow claims-lookup queries with targeted indexing and query rewrites",
+        "Owned GitLab CI/CD pipeline for the claims platform, adding automated test gates that caught regressions before they reached staging",
+        "Raised unit and integration test coverage on the claims module from under 40% to over 75% using xUnit and Moq, as a department-wide quality initiative"
+      ]
+    },
+    {
+      "title": "Software Developer",
+      "company": "Aerotech Industries Ltd.",
+      "location": "Springfield, MD (Hybrid)",
+      "dates": "September 2019 – October 2022",
+      "bullets": [
+        "Built a real-time integration service in C#/ASP.NET Core reconciling sales lead data between the CRM and an ERP system, eliminating a recurring manual data-entry reconciliation process",
+        "Coordinated release management across environments using Azure DevOps Pipelines and a ticket-driven change process",
+        "Developed a desktop-application plugin (C#, WPF) to import and validate vendor takeoff files against a custom XML schema",
+        "Automated quality-control issue tracking with Power Apps and Power Automate, replacing a spreadsheet-based process"
+      ]
+    },
+    {
+      "title": "Programmer / Systems Analyst",
+      "company": "Prairie Transport Co.",
+      "location": "Springfield, MD (Onsite)",
+      "dates": "May 2019 – August 2019",
+      "bullets": [
+        "Modernized a legacy reporting application by migrating business logic into SQL Server stored procedures, improving report generation speed",
+        "Gathered requirements and built SSRS reports for dispatch and billing teams"
+      ]
+    },
+    {
+      "title": ".NET Developer",
+      "company": "Riverside Pharmacy Ltd.",
+      "location": "Springfield, MD (Onsite)",
+      "dates": "November 2015 – April 2019",
+      "bullets": [
+        "Migrated a legacy MS Access order-management tool to a centralized ASP.NET Web Forms application backed by SQL Server",
+        "Owned the organization's Git source-control server (Ubuntu, SSH-administered) and led the transition off ad hoc file-share-based version control",
+        "Built SSIS packages to automate a drug-data transformation process, cutting processing time from hours to well under an hour"
+      ]
+    },
+    {
+      "title": "Software Developer",
+      "company": "Vantage Technology Solutions",
+      "location": "Springfield, MD (Onsite)",
+      "dates": "October 2011 – March 2015",
+      "bullets": [
+        "Built and enhanced custom reports in C# and Entity Framework against a DB2 database, working from an Agile backlog with a geographically dispersed team",
+        "Developed and maintained VB.NET/C# applications against Sybase SQL Server to meet evolving client business rules",
+        "Provided on-call production support, investigating and remediating failed overnight batch jobs under documented escalation procedures"
+      ]
+    }
+  ],
+  "additional_experience": "",
+  "education": [
+    "Applied Computer Science (Coursework) — Northfield University, 2012",
+    "Computer Analyst and Programmer Diploma — Lakeshore Polytechnic, 2010"
+  ],
+  "certifications": [
+    "Microsoft Azure Fundamentals (AZ-900) — Certified",
+    "Azure AI Cloud Developer Associate (AI-200) — In Progress"
+  ]
+}
+--- stderr
+Fit Rating: Strong — All 9 required skills covered (0 course/portfolio-only); 4 nice-to-have(s) present.

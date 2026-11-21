@@ -204,7 +204,7 @@ def test_render_files_a_tailored_document_by_posting_and_logs_a_draft() -> None:
 
 def test_render_a_tailored_document_needs_out_or_jd(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["render", "resume", str(FIXTURES / "resume.json")]) == 1
-    assert "--jd" in capsys.readouterr().out
+    assert "output path, or the job description" in capsys.readouterr().err
 
 
 def test_tailored_content_checks(capsys: pytest.CaptureFixture[str]) -> None:

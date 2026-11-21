@@ -38,6 +38,10 @@ CURATED_SKILLS: tuple[str, ...] = (
 COMMAND_TO_TOOL: dict[str, str] = {
     "fit-check": "fit_check",
     "gap-analysis": "gap_analysis",
+    "render schema": "render_schema",
+    "render draft": "render_draft",
+    "render resume": "render_resume",
+    "render cover-letter": "render_cover_letter",
     "generate-resume": "generate_resume",
     "generate-cover-letter": "generate_cover_letter",
     "generate-cold-call": "generate_cold_call",
@@ -61,10 +65,22 @@ call the tool that does the same job (its parameters mirror the command's option
 
 {mapping}
 
-`render`, `application-dir`, `learning ...` and file-import commands have no tool: do not try to
-run them. For tailored documents use `generate_application_documents` (or `generate_resume` and
-`generate_cover_letter`); each checks the fit rating, the duplicate-application log and the pay
-minimum first and refuses with a reason if one of them fails. A Stretch or Worth a try rating can be
+`application-dir`, `learning ...` and file-import commands have no tool: do not try to run them.
+
+Tailored resume and cover letter (the workflow's Step 5): you write the content, the tool lays it out.
+`profile_summary` shows only the public facts, so the candidate's real employers, dates, bullets and
+contact details reach you through `render_draft` (it is the "profile output" the grounding rule
+means here): call it for the resume and for the cover letter, edit that JSON for the posting, and
+pass the result to `render_resume` / `render_cover_letter`. Every claim you write must trace to the
+draft; never add one that is not in it. A recruiter decides in about fifteen seconds, so write for
+that skim: a one-line headline, a short summary, short bullets, a letter of about 150 words. `render_schema`
+lists the fields and their limits, and the render tools refuse content over them, naming the field:
+shorten it and call again. Do not call
+`generate_resume`, `generate_cover_letter` or `generate_application_documents` for the same
+posting afterwards: they write the same file names and would replace your documents (they are the
+rule-based version, only for when the user asks for a quick draft; skip the workflow's optional audit
+pass). `render_draft`, `render_resume` and `render_cover_letter` each check the fit rating, the
+duplicate-application log and the pay minimum first and refuse with a reason if one of them fails. A Stretch or Worth a try rating can be
 confirmed past: list the gaps, ask the user, and only if they say yes call the tool again with
 `confirm_gaps=true`; a Pass (skills or location) cannot. Likewise `confirm_reapply` and
 `confirm_below_minimum` are set only after the user says so. Never mark an application as applied

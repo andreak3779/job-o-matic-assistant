@@ -24,6 +24,7 @@ from jobomatic.commands.support import (
     require_path,
     verify_pages,
 )
+from jobomatic.documents import skim
 from jobomatic.documents.adapters.docx_layout import (
     DEFAULT_SIGNATURE_NAME,
 )
@@ -32,6 +33,7 @@ from jobomatic.documents.model import ResumeContact, ResumeJob, SkillLine, Tailo
 from jobomatic.documents.pagefit import fit_resume
 from jobomatic.fit.engine import FitResult, profile_has_skill_text, rate_parsed_jd
 from jobomatic.fit.parser import parse_jd
+from jobomatic.fit.terms import extract_skill_terms
 from jobomatic.provenance import write_sidecar
 from jobomatic.results import CommandResult, Message, emit
 
@@ -62,14 +64,24 @@ def _bullet_score(bullet: str, jd_pool: str) -> int:
 
 
 def _skill_content(profile: Any, parsed: Any) -> list[SkillLine]:
-    """Technical-skills categories, ordered by relevance to the posting."""
+    """Technical-skills lines for a reader who skims: the categories the posting names first, and
+    in each the posting's own terms first, cut to a line (``documents.skim``)."""
     jd_pool = " ".join(parsed.required + parsed.nice_to_have)
     categories = list(profile.skills.groups)
     categories.sort(
         key=lambda cat: sum(_skill_score(s, jd_pool) for s in cat.skills),
         reverse=True,
     )
-    return [SkillLine(label=cat.category, skills=", ".join(cat.skills)) for cat in categories]
+    lines: list[SkillLine] = []
+    for cat in categories[: skim.SKILL_LINES]:
+        ranked = sorted(cat.skills, key=lambda s: -_skill_score(s, jd_pool))  # stable
+        kept: list[str] = []
+        for skill in ranked:
+            if kept and skim.words(", ".join([*kept, skill])) > skim.SKILL_LINE_WORDS:
+                break
+            kept.append(skill)
+        lines.append(SkillLine(label=cat.category, skills=", ".join(kept)))
+    return lines
 
 
 def _job_content(profile: Any, parsed: Any) -> list[ResumeJob]:
@@ -81,7 +93,12 @@ def _job_content(profile: Any, parsed: Any) -> list[ResumeJob]:
             company=job.company or "",
             location=job.location or "",
             dates=job.dates or "",
-            bullets=sorted(job.bullets, key=lambda b: _bullet_score(b, jd_pool), reverse=True),
+            bullets=[
+                skim.shorten(b, skim.BULLET_WORDS)
+                for b in sorted(job.bullets, key=lambda b: _bullet_score(b, jd_pool), reverse=True)[
+                    : skim.JOB_BULLETS
+                ]
+            ],
         )
         for job in profile.resume_roles
     ]
@@ -119,11 +136,24 @@ def _resume_content(profile: Any, parsed: Any, tagline: str) -> TailoredResume:
     """The resume for a posting. ``parsed`` orders skills and bullets by relevance to it."""
     ident = profile.identity
     # Paragraphs only: a blank line between them must not become an empty second paragraph.
-    summary = [
+    jd_pool = " ".join(parsed.required + parsed.nice_to_have)
+    paragraphs = [
         line.strip()
         for line in ident.summary.splitlines()
         if line.strip() and not _MARKDOWN_RULE.fullmatch(line.strip())
-    ][:2] or [""]
+    ]
+    # Three lines at most, and the sentences that speak to this posting rather than the first few.
+    summary = (
+        [
+            skim.pick_sentences(
+                " ".join(paragraphs),
+                skim.SUMMARY_WORDS,
+                lambda sentence: _bullet_score(sentence, jd_pool),
+            )
+        ]
+        if paragraphs
+        else [""]
+    )
     full = TailoredResume(
         contact=ResumeContact(
             name=ident.name or DEFAULT_SIGNATURE_NAME,
@@ -147,15 +177,45 @@ def _resume_content(profile: Any, parsed: Any, tagline: str) -> TailoredResume:
     return fit_resume(full)
 
 
-def _build_tagline(parsed: Any, profile: Any) -> str:
-    """Compose a JD-aware tagline from role title + top skills."""
-    title = parsed.title
-    top_skills = parsed.required[:3]
-    if not top_skills and profile.skills.groups:
-        first_cat = profile.skills.groups[0]
-        top_skills = first_cat.skills[:3]
-    skills_text = " · ".join(top_skills)
-    return f"{title} | {skills_text}" if skills_text else title
+def _build_tagline(parsed: Any, profile: Any, matched: list[str] | None = None) -> str:
+    """The headline: the candidate's own role, then up to three skills the posting names that the
+    candidate has evidence for. One line (``documents.skim``), never the posting's own phrases."""
+    role = profile.identity.headline.replace("**", "").split("|")[0].strip() or parsed.title
+    chosen: list[str] = []
+    for term in matched or []:
+        low = term.lower()
+        if len(term.split()) > 2 or low in role.lower():
+            continue
+        if any(low in c.lower() or c.lower() in low for c in chosen):
+            continue
+        chosen.append(term)
+        if len(chosen) == 3:
+            break
+    return f"{role} | {' · '.join(chosen)}" if chosen else role
+
+
+def _matched_terms(jd_text: str, grounded: list[str]) -> list[str]:
+    """Skill names from the posting that the profile backs with evidence, named tools and
+    technologies ("Claude Code", "SQL Server") before plain practices ("testing"), each group in
+    the posting's own order."""
+    found = [
+        term
+        for term in extract_skill_terms(jd_text)
+        if any(term.lower() in g.lower() for g in grounded)
+    ]
+    return [t for t in found if t != t.lower()] + [t for t in found if t == t.lower()]
+
+
+def draft_resume(profile: Any, parsed: Any, jd_text: str) -> TailoredResume:
+    """The deterministic resume content for a parsed posting: what ``generate-resume`` renders.
+
+    ``render draft`` hands it out as the starting point for a hand-tailored resume (ADR 0035).
+    """
+    rated = rate_parsed_jd(parsed, profile)
+    grounded = [m.skill for m in (*rated.required, *rated.nice_to_have) if m.is_grounded]
+    return _resume_content(
+        profile, parsed, _build_tagline(parsed, profile, _matched_terms(jd_text, grounded))
+    )
 
 
 def generate_resume(
@@ -203,7 +263,7 @@ def generate_resume_from_text(
     profile = profile or bootstrap.load_profile()
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
-    content = _resume_content(profile, parsed, _build_tagline(parsed, profile))
+    content = draft_resume(profile, parsed, jd_text)
 
     located = outputs.locate_application(
         jd_text,

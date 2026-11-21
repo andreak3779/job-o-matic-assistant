@@ -48,3 +48,4 @@ status below says so.
 | [0032](0032-tiered-git-hooks.md) | Tiered git hooks: a fast check on commit, the full suite on push and in CI | Accepted |
 | [0033](0033-python-version-support-and-ci-matrix.md) | Which Python versions are supported, and what CI tests | Accepted |
 | [0034](0034-dependabot-for-the-lock-and-the-actions.md) | Dependabot keeps the lock file and the Actions current | Accepted |
+| [0035](0035-render-tools-for-claude-desktop.md) | Claude Desktop writes tailored documents through render tools (schema, draft, render), gated like the generators, instead of only the rule-based generators | Accepted |

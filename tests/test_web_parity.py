@@ -48,6 +48,10 @@ NOT_IN_WEB = {
     "generate_job_site_letter",
     "generate_thank_you",
     "generate_learning_plan",
+    "render_schema",
+    "render_draft",
+    "render_resume",
+    "render_cover_letter",
 }
 
 # The page's module -> the command modules it must call, which are the ones the tools call.

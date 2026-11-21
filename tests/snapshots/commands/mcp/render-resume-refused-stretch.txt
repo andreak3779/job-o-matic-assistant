@@ -1,0 +1,6 @@
+status: error
+--- message
+REFUSED: Fit rating is Stretch (below Good) — not generating resume/cover letter yet.
+A core requirement has no evidence; coverage 68% of 8 required skills. Core gap(s): rust. 1 other gap(s).
+List the gaps for the user and ask whether to go ahead.
+Only if the user says so, run again with confirm_gaps (command line: --confirm-gaps; tool: confirm_gaps=true).

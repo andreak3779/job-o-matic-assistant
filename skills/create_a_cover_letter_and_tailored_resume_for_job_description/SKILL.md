@@ -175,6 +175,11 @@ Use values exactly as written in the profile output. Do not paraphrase, reformat
 
 ## Step 4 — Plan Content
 
+**The 15-second rule — applies to every resume and cover letter.** A recruiter or hiring manager decides in about fifteen seconds whether the candidate fits (eye-tracking and survey figures put the first scan at roughly 6–15 seconds; most readers give a cover letter under a minute). They read the top of the page, titles, dates and the bold labels, not the paragraphs. So a reader who sees only the headline, the first summary lines, the skill labels, the role lines and the letter's hook, bold labels and ask must already know the fit. Write for that reader:
+- **Headline:** one line, `Role | A · B · C`: the candidate's own role, then up to three skills the posting names that the profile backs. Never the posting's phrases or its title if it overstates the candidate's role.
+- **Limits** (`src/jobomatic/documents/budget.py`; `render` refuses content over them and names the field): summary 60 words; 7 skill lines of 28 words, the posting's own terms first; 4 bullets per role of 35 words, one fact and its result; letter hook 2 sentences and 40 words; 4 bring-items with a bold label under 40 characters and a body under 20 words; highlights 30 words; closing 2 sentences and 35 words; the whole letter 200 words.
+- **Cut, don't compress:** drop the weakest item rather than shrinking every item.
+
 **Resume:** Summary (2 lines, exact role + 2–3 ATS keywords) · Skills (ATS keywords first, remove irrelevant categories) · Experience bullets (reorder/reword by JD relevance) · Cert status: use values from the profile output.
 
 **Legacy history:** the generated resume always ends Professional Experience with the profile's one-line "Additional Experience" summary (`raw_sections["Additional Experience"]` — no dates, no bullets); legacy roles never get full entries. If any required skill is 🕰️, ask before generating whether to surface it for this application (an Earlier Experience addendum or a cover-letter mention) — never add it automatically.
@@ -186,11 +191,11 @@ Use values exactly as written in the profile output. Do not paraphrase, reformat
 **Page 2:** Run the script first, then open the output and check page count. If it spills to page 2, uncomment `page2Header()` and position it before the job that starts on page 2.
 
 **Cover letter — STRICT ONE PAGE MAXIMUM. No exceptions.**
-Hook (strongest match to top JD requirement, NOT "I am writing…") · WHAT I BRING (4–5 items max: ATS keyword → evidence, 1 line each — never 2) · TWO HIGHLIGHTS (2 most relevant employers + concrete detail, 1–2 lines each) · Closing (company/role interest + direct CTA, 2 sentences max) · Tone: enterprise = formal, startup = direct.
+Hook (strongest match to top JD requirement, NOT "I am writing…") · WHAT I BRING (4 items max: the posting's skill as a short bold label → evidence, 1 line each — never 2) · TWO HIGHLIGHTS (2 most relevant employers + concrete detail, 1–2 lines each) · Closing (company/role interest + direct CTA, 2 sentences max) · Tone: enterprise = formal, startup = direct.
 
 **Cover letter content budget — enforce before writing any bullet:**
 - Hook: 2 sentences max
-- WHAT I BRING bullets: 4–5 items; each body text must fit on one line (≤ 120 chars) — cut ruthlessly if needed
+- WHAT I BRING bullets: 4 items; each label under 40 characters and each body under 20 words (one line) — cut ruthlessly if needed
 - TWO HIGHLIGHTS bullets: 1–2 lines each; combine detail into a single sentence where possible
 - Closing: 2 sentences max
 - If content feels tight, cut a WHAT I BRING bullet entirely rather than letting any bullet run long
@@ -206,7 +211,7 @@ When selecting cover letter highlights and WHAT I BRING evidence, check the prof
 Write the tailored content from Step 4 as two JSON files (in the scratchpad, not the repo), then lay them out:
 
 1. `python -m jobomatic render schema resume` and `render schema cover-letter` show the fields and their limits (a resume summary is at most 2 lines and 7 skill lines; a letter has 1–5 "What I Bring" items and at most 2 highlights).
-2. Resume content: contact (from `profile show contact`), tagline, summary, skills (most JD-relevant first), experience (bullets reordered by relevance), additional experience, education, and certification lines. Cert lines come from the profile's cert table (Certified or In progress).
+2. To start from the profile's own material instead of a blank page, `python -m jobomatic render draft resume <jd_path>` and `render draft cover-letter <jd_path>` print the content the rule-based generators would render, as JSON on stdout (MCP: `render_draft`; it is the only source of the candidate's facts there). Edit it for the posting; add nothing that is not in it. Resume content: contact (from `profile show contact`), tagline, summary, skills (most JD-relevant first), experience (bullets reordered by relevance), additional experience, education, and certification lines. Cert lines come from the profile's cert table (Certified or In progress).
 3. Cover-letter content: contact, role title, company, hook, bring items, highlights, closing.
 4. Render both against the posting, which files them in its application folder and logs the posting as `drafted` (never applied):
 
@@ -215,7 +220,7 @@ python -m jobomatic render resume <resume.json> --jd <jd_path>
 python -m jobomatic render cover-letter <letter.json> --jd <jd_path>
 ```
 
-Bad content stops with the field that is wrong. Layout is not editable; if a page overflows, cut content. Add `--check-pages` to either `render` command to count the real pages with LibreOffice: it fails (exit 1, file kept) when a resume is over 2 pages or a letter is not exactly 1.
+`render` gates the posting the way `generate-resume` does (fit, duplicate application, pay) before it writes, so after the user says yes to a Stretch or Worth a try rating, pass `--confirm-gaps` (and `--confirm-reapply` / `--confirm-below-minimum` only when the user says so for those). MCP: `render_resume` and `render_cover_letter`, with `confirm_gaps` and the others. Bad content stops with the field that is wrong. Layout is not editable; if a page overflows, cut content. Add `--check-pages` to either `render` command to count the real pages with LibreOffice: it fails (exit 1, file kept) when a resume is over 2 pages or a letter is not exactly 1.
 
 **ATS rules:** no tables · no columns · no text boxes · no graphics · standard section headings · no color beyond the section rules · one font throughout · resume ≤ 2 pages · cover letter = 1 page.
 

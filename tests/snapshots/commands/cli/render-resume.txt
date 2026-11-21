@@ -1,0 +1,8 @@
+exit: 0
+--- stdout
+Fit Rating: Strong — All 9 required skills covered (0 course/portfolio-only); 4 nice-to-have(s) present.
+Logged as drafted (not applied): application <TODAY>_northgate-insurance-group_senior-full-stack-net-developer
+Wrote <TMP>/out/resume.docx
+Wrote <TMP>/out/resume.docx.meta.json
+--- stderr
+

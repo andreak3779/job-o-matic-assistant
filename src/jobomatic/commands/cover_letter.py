@@ -22,6 +22,7 @@ from jobomatic.commands.support import (
     say,
     verify_pages,
 )
+from jobomatic.documents import skim
 from jobomatic.documents.adapters.docx_layout import (
     DEFAULT_SIGNATURE_NAME,
     clean_stack,
@@ -50,6 +51,28 @@ def _display_skill(skill: str, parsed: Any) -> str:
     return f".{skill}" if skill.upper().startswith("NET ") else skill
 
 
+def _short_label(label: str) -> str:
+    """A bold label a reader takes in at a glance: "Claude Code / Claude / GitHub Copilot / Cursor /
+    Windsurf" becomes "Claude Code / GitHub Copilot / Cursor" (a name inside another is dropped)."""
+    parts = [p.strip() for p in label.split(" / ") if p.strip()]
+    parts = [p for p in parts if not any(p != o and p.lower() in o.lower() for o in parts)]
+    short = " / ".join(parts[:3])
+    return short if len(short) <= skim.BRING_LABEL_CHARS else " / ".join(parts[:2])
+
+
+def _merge_same_evidence(items: list[dict[str, str]]) -> list[dict[str, str]]:
+    """One line per piece of evidence: "AI" and "AI coding agents" both resting on the same project
+    read as one item, "AI coding agents", not two bullets that say the same thing."""
+    merged: list[dict[str, str]] = []
+    for item in items:
+        twin = next((m for m in merged if m["body"] == item["body"]), None)
+        if twin is None:
+            merged.append(dict(item))
+            continue
+        twin["label"] = _short_label(f"{twin['label']} / {item['label']}")
+    return merged
+
+
 def _select_evidence(
     profile: Any,
     parsed: Any,
@@ -64,10 +87,14 @@ def _select_evidence(
     tracks them as planned learning (never claimed as experience).
     """
     grounded_required = result.grounded_required
-    top_match = next(
-        (m for m in grounded_required if m.status == "match"),
-        grounded_required[0] if grounded_required else None,
-    )
+    # The hook names one skill and the evidence for that skill: a short name, production first.
+    production = [m for m in grounded_required if m.status == "match"]
+    named = [
+        m
+        for m in production
+        if len(m.skill.split()) <= 2 and _display_skill(m.skill, parsed) != m.skill
+    ]
+    top_match = next(iter(named or production or grounded_required), None)
 
     # Portfolio projects that match required skills (alias-aware).
     matching_projects: list[Any] = []
@@ -79,9 +106,10 @@ def _select_evidence(
     # WHAT-I-BRING: grounded required first, then grounded nice-to-have.
     bring: list[dict[str, str]] = []
     for m in grounded_required + [m for m in result.nice_to_have if m.is_grounded]:
-        bring.append({"label": _display_skill(m.skill, parsed), "body": humanize_evidence(m)})
-        if len(bring) >= 5:
-            break
+        bring.append(
+            {"label": _short_label(_display_skill(m.skill, parsed)), "body": humanize_evidence(m)}
+        )
+    bring = _merge_same_evidence(bring)[: skim.BRING_ITEMS]
 
     # Highlights: up to 2 employers / portfolio projects with required-skill overlap.
     highlights: list[dict[str, str]] = []
@@ -99,7 +127,7 @@ def _select_evidence(
             highlights.append(
                 {
                     "label": f"{exp.company} ({exp.dates or 'recent'})",
-                    "body": best_bullet.replace("**", ""),
+                    "body": skim.shorten(best_bullet.replace("**", ""), skim.HIGHLIGHT_BODY_WORDS),
                 }
             )
             if len(highlights) >= 2:
@@ -111,17 +139,20 @@ def _select_evidence(
         highlights.append(
             {
                 "label": f"{project.name} (portfolio)",
-                "body": f"{project.description} Built with {stack_text}."
-                if stack_text
-                else project.description,
+                "body": skim.shorten(
+                    f"{project.description} Built with {stack_text}."
+                    if stack_text
+                    else project.description,
+                    skim.HIGHLIGHT_BODY_WORDS,
+                ),
             }
         )
 
     # Hook: if no verified evidence, use a neutral hook rather than fabricate fit.
-    top_required = parsed.required[0] if parsed.required else parsed.title
     if top_match:
         hook = (
-            f"Your {parsed.title} posting asks for {top_required}, which is a big part of what I do. "
+            f"Your {parsed.title} posting asks for {_display_skill(top_match.skill, parsed)}, "
+            f"which is a big part of what I do. "
             f"I have {humanize_evidence(top_match)}, so I could be useful on the team quickly."
         )
     elif matching_projects:
@@ -138,7 +169,7 @@ def _select_evidence(
         )
 
     # Closing: focus on verified skills only, falling back to neutral phrasing.
-    focus_skills = [_display_skill(m.skill, parsed) for m in grounded_required[:2]]
+    focus_skills = [_short_label(_display_skill(m.skill, parsed)) for m in grounded_required[:2]]
     if focus_skills:
         focus = " and ".join(focus_skills)
         closing = (
@@ -191,6 +222,17 @@ def _letter_content(
     )
 
 
+def draft_letter(
+    profile: Any, parsed: Any, result: FitResult, company: str
+) -> tuple[TailoredCoverLetter, bool]:
+    """The deterministic cover-letter content for a parsed, rated posting, and whether it is
+    low-confidence (too little verified evidence). ``render draft`` hands it out as the starting
+    point for a hand-tailored letter (ADR 0035)."""
+    evidence = _select_evidence(profile, parsed, company, result)
+    letter = _letter_content(profile, parsed.title, company, evidence)
+    return letter, bool(evidence["low_confidence"])
+
+
 def generate_cover_letter(
     jd_path: Path,
     *,
@@ -239,7 +281,7 @@ def generate_cover_letter_from_text(
     parsed = parse_jd(jd_text)
     result = rate_parsed_jd(parsed, profile)
     company = company or parsed.company
-    evidence = _select_evidence(profile, parsed, company, result)
+    letter, low_confidence = draft_letter(profile, parsed, result, company)
 
     if record:
         located = outputs.locate_application(
@@ -257,10 +299,9 @@ def generate_cover_letter_from_text(
         raise ValueError("out_path is required when record is False")
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    letter = _letter_content(profile, parsed.title, company, evidence)
     DocxTailoredCoverLetter().render(letter, out_path)
 
-    if evidence["low_confidence"]:
+    if low_confidence:
         say(
             notes,
             "warning",
@@ -275,9 +316,7 @@ def generate_cover_letter_from_text(
         inputs=[str(source)] if source else [],
         fit_rating=result.rating,
         evidence_sources=result.evidence_sources(),
-        warnings=["low evidence — manually review before sending"]
-        if evidence["low_confidence"]
-        else [],
+        warnings=["low evidence — manually review before sending"] if low_confidence else [],
     )
     if check_pages:
         verify_pages("cover-letter", out_path, notes)

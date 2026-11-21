@@ -277,6 +277,7 @@ to the vault's `outputs/profiles/<platform>/<date>.md`. Pass `--out PATH` to cho
 ```bash
 jobo generate-learning-plan profile/roles/<role>.json   # run from the vault, or give the full path
 jobo render schema resume                                # print the JSON shape for a content file
+jobo render draft resume job.md                          # the profile's content for a posting, as JSON to edit (also: cover-letter)
 jobo render resume content.json [--out PATH] [--check-pages]   # render a content file to DOCX
 ```
 
