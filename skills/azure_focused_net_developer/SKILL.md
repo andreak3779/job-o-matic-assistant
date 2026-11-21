@@ -36,7 +36,7 @@ description: >
 | DevOps | Docker · Kubernetes · GitHub Actions · CI/CD |
 | AI | GitHub Copilot ({github_copilot_course_count} courses) · Prompt Engineering · AI Agents |
 | Scripting | Python 3 · Linux / Unix / Bash · Shell scripting · PowerShell · AWK |
-| Portfolio | ai-job-search-workflow (Python + AI automation) · Resume_Site (GitHub Actions end-to-end) |
+| Portfolio | The projects in the profile output's Portfolio Projects table (use only what is listed there) |
 
 ---
 
@@ -53,7 +53,7 @@ Extract ATS keywords → map to experience + Pluralsight credentials + portfolio
 - **Skills**: list Azure services explicitly, not just "cloud."
 - **Experience**: measurable impact; inject missing keywords naturally.
 - **Certs**: Pluralsight path completions as evidence.
-- **Portfolio**: where relevant, reference GitHub projects as applied evidence (e.g. Resume_Site for CI/CD end-to-end, ai-job-search-workflow for Python/AI tooling).
+- **Portfolio**: where relevant, reference GitHub projects as applied evidence (from the profile output's Portfolio Projects table; use only what is listed there).
 
 For DOCX output → use the **create-a-cover-letter-and-tailored-resume-for-job-description** skill.
 
