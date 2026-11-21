@@ -203,6 +203,8 @@ def _unglue_bullets(lines: list[str]) -> list[str]:
 # benefits list as "required skills" this way.
 _SECTION_END_HEADING_RE = re.compile(
     r"(what we offer|benefits?|perks|compensation|why (?:join|work)|"
+    r"what you(?:\W?ll| can| will)? (?:expect|get|receive)|what we (?:provide|give)|"
+    r"what.s in it for you|in return|our offer|we offer|total rewards|life at|"
     r"about (?:us|the company)|our culture|company overview|"
     r"responsibilit(?:y|ies)|what you.?ll do|salary|pay range|how to apply|"
     r"equal opportunity|culture by|our values|core values|how we work)",

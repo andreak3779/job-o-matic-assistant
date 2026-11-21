@@ -144,3 +144,17 @@ three wrongly, so a posting the profile partly covers rated 34% and was refused 
 Measured on the 12 real postings in the vault, no rating changed; the Indeed posting went from 34%
 to 66% coverage and is still a Pass, because three early requirements (MVP, MVC Razor, CSLA) are
 genuine core gaps (ADR 0021).
+
+## Addendum: an offer section ends the requirements (2026-11-20)
+
+A posting whose benefits section is headed "What you can expect from us:" had that whole section
+read as required skills (employee ownership, the paid sabbatical, the diversity statement), and
+"over 35 years of experience" in the company blurb as a 35-year minimum for the candidate. The
+requirements list only ended at the headings in `_SECTION_END_HEADING_RE`, which did not include
+this one. It now also ends at "What you can expect", "What you'll get / receive", "What we provide /
+give", "What's in it for you", "In return", "Our offer", "We offer", "Total rewards" and "Life at".
+"What you'll bring" still opens the requirements.
+
+Not changed: a heading that ends in a question mark ("What's in it for you?") still counts as a
+sentence, not a heading, as before; that rule is wider than this fix. Measured on the 13 real
+postings in the vault, no rating or row count changed.
