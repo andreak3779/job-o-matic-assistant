@@ -296,7 +296,8 @@ _PROSE_MIN_WORDS = 6
 # intentional: that one uses ``>`` on the word count without parentheticals (term
 # extraction), this one ``>=`` on the full count including them (whole-item rating).
 _PROSE_REQUIREMENT_MIN_WORDS = _PROSE_MIN_WORDS
-_BULLET_RE = re.compile(r"^[-•]|^\d+[.)]")
+# A lone "*" followed by a space is a bullet (Indeed pastes use it); "**bold**" and "*italic*" are not.
+_BULLET_RE = re.compile(r"^[-•]|^\*\s|^\d+[.)]")
 
 # Postings saved as label/value pairs under their own headings, e.g.
 # "# Company\nExample Corp\n\n# Position\nSoftware Developer". "Postion" is

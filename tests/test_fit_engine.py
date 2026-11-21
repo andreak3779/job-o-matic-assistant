@@ -941,3 +941,21 @@ def test_an_acronym_posting_line_matches_the_spelled_out_name_and_back():
     assert "tfs" in skill_match_terms("Microsoft Team Foundation Server (TFS)")
     assert ".net framework" in skill_match_terms("Microsoft .NET Platform (4.0 or higher)")
     assert "dynamics 365" in skill_match_terms("Microsoft Dynamics CRM")
+
+
+def test_mvp_is_an_alias_of_aspnet_web_forms() -> None:
+    aliases = _load_aliases()
+    assert "asp.net web forms" in aliases["mvp"]
+
+
+def test_mvc_razor_architectures_is_keyed_by_its_normalized_form() -> None:
+    # _normalize drops "(razor)", so the alias key is "mvc architectures".
+    aliases = _load_aliases()
+    assert "asp.net core mvc" in aliases["mvc architectures"]
+
+
+@pytest.mark.parametrize(
+    "phrase", ["MVC (Razor) architectures", "MVC Razor architecture", "MVC Razor architectures"]
+)
+def test_mvc_razor_architecture_phrasings_all_expand_to_aspnet_core_mvc(phrase: str) -> None:
+    assert "asp.net core mvc" in skill_match_terms(phrase)

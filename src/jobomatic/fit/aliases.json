@@ -50,6 +50,8 @@
     "sybase": ["sybase ase", "sybase sql server"],
     "microsoft graph api": ["ms graph api", "graph api"],
     "asp.net webforms": ["asp.net web forms", "web forms", "webforms"],
+    "mvp": ["asp.net web forms", "web forms", "webforms"],
+    "mvc architectures": ["asp.net core mvc", "asp.net mvc", "mvc", "razor", "mvc razor architecture", "mvc razor architectures"],
     "asp.net mvc": ["asp.net core mvc", "mvc"],
     "asp.net core blazor": ["blazor"],
     "linq to sql": ["ado.net"],
