@@ -13,7 +13,9 @@ Rules, as the owner stated them:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from collections.abc import Iterable
+from dataclasses import dataclass, replace
+from typing import Protocol
 
 _YEARS_RE = re.compile(
     r"(\d+)\s*(?:\+|plus)?\s*(?:(?:[-–—]|to)\s*\d+\s*\+?\s*)?(?:years?|yrs?)\b",
@@ -56,6 +58,8 @@ class SoftRequirement:
     line: str
     note: str
     minimum_years: int | None = None
+    # For an education line: the user's own credentials, shown beside it for the user to compare.
+    on_file: str = ""
 
 
 def minimum_years(text: str) -> int | None:
@@ -130,3 +134,88 @@ def body_level(title: str, text: str) -> SoftRequirement | None:
         re.IGNORECASE,
     )
     return SoftRequirement("level", match.group(0), BODY_LEVEL_NOTE) if match else None
+
+
+# Credential levels a posting can name, and the stored levels that answer each one.
+_NAMED_LEVELS: tuple[tuple[str, re.Pattern[str], frozenset[str]], ...] = (
+    ("certificate", re.compile(r"\bcertificat\w*", re.IGNORECASE), frozenset({"certificate"})),
+    (
+        "diploma",
+        re.compile(r"\bdiploma\b", re.IGNORECASE),
+        frozenset({"diploma", "advanced-diploma"}),
+    ),
+    (
+        "degree",
+        re.compile(r"\bdegree\b|\bbachelor\w*", re.IGNORECASE),
+        frozenset({"bachelor", "master", "doctorate"}),
+    ),
+    (
+        "master's",
+        re.compile(r"\bmaster(?:['’]?s| of)\b", re.IGNORECASE),
+        frozenset({"master", "doctorate"}),
+    ),
+)
+_NAMED_FIELD_RE = re.compile(r"\bcomputer science\b", re.IGNORECASE)
+
+
+class EducationEntry(Protocol):
+    """What the cross-reference reads from a stored education entry. A structural type, so this
+    module does not import the profile module (the fit rules stay independent of it)."""
+
+    @property
+    def credential(self) -> str: ...
+    @property
+    def level(self) -> str | None: ...
+    @property
+    def field_of_study(self) -> str | None: ...
+    @property
+    def completed(self) -> bool: ...
+
+
+def education_on_file(line: str, education: Iterable[EducationEntry]) -> str:
+    """The user's structured education entries beside a posting's education line.
+
+    Facts only: the levels the posting names, the levels on file that answer them, and each entry
+    with its level, field and whether it was finished. It never says the requirement is met: that
+    is for the user (and the employer) to judge. Entries with no level and no field are not
+    schooling and are left out; with none on file the result is empty.
+    """
+    entries = [e for e in education if e.level or e.field_of_study]
+    if not entries:
+        return ""
+    named = [(label, held) for label, pattern, held in _NAMED_LEVELS if pattern.search(line)]
+    field_named = _NAMED_FIELD_RE.search(line) is not None
+    parts = []
+    if named or field_named:
+        wants = [label for label, _ in named] + (["computer science"] if field_named else [])
+        parts.append("Posting names " + ", ".join(wants))
+    described = []
+    for e in entries:
+        facts: list[str] = [e.level] if e.level else []
+        if e.field_of_study:
+            facts.append(f"field: {e.field_of_study}")
+        if not e.completed:
+            facts.append("not completed")
+        described.append(f"{e.credential} ({'; '.join(facts)})" if facts else e.credential)
+    parts.append("You have " + "; ".join(described))
+    if named:
+        held = sorted(
+            {
+                e.level
+                for e in entries
+                if e.level and e.completed and any(e.level in levels for _, levels in named)
+            }
+        )
+        parts.append("Named levels held: " + (", ".join(held) if held else "none on file"))
+    return ". ".join(parts) + ". Whether the level and field fit is for you to judge."
+
+
+def with_education_on_file(
+    soft: Iterable[SoftRequirement], education: Iterable[EducationEntry]
+) -> tuple[SoftRequirement, ...]:
+    """Each education requirement with the user's credentials attached; others unchanged."""
+    entries = list(education)
+    return tuple(
+        replace(s, on_file=education_on_file(s.line, entries)) if s.kind == "education" else s
+        for s in soft
+    )

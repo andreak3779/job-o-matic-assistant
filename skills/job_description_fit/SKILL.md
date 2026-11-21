@@ -71,7 +71,11 @@ before relying on the rating. It does not change the rating.
 If the output has a **Soft requirements** list, those are education,
 years-of-experience, title-level and soft-skill lines (communication, teamwork and the
 like). They are never scored and never gaps. Show them to the user as written; do not
-decide whether they are met.
+decide whether they are met. An education line may carry an **On file** sub-line: the
+user's own credentials from the profile, with the levels the posting names. Show it with
+the line and leave the judgement (does a diploma count as a "major in computer science",
+is coursework enough) to the user. Each credential's `notes` hold what is known about its
+classification; read them with `profile show` only when the user asks how to describe it.
 
 If the output has a **Terms to confirm** list, a word that is also a skill name
 (for example "solid", which is an adjective in "Solid understanding of CI/CD" but

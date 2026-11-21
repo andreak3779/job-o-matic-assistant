@@ -11,7 +11,7 @@ from typing import Literal
 from jobomatic.fit.gap_coaching import GapCoachingEntry
 from jobomatic.fit.location import LocationAssessment
 from jobomatic.fit.parser import ParsedJD, is_prose_requirement
-from jobomatic.fit.soft_requirements import LABELS, SoftRequirement
+from jobomatic.fit.soft_requirements import LABELS, SoftRequirement, with_education_on_file
 from jobomatic.fit.terms import umbrella_parts
 from jobomatic.profile.model import Profile
 
@@ -365,7 +365,7 @@ def rate_fit(
         terms_to_confirm=tuple(terms_to_confirm),
         possible_typos=tuple(possible_typos),
         unknown_names=tuple(unknown_names),
-        soft_requirements=tuple(soft_requirements),
+        soft_requirements=with_education_on_file(soft_requirements, profile.education),
     )
 
 
@@ -637,6 +637,8 @@ def render_fit_table(result: FitResult) -> str:
         for soft in result.soft_requirements:
             label = LABELS.get(soft.kind, "Education")
             lines.append(f"- {label} — {soft.note}: {soft.line}")
+            if soft.on_file:
+                lines.append(f"  - On file: {soft.on_file}")
     if result.terms_to_confirm:
         lines.append("")
         lines.append(

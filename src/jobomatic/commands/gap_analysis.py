@@ -229,6 +229,8 @@ def _render_report(
         for soft in result.soft_requirements:
             label = LABELS.get(soft.kind, "Education")
             lines.append(f"- {label} — {soft.note}: {soft.line}")
+            if soft.on_file:
+                lines.append(f"  - On file: {soft.on_file}")
     if result.terms_to_confirm:
         lines.append("")
         lines.append("### Terms to confirm")
