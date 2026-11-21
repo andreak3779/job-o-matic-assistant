@@ -158,3 +158,32 @@ give", "What's in it for you", "In return", "Our offer", "We offer", "Total rewa
 Not changed: a heading that ends in a question mark ("What's in it for you?") still counts as a
 sentence, not a heading, as before; that rule is wider than this fix. Measured on the 13 real
 postings in the vault, no rating or row count changed.
+
+## Addendum: more headings, run-together headings, qualities and APIs (2026-11-21)
+
+Three real LinkedIn postings parsed to "No required skills" or to the benefits and company blurb,
+and rated Pass for that reason alone. Their causes, and the fixes (all in `fit/`):
+
+- **Headings.** "What You Bring", "You Should Get In Touch If", "You should have", "About you",
+  "Your background/skills/experience/profile" and "The ideal candidate" now open the requirements.
+  "Why this role is unique", "Why you'll love", "What you'll find", "Additional perks" and "About
+  <company>" (but not "About you" or "About the role") now end them.
+- **Run-together text.** A pasted page runs a heading into the next sentence ("...the
+  process.Benefits Overview", "What You'll Find HereTo do great work"). A sentence that ends and is
+  followed at once by a capital word now starts a new line, and a known heading followed at once by
+  a capital word is split from it.
+- **A list ends at the left margin.** In a section whose items are bullets or indented lines, a
+  sentence at the left margin ("We're hiring across multiple teams...") is not another item.
+- **Qualities are soft skills (ADR 0023).** "You care about outcomes", "strong ownership",
+  "comfortable working across...", "maturity, rigor", "grown the team", "stepped outside your role",
+  "ambiguous problems" and "non-technical stakeholders" are in `soft_skill_phrases.json`, so those
+  sentences are listed under Soft requirements and never scored. A sentence that names no known
+  skill but states a capability ("Experience troubleshooting production issues") is still rated,
+  as before: an earlier test depends on it, and it is a thing the profile can be searched for.
+- **APIs.** "API" is in the skill vocabulary, so "Experience building APIs and integrating with
+  external systems" is scored as API, not as a whole sentence no evidence could match.
+
+Measured on the 13 real postings in the vault: no rating or row count changed. Of the three
+postings above: the first moved from Pass (no required skills) to Worth a try, the second from Pass
+to Good, and the third stayed Pass at 33% of 3 required skills (one core gap, "complex distributed
+systems"); with so few scoreable lines, that rating rests on very little.
