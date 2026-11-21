@@ -1093,3 +1093,21 @@ def test_asterisk_bullets_match_dash_bullets() -> None:
 def test_bold_and_italic_lines_are_not_asterisk_bullets() -> None:
     parsed = parse_jd("Developer\n\n**Requirements:**\n\n- C#\n- Docker\n\n*Apply today*\n")
     assert parsed.required == ["C#", "Docker"]
+
+
+# ── web-service protocol terms (SOAP, WSDL, WCF) ──
+
+
+def test_a_soa_line_names_soap_wsdl_and_wcf_as_requirements() -> None:
+    parsed = parse_jd(
+        "Developer\n\n## Requirements\n"
+        "- Experience with Service Oriented Architectures (SOA), with implementations using "
+        "Web Services (WSDL, SOAP, XML, and XML Schemas) and Windows Communication Foundation (WCF)\n"
+    )
+    required = {item.lower() for item in parsed.required_for_rating}
+    assert {"soap", "wsdl", "wcf"} <= required
+
+
+def test_soap_in_lowercase_prose_is_not_the_protocol() -> None:
+    parsed = parse_jd("Dev\n\n## Requirements\n- Comfortable working with soap and water\n- C#\n")
+    assert "soap" not in {item.lower() for item in parsed.required_for_rating}
