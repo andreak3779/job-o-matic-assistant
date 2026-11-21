@@ -928,3 +928,54 @@ def test_a_comma_that_adds_a_qualifier_is_not_a_list():
 
 def test_a_heading_with_detail_keeps_its_list():
     assert _required("Monitoring: Datadog, Splunk") == ["Monitoring: Datadog, Splunk"]
+
+
+# -- the offer section is not a requirements list (ADR 0009) ---------------------------------------
+
+
+_OFFER_POSTING = """Developer - Springfield, ON
+
+Requirements:
+
+    C#
+    SQL Server
+    Experience with Agile development techniques
+
+{heading}
+
+    An IT consulting practice with over 35 years of experience across Canada
+    Exciting employee ownership options
+    Support for your professional development program
+"""
+
+
+@pytest.mark.parametrize(
+    "heading",
+    [
+        "What you can expect from us:",
+        "What you'll get:",
+        "What you will receive",
+        "What we provide:",
+        "What's in it for you",
+        "In return:",
+        "Our offer",
+        "We offer:",
+        "Total rewards",
+        "Life at Acme",
+    ],
+)
+def test_an_offer_section_heading_ends_the_requirements(heading):
+    parsed = parse_jd(_OFFER_POSTING.format(heading=heading))
+    assert parsed.required_for_rating == [
+        "C#",
+        "SQL Server",
+        "Experience with Agile development techniques",
+    ]
+    assert not any(
+        r.kind == "years" for r in parsed.soft_requirements
+    )  # the "35 years" is the firm
+
+
+def test_what_you_will_bring_still_opens_the_requirements():
+    parsed = parse_jd("Developer\n\n## What you'll bring\n- C#\n- SQL Server\n")
+    assert parsed.required_for_rating == ["C#", "SQL Server"]
