@@ -43,7 +43,10 @@ CONTENT_SECURITY_POLICY = "; ".join(
 HEADERS = {
     "Content-Security-Policy": CONTENT_SECURITY_POLICY,
     "X-Content-Type-Options": "nosniff",
-    "Referrer-Policy": "no-referrer",
+    # Not "no-referrer": the Fetch spec makes a browser send ``Origin: null`` on a same-origin form
+    # POST under that policy (Firefox does), and the Origin check below would then refuse every
+    # form. "same-origin" sends no Referer to any other site and still sends the real Origin here.
+    "Referrer-Policy": "same-origin",
     "Cache-Control": "no-store",
     "X-Frame-Options": "DENY",
 }

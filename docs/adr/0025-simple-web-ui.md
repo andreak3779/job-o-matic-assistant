@@ -308,7 +308,7 @@ the generators never do, only the skills do, in conversation. The file policy is
 4. **Response headers beyond the guards above**, from one hook: a Content-Security-Policy
    (`default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-ancestors
    'none'; form-action 'self'; base-uri 'none'`), `X-Content-Type-Options: nosniff`,
-   `Referrer-Policy: no-referrer` and `Cache-Control: no-store`, because the pages show a real profile
+   `Referrer-Policy: same-origin` (not `no-referrer`; see "Found after release") and `Cache-Control: no-store`, because the pages show a real profile
    and real postings. There is no inline script, inline handler or inline style; a test enforces it.
 5. **No path ever comes from the browser.** Postings and notes are text fields; the Pluralsight file
    is an upload written to a throwaway temporary folder for the call; documents go to the default
@@ -381,3 +381,11 @@ Built in nine commits on one branch, in the order of "Follow-ups", security befo
   standalone Pluralsight page cannot be served from the web UI, because its inline script is exactly
   what the Content-Security-Policy forbids; the import page says where it is.
 
+## Found after release
+
+- **Every form was refused in Firefox ("Not allowed", 403).** The first build sent
+  `Referrer-Policy: no-referrer`. By the Fetch spec a browser then sends `Origin: null` on a
+  same-origin form POST (Firefox does; checked against Firefox 160 with a probe page), so the
+  `Origin` guard refused each one. The tests set `Origin` by hand and never saw it. The policy is now
+  `same-origin`: no Referer goes to another site, and the real `Origin` is sent here. A test models
+  the browser rule and fails if the policy goes back to `no-referrer`.

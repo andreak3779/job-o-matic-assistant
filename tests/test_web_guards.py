@@ -198,6 +198,30 @@ def test_the_policy_forbids_framing_other_origins_and_inline_code() -> None:
     assert guards.HEADERS["Cache-Control"] == "no-store"
 
 
+def _origin_a_browser_sends(referrer_policy: str) -> str:
+    """The ``Origin`` of a same-origin form POST, by the Fetch spec ("append a request Origin header").
+
+    Under ``no-referrer`` the serialized origin is "null", even to the same site. Firefox follows
+    this; probed with Firefox 160 against a page sending each policy.
+    """
+    return "null" if referrer_policy == "no-referrer" else BASE
+
+
+def test_a_form_post_from_our_own_pages_carries_the_origin_the_guard_wants(signed_in) -> None:  # type: ignore[no-untyped-def]
+    # Regression: with ``Referrer-Policy: no-referrer`` Firefox sent ``Origin: null`` and every form
+    # on the site came back "Not allowed".
+    page = signed_in.get("/", base_url=BASE)
+    origin = _origin_a_browser_sends(page.headers["Referrer-Policy"])
+    assert origin == BASE
+    assert _post(signed_in, headers={"Origin": origin}).status_code == 200
+
+
+def test_the_referrer_policy_leaks_nothing_to_other_sites() -> None:
+    # Pages hold a real profile; no Referer may go to another origin (a link a person clicks).
+    assert guards.HEADERS["Referrer-Policy"] in {"same-origin", "strict-origin", "origin"}
+    assert guards.HEADERS["Referrer-Policy"] != "no-referrer"
+
+
 def test_no_cross_origin_sharing_header_is_ever_sent(signed_in) -> None:  # type: ignore[no-untyped-def]
     reply = signed_in.get("/", headers={"Origin": "http://evil.test"}, base_url=BASE)
     assert not [h for h in reply.headers.keys() if h.lower().startswith("access-control-")]
