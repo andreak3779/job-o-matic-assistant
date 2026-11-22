@@ -8,8 +8,9 @@
 <link rel="icon" href="{{ url_for('brand', name='favicon.ico') }}">
 <link rel="stylesheet" href="{{ url_for('brand', name='tokens.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
-<meta name="htmx-config" content='{"selfRequestsOnly":true,"allowEval":false,"allowScriptTags":false,"historyEnabled":false,"includeIndicatorStyles":false}'>
+<meta name="htmx-config" content='{"selfRequestsOnly":true,"allowEval":false,"allowScriptTags":false,"historyEnabled":false,"includeIndicatorStyles":false,"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"400","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
 <script src="{{ url_for('static', filename='htmx.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
 <header class="brand">
@@ -24,6 +25,7 @@
   </div>
 </header>
 <main>
+<p id="request-error" class="alert error" role="alert" hidden></p>
 {% block main %}{% endblock %}
 </main>
 <footer class="page">This page runs on your computer only. Nothing is sent anywhere else.</footer>

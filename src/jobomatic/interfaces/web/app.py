@@ -35,7 +35,7 @@ ERROR_TEXT = {
         "Not allowed",
         "This page only opens from the address printed in the terminal by `jobo web`, "
         "which works once. Start `jobo web` again if you closed that window.",
-    ),
+    ),  # the fallback; a guard refusal names its own reason (guards.REFUSALS)
     404: ("Not found", "There is nothing at this address."),
     413: ("Too large", "That is more than this page accepts (2 MB). Use a smaller file."),
     500: ("Something went wrong", "The page could not be made. The terminal has the details."),
@@ -109,6 +109,8 @@ def create_app(*, launch_token: str, pages: tuple[Page, ...] = PAGES) -> Flask:
 
     def error_page(error: HTTPException):  # type: ignore[no-untyped-def]
         title, text = ERROR_TEXT.get(error.code or 500, ERROR_TEXT[500])
+        if error.code == 403 and error.description in guards.REFUSALS:
+            title, text = guards.REFUSALS[error.description]
         return render_template("error.html", title=title, text=text), error.code or 500
 
     for code in ERROR_TEXT:

@@ -389,3 +389,11 @@ Built in nine commits on one branch, in the order of "Follow-ups", security befo
   `Origin` guard refused each one. The tests set `Origin` by hand and never saw it. The policy is now
   `same-origin`: no Referer goes to another site, and the real `Origin` is sent here. A test models
   the browser rule and fails if the policy goes back to `no-referrer`.
+- **A refusal now says why.** The 403 page was one fixed text for every guard, which pointed at the
+  launch address when the real cause was the `Origin` header. Each guard now names its reason
+  (`guards.REFUSALS`: host, no session, launch token, origin, form token), shows it on the page, and
+  logs it in the terminal. No token is ever logged.
+- **A failed partial update is visible.** htmx does not swap an error reply, so a refused status
+  change on the Applications page changed nothing on screen. A 400 now swaps the row back with its
+  message (the one error `responseHandling` swaps), and any other failure, or a server that has gone,
+  is shown by `static/app.js`, our only script besides htmx, which writes text and never markup.

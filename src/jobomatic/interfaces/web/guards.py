@@ -22,7 +22,8 @@ from __future__ import annotations
 import hmac
 import secrets
 
-from flask import Flask, Response, abort, current_app, redirect, request, session
+from flask import Flask, Response, current_app, redirect, request, session
+from werkzeug.exceptions import Forbidden
 from werkzeug.wrappers import Response as BaseResponse
 
 # default-src 'self': nothing is fetched from another origin. No inline script or style is allowed,
@@ -53,6 +54,52 @@ HEADERS = {
 
 SAFE_METHODS = ("GET", "HEAD")
 
+# Why a request was refused, in words a person can act on. The key is the reason's name; the error
+# page shows the text and the terminal gets the key and a short detail. Nothing here repeats the
+# launch token or the form token.
+REFUSALS = {
+    "host": (
+        "Wrong address",
+        "This address does not match the one the server is listening on. Open the address that "
+        "`jobo web` printed in the terminal (127.0.0.1 or localhost, with the same port).",
+    ),
+    "no_session": (
+        "Not signed in",
+        "Your browser has no valid session for this server. That happens when the page was opened "
+        "without the launch address, or after `jobo web` was restarted. Open the address printed "
+        "in the terminal by `jobo web`; it works once, so start `jobo web` again if you used it.",
+    ),
+    "token": (
+        "Launch address not accepted",
+        "That launch address was already used, or it is not the one this server printed. It works "
+        "once. Start `jobo web` again for a new one.",
+    ),
+    "origin": (
+        "The browser did not say where the form came from",
+        "A form was sent without an Origin header that matches this server, so it was refused as "
+        "a precaution. Go back, reload the page and try again. If it keeps happening, note your "
+        "browser and its version; the terminal shows what it sent.",
+    ),
+    "csrf": (
+        "This form is out of date",
+        "The form's security token is missing or does not match this session, usually because the "
+        "page was loaded before `jobo web` was restarted or in another window. Reload the page and "
+        "send it again.",
+    ),
+}
+
+
+def refuse(reason: str, detail: str = "") -> None:
+    """Stop the request with a 403 that says why, and log the reason (never a token) in the terminal."""
+    current_app.logger.warning(
+        "refused %s %s: %s%s",
+        request.method,
+        request.path,
+        reason,
+        f" ({detail})" if detail else "",
+    )
+    raise Forbidden(description=reason)
+
 
 def install(app: Flask) -> None:
     """Attach the two hooks. Called once, by ``create_app``."""
@@ -69,17 +116,18 @@ def install(app: Flask) -> None:
 
 def check_request() -> BaseResponse | None:
     if request.host not in current_app.config["ALLOWED_HOSTS"]:
-        abort(403)
+        refuse("host", f"Host {request.host!r}")
     if request.path == "/" and "token" in request.args and request.method in SAFE_METHODS:
         return _exchange_launch_token()
     if not session.get("ok"):
-        abort(403)
+        refuse("no_session")
     if request.method not in SAFE_METHODS:
-        if request.headers.get("Origin") != f"http://{request.host}":
-            abort(403)
+        origin = request.headers.get("Origin")
+        if origin != f"http://{request.host}":
+            refuse("origin", f"Origin {origin!r}, expected 'http://{request.host}'")
         sent = request.form.get("csrf") or request.headers.get("X-CSRF-Token") or ""
         if not hmac.compare_digest(sent, str(session.get("csrf", ""))):
-            abort(403)
+            refuse("csrf")
     return None
 
 
@@ -89,7 +137,7 @@ def _exchange_launch_token() -> BaseResponse:
     with config["LAUNCH_LOCK"]:
         offered = request.args.get("token", "")
         if config["LAUNCH_USED"] or not hmac.compare_digest(offered, config["LAUNCH_TOKEN"]):
-            abort(403)
+            refuse("token", "already used" if config["LAUNCH_USED"] else "does not match")
         config["LAUNCH_USED"] = True
     session.clear()
     session["ok"] = True
