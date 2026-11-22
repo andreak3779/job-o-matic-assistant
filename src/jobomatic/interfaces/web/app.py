@@ -24,6 +24,7 @@ from jobomatic.interfaces.web import (
     profile_page,
 )
 from jobomatic.interfaces.web.downloads import Downloads
+from jobomatic.interfaces.web.results import Results
 
 BRANDING = Path(__file__).resolve().parents[2] / "branding"
 # The only branding files a page may ask for, by name.
@@ -73,6 +74,7 @@ def create_app(*, launch_token: str, pages: tuple[Page, ...] = PAGES) -> Flask:
         TESTING=False,
     )
     app.extensions["downloads"] = Downloads()
+    app.extensions["results"] = Results()
     guards.install(app)
     fit_page.register(app)
     applications_page.register(app)

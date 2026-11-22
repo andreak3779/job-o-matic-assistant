@@ -397,3 +397,17 @@ Built in nine commits on one branch, in the order of "Follow-ups", security befo
   change on the Applications page changed nothing on screen. A 400 now swaps the row back with its
   message (the one error `responseHandling` swaps), and any other failure, or a server that has gone,
   is shown by `static/app.js`, our only script besides htmx, which writes text and never markup.
+- **A form that ran a command redirects to its result.** Fit, Documents and Profile answered the POST
+  with the page itself, so a reload made the browser offer to send the form again, and on Documents
+  that wrote a second set of files. They now answer `303` to `/<page>/result/<id>`, a GET served from
+  `results.py`, which keeps the newest 16 results in memory under an id the server issued (nothing is
+  written to disk). A reload shows the same result and runs nothing; an id that is gone says so and
+  offers the form. The Pluralsight page is not covered: its dry run changes nothing and its Apply
+  already takes its upload once.
+- **The launch address opened twice.** A browser that is already signed in and opens `/?token=…`
+  again (a reload, or the address opened twice) is sent to `/` instead of seeing a 403; the token is
+  not spent and not a second way in, so another browser still cannot use it. A port that is taken
+  already gets a message from Werkzeug, so `--port` needed no change.
+- **Small hardening.** `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy` are
+  `same-origin`, `Permissions-Policy` turns off camera, microphone and location, and the download ids
+  are capped at the newest 200.

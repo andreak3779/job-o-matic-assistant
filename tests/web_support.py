@@ -29,9 +29,14 @@ class Browser:
         return self.client.get(path, base_url=BASE, **kw)
 
     def post(self, path: str, data: dict | None = None, **kw):  # type: ignore[no-untyped-def]
-        """A form post the way a browser makes it: its own origin and the form token."""
+        """A form post the way a browser makes it: its own origin and the form token.
+
+        A post that ran a command answers with a redirect to its result page (ADR 0025); this follows
+        it as a browser does. ``follow_redirects=False`` shows the redirect itself.
+        """
         fields = {"csrf": self.csrf, **(data or {})}
         headers = {"Origin": BASE, **kw.pop("headers", {})}
+        kw.setdefault("follow_redirects", True)
         return self.client.post(path, data=fields, headers=headers, base_url=BASE, **kw)
 
 

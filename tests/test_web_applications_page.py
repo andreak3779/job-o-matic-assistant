@@ -71,6 +71,7 @@ def test_a_status_change_is_recorded_and_shown(browser: Browser) -> None:
     reply = browser.post(
         f"/applications/{application_id}/status",
         {"status": "phone_screen", "next_step": "Call on Friday"},
+        follow_redirects=False,
     )
     assert reply.status_code == 302 and reply.headers["Location"].endswith("/applications")
     page = _page(browser.get("/applications"))
@@ -153,7 +154,7 @@ def test_marking_applied_asks_first_and_names_the_posting(browser: Browser) -> N
 
 def test_marking_applied_happens_only_on_the_confirmed_post(browser: Browser) -> None:
     application_id = _draft("Acme", "Dev")
-    reply = browser.post(f"/applications/{application_id}/applied")
+    reply = browser.post(f"/applications/{application_id}/applied", follow_redirects=False)
     assert reply.status_code == 302
     done = apps.get_application(application_id)
     assert done.status == "applied" and done.applied_on
