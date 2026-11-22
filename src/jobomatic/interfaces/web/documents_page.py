@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Flask, current_app, render_template, request
+from flask import Flask, current_app, redirect, render_template, request, url_for
 
 from jobomatic import gate
 from jobomatic.commands import cover_letter, resume
@@ -89,19 +89,44 @@ def register(app: Flask) -> None:
             stopped = steps[-1][1]
         # An override is offered only when the last refusal names one that is not already given.
         asked = stopped.override if stopped.refused and stopped.override in OVERRIDES else None
-        return _page(
-            posting=posting,
-            steps=steps,
-            downloads=downloads,
-            asked=asked,
-            confirmed=confirmed,
+        held = current_app.extensions["results"].hold(
+            "documents",
+            _fields(
+                posting=posting,
+                steps=steps,
+                downloads=downloads,
+                asked=asked,
+                confirmed=confirmed,
+            ),
         )
+        return redirect(url_for("documents_result", result_id=held), code=303)
+
+    @app.get("/documents/result/<result_id>")
+    def documents_result(result_id: str):  # type: ignore[no-untyped-def]
+        fields = current_app.extensions["results"].get("documents", result_id)
+        if fields is None:
+            return _page(posting="", problem=GONE), 404
+        return _render(fields)
 
 
-def _page(**fields: Any) -> str:
+GONE = (
+    "That result is no longer held (the server was restarted, or newer results replaced it). "
+    "Your files are still in your vault's outputs/ folder. Paste the posting again to see this page."
+)
+
+
+def _fields(**fields: Any) -> dict[str, Any]:
     fields.setdefault("problem", None)
     fields.setdefault("steps", [])
     fields.setdefault("downloads", [])
     fields.setdefault("asked", None)
     fields.setdefault("confirmed", ())
+    return fields
+
+
+def _render(fields: dict[str, Any]) -> str:
     return render_template("documents.html", overrides=OVERRIDES, **fields)
+
+
+def _page(**fields: Any) -> str:
+    return _render(_fields(**fields))

@@ -8,12 +8,17 @@ from __future__ import annotations
 
 import secrets
 import threading
+from collections import OrderedDict
 from pathlib import Path
+
+# A person opens a few result pages at a time; each lists a handful of files. Older ids are dropped,
+# so a long session does not collect every path ever issued. The files stay in the vault's outputs/.
+MAX_ISSUED = 200
 
 
 class Downloads:
     def __init__(self) -> None:
-        self._paths: dict[str, Path] = {}
+        self._paths: OrderedDict[str, Path] = OrderedDict()
         self._lock = threading.Lock()
 
     def issue(self, path: Path) -> str:
@@ -21,6 +26,8 @@ class Downloads:
         download_id = secrets.token_urlsafe(16)
         with self._lock:
             self._paths[download_id] = path
+            while len(self._paths) > MAX_ISSUED:
+                self._paths.popitem(last=False)
         return download_id
 
     def get(self, download_id: str) -> Path | None:

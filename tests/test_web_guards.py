@@ -76,6 +76,22 @@ def test_the_launch_token_starts_a_session_and_leaves_the_address(client) -> Non
     assert client.get("/", base_url=BASE).status_code == 200
 
 
+def test_opening_the_launch_address_again_when_signed_in_just_goes_home(
+    app: Flask, signed_in
+) -> None:  # type: ignore[no-untyped-def]
+    # Reloading the address, or opening it twice in one browser, is not an error for that browser...
+    again = signed_in.get(f"/?token={TOKEN}", base_url=BASE)
+    assert again.status_code == 302 and again.headers["Location"] == "/"
+    assert signed_in.get("/", base_url=BASE).status_code == 200
+    # ...and it is not a second way in: another browser still cannot use the token.
+    assert app.test_client().get(f"/?token={TOKEN}", base_url=BASE).status_code == 403
+
+
+def test_a_signed_in_browser_gains_nothing_from_a_wrong_token(signed_in) -> None:  # type: ignore[no-untyped-def]
+    reply = signed_in.get("/?token=whatever", base_url=BASE)
+    assert reply.status_code == 302 and reply.headers["Location"] == "/"
+
+
 def test_the_launch_token_works_once(app: Flask) -> None:
     first, second = app.test_client(), app.test_client()
     assert first.get(f"/?token={TOKEN}", base_url=BASE).status_code == 302
@@ -201,12 +217,14 @@ def test_a_used_launch_token_says_so_rather_than_blaming_the_session(app: Flask)
     assert _title(reply) == guards.REFUSALS["token"][0]
 
 
-def test_a_refusal_is_logged_with_its_reason_and_never_a_token(signed_in, caplog) -> None:  # type: ignore[no-untyped-def]
+def test_a_refusal_is_logged_with_its_reason_and_never_a_token(
+    signed_in, app: Flask, caplog
+) -> None:  # type: ignore[no-untyped-def]
     with caplog.at_level("WARNING"):
         signed_in.post(
             "/__echo", data={"csrf": _csrf(signed_in)}, headers={"Origin": "null"}, base_url=BASE
         )
-        signed_in.get("/?token=guess-123", base_url=BASE)
+        app.test_client().get("/?token=guess-123", base_url=BASE)
     log = caplog.text
     assert "refused POST /__echo: origin" in log and "'null'" in log
     assert "refused GET /: token" in log
@@ -271,6 +289,14 @@ def test_the_referrer_policy_leaks_nothing_to_other_sites() -> None:
     # Pages hold a real profile; no Referer may go to another origin (a link a person clicks).
     assert guards.HEADERS["Referrer-Policy"] in {"same-origin", "strict-origin", "origin"}
     assert guards.HEADERS["Referrer-Policy"] != "no-referrer"
+
+
+def test_other_pages_cannot_hold_our_windows_or_files_and_no_device_is_asked_for() -> None:
+    assert guards.HEADERS["Cross-Origin-Opener-Policy"] == "same-origin"
+    assert guards.HEADERS["Cross-Origin-Resource-Policy"] == "same-origin"
+    policy = guards.HEADERS["Permissions-Policy"]
+    for feature in ("camera", "microphone", "geolocation"):
+        assert f"{feature}=()" in policy
 
 
 def test_no_cross_origin_sharing_header_is_ever_sent(signed_in) -> None:  # type: ignore[no-untyped-def]

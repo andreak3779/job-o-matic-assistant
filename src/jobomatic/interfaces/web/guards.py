@@ -9,6 +9,8 @@ route, passes one ``before_request`` hook, and no route can skip it:
 * the only way in is a launch token that works once: it is exchanged for a session cookie
   (``HttpOnly``, ``SameSite=Strict``, no ``Domain``) and the browser is redirected to the bare
   address, so the token is not left in the history or in a ``Referer``;
+* a browser that is already signed in and opens the launch address again is sent on to the bare
+  address (the token stays unused, so it is not a second way in);
 * every request that is not a ``GET`` or ``HEAD`` also needs an ``Origin`` equal to this server and
   the session's form token.
 
@@ -50,6 +52,11 @@ HEADERS = {
     "Referrer-Policy": "same-origin",
     "Cache-Control": "no-store",
     "X-Frame-Options": "DENY",
+    # No other page may hold a reference to a window of ours, or embed our files, and the pages ask
+    # for no device. Cheap, and they cost nothing here: the pages load only from this server.
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 }
 
 SAFE_METHODS = ("GET", "HEAD")
@@ -118,6 +125,10 @@ def check_request() -> BaseResponse | None:
     if request.host not in current_app.config["ALLOWED_HOSTS"]:
         refuse("host", f"Host {request.host!r}")
     if request.path == "/" and "token" in request.args and request.method in SAFE_METHODS:
+        if session.get("ok"):  # opened twice in the same browser, or the address was reloaded
+            return redirect(
+                "/"
+            )  # already signed in: nothing to exchange, and the token stays unused
         return _exchange_launch_token()
     if not session.get("ok"):
         refuse("no_session")
