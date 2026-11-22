@@ -53,7 +53,6 @@ PORTFOLIO_HOOKS = {
     "CookingTime": ".NET 10 Blazor legacy migration, layered tests, blocking CI coverage gate",
     "MoviesApp": "Angular SSR + ASP.NET Core, containerized with Docker Compose",
     "job-o-matic-assistant": "Python MCP server and CLI with tests and CI gates",
-    "ai-job-search-workflow": "Claude API + Python job-application automation",
     "Resume_Site": "GitHub Actions CI/CD",
     "awk_linux_scripts": "Linux maintenance scripts",
 }
