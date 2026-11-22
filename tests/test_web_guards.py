@@ -167,6 +167,57 @@ def test_a_cross_origin_preflight_is_refused(client) -> None:  # type: ignore[no
     assert reply.status_code == 403
 
 
+# -- a refusal says why ------------------------------------------------------------------------
+
+
+def _title(reply) -> str:  # type: ignore[no-untyped-def]
+    assert reply.status_code == 403
+    body = reply.get_data(as_text=True)
+    return body.split("<h1>", 1)[1].split("</h1>", 1)[0]
+
+
+def test_each_refusal_names_its_own_reason_on_the_page(app: Flask, client) -> None:  # type: ignore[no-untyped-def]
+    titles = {
+        "host": _title(client.get("/", headers={"Host": "evil.test:5000"}, base_url=BASE)),
+        "no_session": _title(client.get("/", base_url=BASE)),
+        "token": _title(client.get("/?token=nope", base_url=BASE)),
+    }
+    client.get(f"/?token={TOKEN}", base_url=BASE)
+    csrf = _csrf(client)
+    titles["origin"] = _title(
+        client.post("/__echo", data={"csrf": csrf}, headers={"Origin": "null"}, base_url=BASE)
+    )
+    titles["csrf"] = _title(
+        client.post("/__echo", data={"csrf": "x"}, headers={"Origin": BASE}, base_url=BASE)
+    )
+    for reason, title in titles.items():
+        assert title == guards.REFUSALS[reason][0], reason
+    assert len(set(titles.values())) == len(titles)  # no two reasons share a page
+
+
+def test_a_used_launch_token_says_so_rather_than_blaming_the_session(app: Flask) -> None:
+    app.test_client().get(f"/?token={TOKEN}", base_url=BASE)
+    reply = app.test_client().get(f"/?token={TOKEN}", base_url=BASE)
+    assert _title(reply) == guards.REFUSALS["token"][0]
+
+
+def test_a_refusal_is_logged_with_its_reason_and_never_a_token(signed_in, caplog) -> None:  # type: ignore[no-untyped-def]
+    with caplog.at_level("WARNING"):
+        signed_in.post(
+            "/__echo", data={"csrf": _csrf(signed_in)}, headers={"Origin": "null"}, base_url=BASE
+        )
+        signed_in.get("/?token=guess-123", base_url=BASE)
+    log = caplog.text
+    assert "refused POST /__echo: origin" in log and "'null'" in log
+    assert "refused GET /: token" in log
+    assert "guess-123" not in log and TOKEN not in log and _csrf(signed_in) not in log
+
+
+def test_every_refusal_reason_has_words_for_a_person() -> None:
+    for title, text in guards.REFUSALS.values():
+        assert title and len(text) > 40
+
+
 # -- every response ----------------------------------------------------------------------------
 
 
@@ -196,6 +247,30 @@ def test_the_policy_forbids_framing_other_origins_and_inline_code() -> None:
         assert part in policy
     assert "unsafe-inline" not in policy and "unsafe-eval" not in policy and "*" not in policy
     assert guards.HEADERS["Cache-Control"] == "no-store"
+
+
+def _origin_a_browser_sends(referrer_policy: str) -> str:
+    """The ``Origin`` of a same-origin form POST, by the Fetch spec ("append a request Origin header").
+
+    Under ``no-referrer`` the serialized origin is "null", even to the same site. Firefox follows
+    this; probed with Firefox 160 against a page sending each policy.
+    """
+    return "null" if referrer_policy == "no-referrer" else BASE
+
+
+def test_a_form_post_from_our_own_pages_carries_the_origin_the_guard_wants(signed_in) -> None:  # type: ignore[no-untyped-def]
+    # Regression: with ``Referrer-Policy: no-referrer`` Firefox sent ``Origin: null`` and every form
+    # on the site came back "Not allowed".
+    page = signed_in.get("/", base_url=BASE)
+    origin = _origin_a_browser_sends(page.headers["Referrer-Policy"])
+    assert origin == BASE
+    assert _post(signed_in, headers={"Origin": origin}).status_code == 200
+
+
+def test_the_referrer_policy_leaks_nothing_to_other_sites() -> None:
+    # Pages hold a real profile; no Referer may go to another origin (a link a person clicks).
+    assert guards.HEADERS["Referrer-Policy"] in {"same-origin", "strict-origin", "origin"}
+    assert guards.HEADERS["Referrer-Policy"] != "no-referrer"
 
 
 def test_no_cross_origin_sharing_header_is_ever_sent(signed_in) -> None:  # type: ignore[no-untyped-def]

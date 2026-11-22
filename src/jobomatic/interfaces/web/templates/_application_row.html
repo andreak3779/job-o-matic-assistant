@@ -5,6 +5,7 @@
   <td>{{ row.next_step or "" }}</td>
   <td>{{ row.updated }}</td>
   <td>
+    {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
     <form method="post" action="{{ url_for('application_status', application_id=row.id) }}" class="inline"
           hx-post="{{ url_for('application_status', application_id=row.id) }}" hx-target="closest tr" hx-swap="outerHTML">
       <input type="hidden" name="csrf" value="{{ csrf }}">

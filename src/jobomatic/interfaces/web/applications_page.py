@@ -49,7 +49,8 @@ def register(app: Flask) -> None:
         status = request.form.get("status", "")
         if status not in SETTABLE:
             return _refuse(
-                "Pick one of the statuses in the list. Use “Mark applied” to record a submission."
+                "Pick one of the statuses in the list. Use “Mark applied” to record a submission.",
+                application_id,
             )
         result = applications.set_status(
             application_id,
@@ -60,7 +61,8 @@ def register(app: Flask) -> None:
         done = show(result)
         if not done.ok:
             return _refuse(
-                " ".join(m.text for m in done.alerts + done.info) or "Could not change the status."
+                " ".join(m.text for m in done.alerts + done.info) or "Could not change the status.",
+                application_id,
             )
         if request.headers.get("HX-Request"):
             return render_template(
@@ -89,5 +91,15 @@ def register(app: Flask) -> None:
         return redirect(url_for("applications_page"))
 
 
-def _refuse(text: str):  # type: ignore[no-untyped-def]
+def _refuse(text: str, application_id: str):  # type: ignore[no-untyped-def]
+    """A 400. A partial update gets the row back, unchanged, with the reason in it; htmx swaps a 400,
+    so the person sees why. An ordinary form post gets the full page."""
+    row = _find(application_id)
+    if request.headers.get("HX-Request"):
+        if row is None:
+            abort(404)  # htmx does not swap a 404; the page's script shows the reason
+        reply = render_template(
+            "_application_row.html", row=row, settable=SETTABLE, statuses=STATUSES, error=text
+        )
+        return reply, 400
     return render_template("applications_problem.html", text=text), 400

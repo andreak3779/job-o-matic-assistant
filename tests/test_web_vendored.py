@@ -39,6 +39,25 @@ def test_the_settings_are_the_safe_ones() -> None:
     assert settings["includeIndicatorStyles"] is False
 
 
+def test_only_a_400_and_success_are_swapped_so_no_error_page_lands_in_a_row() -> None:
+    meta = re.search(r"<meta name=\"htmx-config\" content='([^']+)'", BASE)
+    assert meta
+    rules = json.loads(meta.group(1))["responseHandling"]
+    swapped = {r["code"] for r in rules if r["swap"]}
+    assert swapped == {"[23]..", "400"}
+    # Anything else that fails is an error event, which static/app.js turns into a visible message.
+    assert {"code": "[45]..", "swap": False, "error": True} in rules
+
+
+def test_the_failure_script_is_ours_loaded_from_this_server_and_writes_text_only() -> None:
+    assert "{{ url_for('static', filename='app.js') }}" in BASE
+    script = (WEB / "static" / "app.js").read_text(encoding="utf-8")
+    for event in ("htmx:responseError", "htmx:sendError"):
+        assert event in script
+    for unsafe in ("innerHTML", "outerHTML", "insertAdjacentHTML", "eval(", "document.write"):
+        assert unsafe not in script, unsafe
+
+
 def test_every_setting_named_is_one_this_version_has() -> None:
     meta = re.search(r"<meta name=\"htmx-config\" content='([^']+)'", BASE)
     assert meta
@@ -47,9 +66,11 @@ def test_every_setting_named_is_one_this_version_has() -> None:
         assert key in source, f"{key} is not an htmx setting in this version"
 
 
-def test_the_file_is_loaded_from_this_server_only() -> None:
+def test_the_scripts_are_loaded_from_this_server_only() -> None:
+    # htmx, then our own small file; nothing else, and always through url_for (never a full URL).
     assert re.findall(r"<script[^>]*\ssrc=\"([^\"]+)\"", BASE) == [
-        "{{ url_for('static', filename='htmx.min.js') }}"
+        "{{ url_for('static', filename='htmx.min.js') }}",
+        "{{ url_for('static', filename='app.js') }}",
     ]
 
 

@@ -99,6 +99,32 @@ def test_a_partial_update_returns_just_the_row(browser: Browser) -> None:
     assert "<html" not in body
 
 
+def test_a_refused_partial_update_returns_the_row_with_the_reason(browser: Browser) -> None:
+    application_id = _draft()
+    before = _log_bytes()
+    reply = browser.post(
+        f"/applications/{application_id}/status",
+        {"status": "applied"},
+        headers={"HX-Request": "true"},
+    )
+    body = _page(reply)
+    # 400 is the one error htmx swaps (see the htmx-config in base.html): the row, with its message.
+    assert reply.status_code == 400
+    assert body.lstrip().startswith("<tr") and f'id="row-{application_id}"' in body
+    assert "<html" not in body
+    assert 'role="alert"' in body and "Mark applied" in body
+    assert _log_bytes() == before
+
+
+def test_a_partial_update_for_an_unknown_row_is_a_404_that_is_not_swapped(
+    browser: Browser,
+) -> None:
+    reply = browser.post(
+        "/applications/no-such-id/status", {"status": "offer"}, headers={"HX-Request": "true"}
+    )
+    assert reply.status_code == 404  # the page's script shows the reason; no page goes in a row
+
+
 def test_a_status_control_cannot_set_applied(browser: Browser) -> None:
     application_id = _draft()
     before = _log_bytes()
