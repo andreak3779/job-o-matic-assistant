@@ -45,6 +45,7 @@ LABELS = {
     "education": "Education",
     "level": "Level",
     "soft skill": "Soft skill",
+    "eligibility": "Eligibility",
 }
 
 # Title words that mark a senior or leading role. Listed for the user to read; never scored.
@@ -54,7 +55,7 @@ CHECK_NOTE = "stated as required — check this yourself"
 
 @dataclass(frozen=True)
 class SoftRequirement:
-    kind: str  # "years", "education", "level" or "soft skill"
+    kind: str  # "years", "education", "level", "soft skill" or "eligibility"
     line: str
     note: str
     minimum_years: int | None = None
@@ -75,6 +76,19 @@ def minimum_years(text: str) -> int | None:
 def has_years_figure(text: str) -> bool:
     """True when the line carries an explicit years figure ("5+ years"); "senior-level" alone is not."""
     return _YEARS_RE.search(text) is not None
+
+
+# "Authorized to work in Canada": a condition of being hired, not a skill. Listed for the user to
+# read; never scored, so it can never read as a gap.
+_ELIGIBILITY_RE = re.compile(
+    r"\b(?:author[iz]{1,2}ed|eligible|legally\s+(?:entitled|permitted|able|eligible)|"
+    r"right|permitted)\s+to\s+work\b|\bwork\s+(?:permit|authori[sz]ation)\b",
+    re.IGNORECASE,
+)
+
+
+def is_eligibility(text: str) -> bool:
+    return _ELIGIBILITY_RE.search(text) is not None
 
 
 def is_education(text: str) -> bool:
@@ -98,6 +112,8 @@ def classify(line: str) -> list[SoftRequirement]:
         found.append(
             SoftRequirement("education", line, EQUIVALENT_NOTE if accepted else CHECK_NOTE)
         )
+    if is_eligibility(line):
+        found.append(SoftRequirement("eligibility", line, CHECK_NOTE))
     return found
 
 

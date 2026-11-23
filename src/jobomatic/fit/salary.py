@@ -24,11 +24,20 @@ from dataclasses import dataclass
 from jobomatic.fit.constraints import SearchConstraints
 
 _NUM = r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?"
+# The amount carries a "$" ("C$75,000"), a spelled-out currency code in place of one
+# ("CAD 134,000 - 175,000"), or a "k" figure followed by its code ("100K CAD/yr - 115K CAD/yr").
+# A code may also follow either end of a range ("$126,225 CAD - $184,800 CAD").
+_CODE = r"USD|CAD"
 _PAY_RE = re.compile(
-    r"(?<![A-Za-z])(?:(?P<cur1>USD|CAD|US|CA|C|A)\s?)?\$\s?(?P<lo>" + _NUM + r")\s?(?P<lok>[kK])?"
+    r"(?<![A-Za-z0-9,.])"
+    r"(?:(?:(?P<cur1>USD|CAD|US|CA|C|A)\s?)?(?P<dollar>\$)\s?|(?P<cur3>" + _CODE + r")\s?)?"
+    r"(?P<lo>" + _NUM + r")\s?(?P<lok>[kK])?(?:\s?(?P<cur4>" + _CODE + r")\b)?"
+    r"(?:\s?/\s?(?:yr|year|hr|hour|annum)\b(?=\s*(?:-|–|—|to)\s))?"
     r"(?:\s*(?:-|–|—|to)\s*(?:(?P<cur2>USD|CAD|US|CA|C|A)\s?)?\$?\s?(?P<hi>"
     + _NUM
-    + r")\s?(?P<hik>[kK])?)?"
+    + r")\s?(?P<hik>[kK])?(?:\s?(?P<cur5>"
+    + _CODE
+    + r")\b)?)?"
     r"(?![\w])"
 )
 _HOURLY_RE = re.compile(r"/\s?h(?:ou)?r|per\s+hour|an\s+hour|hourly|/\s?hour", re.IGNORECASE)
@@ -112,6 +121,10 @@ def find_pay(text: str) -> list[Pay]:
         after = text[match.end() : match.end() + 25]
         if _AFTER_SKIP_RE.match(after) or _BEFORE_SKIP_RE.search(before):
             continue
+        if not (match["dollar"] or match["cur3"]):
+            # No "$" and no leading code: only "100K CAD" (a k figure with its code) is pay.
+            if not ((match["cur4"] or match["cur5"]) and (match["lok"] or match["hik"])):
+                continue
         low = _scaled(match["lo"], match["lok"])
         # "$90-110k": a lone k on the upper bound applies to both ends.
         high_k = match["hik"] or (match["lok"] if match["hi"] is None else None)
@@ -137,7 +150,9 @@ def find_pay(text: str) -> list[Pay]:
         if period == "annual" and high < _PLAUSIBLE_ANNUAL_MIN:
             continue
 
-        code = (match["cur1"] or match["cur2"] or "").upper()
+        code = (
+            match["cur1"] or match["cur2"] or match["cur3"] or match["cur4"] or match["cur5"] or ""
+        ).upper()
         trailing = _TRAILING_CURRENCY_RE.match(text[match.end() : match.end() + 8])
         if trailing:
             code = trailing.group(1)

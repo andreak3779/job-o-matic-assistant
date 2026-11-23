@@ -959,3 +959,89 @@ def test_mvc_razor_architectures_is_keyed_by_its_normalized_form() -> None:
 )
 def test_mvc_razor_architecture_phrasings_all_expand_to_aspnet_core_mvc(phrase: str) -> None:
     assert "asp.net core mvc" in skill_match_terms(phrase)
+
+
+# ── part B and the umbrella fallback (found by running real LinkedIn pastes) ─────────────
+
+
+def _fit_with_unscored(required: list[str], unscored: tuple[str, ...]):
+    from jobomatic.bootstrap import load_profile
+    from jobomatic.fit.engine import rate_fit
+
+    return rate_fit(required, [], load_profile(), unscored_required=unscored)
+
+
+def test_few_skills_and_unread_required_lines_is_low_confidence() -> None:
+    result = _fit_with_unscored(["C#", "SQL"], ("Customer obsessed. You put the customer first",))
+    assert result.low_confidence
+    assert "Only 2 required skills could be read" in (result.low_confidence_message or "")
+    assert "1 required line named no skill" in (result.low_confidence_message or "")
+
+
+def test_few_skills_that_were_all_read_is_not_low_confidence() -> None:
+    assert not _fit_with_unscored(["C#", "SQL"], ()).low_confidence
+
+
+def test_four_skills_with_unread_lines_is_not_low_confidence_on_count_alone() -> None:
+    result = _fit_with_unscored(["C#", "SQL", "Azure", "Docker"], ("A sentence naming no skill",))
+    assert not result.low_confidence
+
+
+def test_a_posting_with_no_readable_skill_is_low_confidence_and_says_so() -> None:
+    result = _fit_with_unscored([], ())
+    assert result.low_confidence
+    assert "No required skills could be read" in (result.low_confidence_message or "")
+
+
+def test_the_fit_table_shows_the_few_skills_notice() -> None:
+    from jobomatic.fit.engine import render_fit_table
+
+    table = render_fit_table(_fit_with_unscored(["C#"], ("Passionate about our mission",)))
+    assert "**Low-confidence result** — Only 1 required skill could be read" in table
+
+
+def test_a_sentence_naming_an_umbrella_is_rated_by_the_umbrellas_parts() -> None:
+    """IDENTOS: "Experience using AI-assisted software development tools" (six words, rated
+    whole) never tried its own `AI`, so it read 🔴 though the profile has AI coding-tool evidence."""
+    result = _rated(["Experience using AI-assisted software development tools"])
+    assert result.required[0].status != "gap"
+
+
+def test_a_sentence_naming_a_plain_term_is_not_credited_with_it() -> None:
+    """ "Azure Data Factory and data pipelines" names Azure, and Azure is not Data Factory."""
+    result = _rated(["Azure Data Factory and data pipelines"])
+    assert result.required[0].status == "gap"
+
+
+# --- Round three ---------------------------------------------------------------------------
+
+
+def test_a_sentence_naming_only_a_skill_is_rated_by_that_skill() -> None:
+    """AspiringIT: six words, rated whole, "React" was never looked for."""
+    result = _rated(["Experience building frontend applications using React"])
+    assert result.required[0].status == "match"
+
+
+def test_the_python_row_is_not_matched_through_the_word_work() -> None:
+    result = _rated(["work experience with python"])
+    assert "[work]" not in result.required[0].evidence
+
+
+def test_cloud_native_is_met_by_azure_but_azure_is_not_met_by_cloud_native() -> None:
+    result = _rated(["cloud-native", "Azure"])
+    assert result.required[0].status == "match"
+    assert "via" in result.required[0].evidence
+
+
+def test_a_nice_to_have_that_is_also_required_is_not_counted_twice() -> None:
+    from jobomatic.bootstrap import load_profile
+    from jobomatic.fit.engine import rate_fit
+
+    result = rate_fit(["C#"], ["C#", "zzqq1"], load_profile())
+    assert [m.skill for m in result.nice_to_have] == ["zzqq1"]
+
+
+def test_a_capitalised_rest_in_a_six_word_sentence_is_the_rest_api_skill() -> None:
+    """Atlassian: "Experience performing platform integrations using REST" read as a gap."""
+    result = _rated(["Experience performing platform integrations using REST"])
+    assert result.required[0].status == "match"

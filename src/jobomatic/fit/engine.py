@@ -12,7 +12,7 @@ from jobomatic.fit.gap_coaching import GapCoachingEntry
 from jobomatic.fit.location import LocationAssessment
 from jobomatic.fit.parser import ParsedJD, is_prose_requirement
 from jobomatic.fit.soft_requirements import LABELS, SoftRequirement, with_education_on_file
-from jobomatic.fit.terms import umbrella_parts
+from jobomatic.fit.terms import extract_skill_terms, umbrella_parts
 from jobomatic.profile.model import Profile
 
 MatchStatus = Literal["match", "portfolio", "course", "legacy", "gap"]
@@ -55,6 +55,11 @@ LOW_CONFIDENCE_MESSAGE = (
     "or it was misread — read the posting yourself before relying on this rating."
 )
 
+# Fewer required skills than this, with required lines the tool could not read a skill from, and
+# the rating rests on too little to trust however the few score. A short posting whose few
+# skills were all read ("C#, SQL") is not flagged; one read from nothing is.
+LOW_CONFIDENCE_MIN_SKILLS = 4
+
 
 @dataclass(frozen=True)
 class FitResult:
@@ -81,12 +86,35 @@ class FitResult:
     """Education and years-of-experience lines: listed for the user to read, never scored."""
 
     @property
-    def low_confidence(self) -> bool:
-        """True when more than half of the required skills are 🔴. Never changes the rating."""
-        if not self.required:
-            return False
+    def low_confidence_message(self) -> str | None:
+        """Why the rating should not be relied on, or ``None``. Never changes the rating.
+
+        Two reasons: no required skill could be read, or fewer than ``LOW_CONFIDENCE_MIN_SKILLS``
+        could be while some required line named none; or more than half of those read are 🔴."""
+        count = len(self.required)
+        unscored = len(self.unscored_required)
+        if count == 0 or (count < LOW_CONFIDENCE_MIN_SKILLS and unscored):
+            lines = f"{unscored} required line{'s' if unscored != 1 else ''}"
+            tail = f", and {lines} named no skill the tool knows" if unscored else ""
+            if count == 0:
+                return (
+                    f"No required skills could be read from this text{tail}. Check that it is a "
+                    "job posting, and read it yourself."
+                )
+            skills = f"{count} required skill{'s' if count != 1 else ''}"
+            return (
+                f"Only {skills} could be read{tail}. The rating rests on very little — read the "
+                "posting yourself before relying on it, and check that the text is a job posting."
+            )
         gaps = sum(1 for m in self.required if m.status == "gap")
-        return gaps / len(self.required) > LOW_CONFIDENCE_RED_SHARE
+        if gaps / count > LOW_CONFIDENCE_RED_SHARE:
+            return LOW_CONFIDENCE_MESSAGE
+        return None
+
+    @property
+    def low_confidence(self) -> bool:
+        """True when ``low_confidence_message`` has a reason. Never changes the rating."""
+        return self.low_confidence_message is not None
 
     @property
     def skills_only_rating(self) -> Rating:
@@ -334,11 +362,20 @@ def rate_fit(
     result for display only — it never changes the rating. Prefer
     ``rate_parsed_jd``, which passes both from a parsed JD so neither is forgotten.
     """
+    # The skills are matched in lower case; the posting's own capitals tell a skill name from
+    # another proper name in a sentence ("React" from "Azure Data Factory"), so keep them.
+    case_of = {s.strip().lower(): s.strip() for s in [*required, *nice_to_have] if s.strip()}
+    # A skill the posting asks for as required and also lists as a bonus is one skill: counting it
+    # again as a nice-to-have present would help a Good rating reach Strong on the same evidence.
+    required_names = {s.strip().lower() for s in required}
+    nice_to_have = [s for s in nice_to_have if s.strip().lower() not in required_names]
     required_matches = [
-        replace(_classify(skill, profile), core=skill in core_skills)
+        replace(_classify(skill, profile, case_of.get(skill)), core=skill in core_skills)
         for skill in _tokenize(required)
     ]
-    nice_matches = [_classify(skill, profile) for skill in _tokenize(nice_to_have)]
+    nice_matches = [
+        _classify(skill, profile, case_of.get(skill)) for skill in _tokenize(nice_to_have)
+    ]
     skill_rating, rationale = _derive_rating(required_matches, nice_matches)
     rating = skill_rating
     disqualifiers: tuple[str, ...] = ()
@@ -405,13 +442,13 @@ def _has_umbrella(profile: Profile, parts: tuple[str, ...]) -> tuple[MatchStatus
     return best[0], f"{best[1]} [via {best[2]}]"
 
 
-def _classify(skill: str, profile: Profile) -> SkillMatch:
+def _classify(skill: str, profile: Profile, original: str | None = None) -> SkillMatch:
     parts = umbrella_parts(skill)
     if parts is not None:
         status, evidence = _has_umbrella(profile, parts)
         return SkillMatch(skill=skill, status=status, evidence=evidence)
     if is_prose_requirement(skill):
-        status, evidence = _has_prose_skill(profile, skill)
+        status, evidence = _has_prose_skill(profile, skill, original)
     else:
         status, evidence = _has_skill(profile, skill)
     return SkillMatch(skill=skill, status=status, evidence=evidence)
@@ -438,7 +475,7 @@ _PROSE_FILLER = (
     "experience|knowledge|skills?|ability|understanding|foundation|proficiency|familiarity|"
     "background|expertise|exposure|competenc(?:y|ies)|equivalent|similar|preferred|"
     "in|with|of|on|for|to|as|such|or|and|their|output|rather|than|accepting|it|at|face|value|"
-    "environments?|systems?|tools?|languages?|methodologies|experience"
+    "environments?|systems?|tools?|languages?|methodologies|experience|work"
 )
 _PROSE_FILLER_ONLY_RE = re.compile(rf"(?:{_PROSE_FILLER})", re.IGNORECASE)
 _PROSE_EDGE_RE = re.compile(
@@ -470,7 +507,19 @@ def _prose_candidates(sentence: str) -> list[str]:
     return candidates
 
 
-def _has_prose_skill(profile: Profile, sentence: str) -> tuple[MatchStatus, str]:
+_CAPITALISED_WORD_RE = re.compile(r"(?<![A-Za-z0-9])[A-Z][A-Za-z0-9.+#]*")
+
+
+def _only_skill_names_capitalised(sentence: str) -> bool:
+    """True when every capitalised word after the first is itself a known skill name."""
+    words = _CAPITALISED_WORD_RE.findall(sentence)
+    first = sentence.split()[0] if sentence.split() else ""
+    return all(word == first or extract_skill_terms(word) for word in words)
+
+
+def _has_prose_skill(
+    profile: Profile, sentence: str, original: str | None = None
+) -> tuple[MatchStatus, str]:
     """Rate a prose requirement by the best evidence found for any phrase in it.
 
     A sentence-style requirement usually lists alternatives or examples
@@ -483,6 +532,28 @@ def _has_prose_skill(profile: Profile, sentence: str) -> tuple[MatchStatus, str]
         status, evidence = _has_skill(profile, phrase)
         if _STATUS_RANK[status] > _STATUS_RANK[best[0]]:
             best = (status, f"{evidence} [{phrase}]" if status != "gap" else evidence)
+    # A sentence whose only capitalised words are skill names ("Experience building frontend
+    # applications using React") asks for that skill: rate it by the skill. A sentence with another
+    # proper name in it ("Azure Data Factory") may name something more specific, so it is not tried.
+    if original is not None and _only_skill_names_capitalised(original):
+        for entry in extract_skill_terms(original):
+            for term in entry.split(" / "):
+                if umbrella_parts(term) is not None:
+                    continue
+                status, evidence = _has_skill(profile, term)
+                if _STATUS_RANK[status] > _STATUS_RANK[best[0]]:
+                    best = (status, f"{evidence} [{term}]" if status != "gap" else evidence)
+    # An umbrella the sentence names ("Experience using AI-assisted software development tools"
+    # names AI) is rated by its parts, as it is when it stands alone. Other terms are not tried:
+    # "Azure Data Factory and data pipelines" names Azure, and Azure is not Data Factory.
+    for entry in extract_skill_terms(sentence):
+        for term in entry.split(" / "):
+            parts = umbrella_parts(term)
+            if parts is None:
+                continue
+            status, evidence = _has_umbrella(profile, parts)
+            if _STATUS_RANK[status] > _STATUS_RANK[best[0]]:
+                best = (status, f"{evidence} [{term}]" if status != "gap" else evidence)
     return best
 
 
@@ -628,7 +699,7 @@ def render_fit_table(result: FitResult) -> str:
             lines.append(f"- {line}")
     if result.low_confidence:
         lines.append("")
-        lines.append(f"**Low-confidence result** — {LOW_CONFIDENCE_MESSAGE}")
+        lines.append(f"**Low-confidence result** — {result.low_confidence_message}")
     if result.soft_requirements:
         lines.append("")
         lines.append(

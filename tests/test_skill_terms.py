@@ -444,7 +444,13 @@ def test_an_umbrella_term_is_dropped_when_examples_follow_and_kept_when_alone(
 
 
 def test_the_shipped_umbrella_terms() -> None:
-    assert load_umbrella_terms() == {"ai", "generative ai", "machine learning", "deep learning"}
+    assert load_umbrella_terms() == {
+        "ai",
+        "generative ai",
+        "machine learning",
+        "deep learning",
+        "cloud-native",
+    }
 
 
 @pytest.mark.parametrize(
@@ -543,7 +549,10 @@ def test_a_phrase_with_nothing_to_strip_or_a_meaningful_extra_word_is_left_alone
         ),
         (
             "Experience with Entity Framework or other ORMs",
-            ["Entity Framework / Entity Framework Core / EF Core / Dapper / Nhibernate"],
+            [
+                "Entity Framework / Entity Framework Core / EF Core / Dapper / Nhibernate / "
+                "Hibernate"
+            ],
         ),
     ],
 )
@@ -768,6 +777,10 @@ def test_a_term_plus_development_methodology_or_practices_reduces_to_the_term():
     assert reduce_to_terms("Agile practices") == ["Agile"]
 
 
+def test_professional_is_a_filler_word_not_a_meaningful_one():
+    assert reduce_to_terms("professional C# development experience") == ["C#"]
+
+
 # ── umbrellas scored by their parts (ADR 0022) ──
 
 
@@ -855,6 +868,9 @@ def test_a_phrase_expansion_with_an_unknown_term_fails_loudly(tmp_path: Path):
         ("Experience with Azure and REST APIs", ["Azure", "REST API"]),
         ("Docker, Kubernetes and Helm", ["Docker", "Kubernetes", "Helm"]),
         ("Familiarity with Git, CI/CD and Docker", ["Git", "CI/CD", "Docker"]),
+        # "professional ... experience" frames the skills; it is not a requirement of its own
+        ("professional C# and .NET development experience", ["C#", ".NET"]),
+        ("Professional C# and .NET experience", ["C#", ".NET"]),
     ],
 )
 def test_conjoined_terms_returns_every_skill_of_a_plain_list(sentence, expected):
@@ -900,3 +916,102 @@ def test_each_piece_of_a_slash_row_is_alias_expanded() -> None:
     from jobomatic.fit.engine import skill_match_terms
 
     assert "penetration testing" in skill_match_terms("vulnerability assessments / pen tests")
+
+
+# ── fixes found by running real LinkedIn pastes ──────────────────────────────
+
+
+def test_a_bare_rest_is_the_skill_rest_api_only_in_capitals() -> None:
+    """Atlassian: "platform integrations using REST" named no skill, so it scored 🔴 whole."""
+    assert extract_skill_terms("Experience performing platform integrations using REST") == [
+        "REST API"
+    ]
+    assert extract_skill_terms("REST API design") == ["REST API"]
+
+
+@pytest.mark.parametrize(
+    "sentence", ["the rest of the team", "Rest and recharge", "freedom to rest and recharge"]
+)
+def test_the_english_word_rest_is_never_a_skill_nor_a_question(sentence: str) -> None:
+    from jobomatic.fit.terms import find_terms_to_confirm
+
+    assert extract_skill_terms(sentence) == []
+    assert find_terms_to_confirm(sentence) == []
+
+
+def test_hibernate_is_a_known_orm_and_not_a_typo_of_nhibernate() -> None:
+    from jobomatic.fit.terms import find_possible_typos
+
+    assert find_possible_typos("proficiency in Java/Spring/Hibernate") == []
+    assert extract_skill_terms("Experience with Hibernate or Entity Framework") == [
+        "Hibernate / Entity Framework"
+    ]
+
+
+def test_junit_joins_the_unit_test_frameworks() -> None:
+    terms = extract_skill_terms("Experience with TDD using frameworks like xUnit, NUnit, or Junit")
+    assert terms == ["xUnit / NUnit / Junit", "TDD"]
+
+
+def test_a_dotted_name_in_a_list_is_not_reported_as_an_unknown_name() -> None:
+    """Accion: ".NET Core" in "including .NET 2.0, 4.0, and .NET Core" was shown as "NET Core"."""
+    from jobomatic.fit.terms import find_unknown_names
+
+    sentence = (
+        "Experience across multiple .NET frameworks, including .NET 2.0, 4.0, 4.5, and .NET Core"
+    )
+    assert find_unknown_names(sentence) == []
+
+
+def test_slash_stacks_joined_by_or_come_back_as_one_choice() -> None:
+    assert extract_skill_terms("Java/Spring/Hibernate or React/TypeScript") == [
+        "Java / Spring / Hibernate / React / TypeScript"
+    ]
+    # an "or" with no "/" list is left to the same-group alternatives rule, as before
+    assert extract_skill_terms("Python or Node.js on the backend") == ["Python", "Node.js"]
+    # a "/" list with no "or" is not a choice
+    assert extract_skill_terms("Docker/Kubernetes and Helm") == ["Docker", "Kubernetes", "Helm"]
+
+
+def test_work_and_programming_are_filler_around_a_skill() -> None:
+    """HCLTech: "5+ years of work experience with C#" and "Strong programming expertise in C#"."""
+    assert reduce_to_terms("work experience with C#") == ["C#"]
+    assert reduce_to_terms("Strong programming expertise in C#") == ["C#"]
+    assert reduce_to_terms("Strong programming of legacy mainframes") is None
+
+
+# --- Round three ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        (
+            "Experience with Java or another object-oriented programming language.",
+            ["Java / object-oriented"],
+        ),
+        ("Experience working with SQL and/or NoSQL databases.", ["SQL / NoSQL"]),
+        ("Experience with SQL/NoSQL databases", ["SQL / NoSQL"]),
+        ("Active access to VS Code and a GitHub or GitLab account", ["VS Code", "GitHub / GitLab"]),
+        ("Experience with Git/GitHub", ["Git / GitHub"]),
+        ("Expertise using Ruby and Ruby on Rails", ["Ruby on Rails"]),
+    ],
+)
+def test_either_or_and_subsumed_terms(sentence: str, expected: list[str]) -> None:
+    assert extract_skill_terms(sentence) == expected
+
+
+def test_sql_and_nosql_stay_two_requirements() -> None:
+    assert extract_skill_terms("Experience with SQL and NoSQL databases") == ["SQL", "NoSQL"]
+
+
+def test_examples_of_concepts_are_not_further_requirements() -> None:
+    sentence = "HTML/CSS experience, including concepts like layout, specificity, and accessibility"
+    assert extract_skill_terms(sentence) == ["HTML", "CSS"]
+
+
+def test_an_umbrella_after_or_equivalent_is_not_a_further_requirement() -> None:
+    sentence = (
+        "Practical experience with Generative AI, GitHub Copilot, or equivalent AI coding tools."
+    )
+    assert extract_skill_terms(sentence) == ["Generative AI / GitHub Copilot"]
