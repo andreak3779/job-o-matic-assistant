@@ -70,7 +70,7 @@ Before writing any model answer or "stronger version":
 4. **Known gaps / learning-level skills.** If the question touches a profile "Known Genuine Gap", or a 🟡/🔴/🕰️ skill, read the vault's `profile/gap-coaching.md` and score *calibration* against its **Honest floor**. The right answer to "do you have X?" for a real gap is honest + bridge + willingness, never bluffing. Use that entry's "what to say" / "what not to say" in your coaching.
 5. **Legacy experience (🕰️).** Real, but deliberately kept off the resume. In a model answer, don't surface it silently — say it exists and ask the user whether they want to raise it in this interview.
 6. **Cert and counts.** Don't state cert status or course totals from memory or from this file; take them from the profile (Copy Fragments) if relevant at all.
-7. **Do not write to `star-bank.md`.** Practice sessions are rehearsal; `interview_prep --update-star-bank` is the only supported writer.
+7. **Do not write to the vault's `profile/stories.yaml`.** Practice sessions are rehearsal; `interview_prep --update-star-bank` is the only supported writer.
 
 ---
 
