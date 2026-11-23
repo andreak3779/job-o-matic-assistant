@@ -7,10 +7,10 @@ import json
 from pathlib import Path
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from jobomatic.profile import model
-from jobomatic.profile.adapters.yaml_vault import YamlVaultProfile
+from jobomatic.profile.adapters.yaml_vault import YamlVaultProfile, _describe
 from jobomatic.profile.model import (
     Certification,
     Profile,
@@ -337,3 +337,20 @@ def test_load_profile_refuses_a_cut_list_item(tmp_path: Path) -> None:
 
     with pytest.raises(ProfileError, match="unbalanced brackets"):
         load_profile(_Repo())  # type: ignore[arg-type]
+
+
+def test_unknown_profile_fields_point_at_an_older_copy_of_the_code(tmp_path: Path) -> None:
+    """A vault newer than the running code fails with 'Extra inputs'; say what that usually means."""
+
+    class Strict(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        name: str
+
+    with pytest.raises(ValidationError) as info:
+        Strict.model_validate({"name": "x", "resume_pin": True})
+    text = _describe("projects.yaml", info.value, "projects")
+    assert "Extra inputs are not permitted" in text
+    assert "restart Claude Desktop" in text
+    with pytest.raises(ValidationError) as other:
+        Strict.model_validate({})
+    assert "restart" not in _describe("projects.yaml", other.value)

@@ -54,7 +54,7 @@ from jobomatic.commands import resume as resume_command
 from jobomatic.commands import search as search_command
 from jobomatic.commands import thank_you as thank_you_command
 from jobomatic.commands.support import Confirmations
-from jobomatic.interfaces.mcp import access, skill_prompts
+from jobomatic.interfaces.mcp import access, freshness, skill_prompts
 from jobomatic.presence import github, job_board, jobgether, linkedin, pluralsight
 
 # Icons shown by MCP clients that display them. The server runs over stdio and hosts nothing, so
@@ -83,7 +83,24 @@ def server_icons() -> list[Icon]:
     return icons
 
 
-mcp = MCPServer("job-o-matic", title="Job-O-Matic Assistant", icons=server_icons())
+_STARTED_WITH = freshness.fingerprint()
+
+
+class _Server(MCPServer):
+    """The server, refusing every tool call once the code on disk is newer than the code it loaded.
+
+    Claude Desktop leaves the process running, and Python reads its code once. A tool run after an
+    update would mix old and new behaviour and fail with errors that blame the vault (a profile
+    field the old model does not know). One plain message, naming the fix, replaces that.
+    """
+
+    async def call_tool(self, name, arguments, context=None):  # type: ignore[no-untyped-def,override]
+        if freshness.is_stale(_STARTED_WITH):
+            raise ToolError(freshness.RESTART_MESSAGE)
+        return await super().call_tool(name, arguments, context)
+
+
+mcp = _Server("job-o-matic", title="Job-O-Matic Assistant", icons=server_icons())
 
 # Every path an MCP client hands us is untrusted: a prompt-injected job posting can
 # steer a tool call at any file the server process can reach. The rules live in
