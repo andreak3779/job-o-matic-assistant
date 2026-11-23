@@ -307,10 +307,19 @@ over the network, with Claude Desktop pointed at it as a remote connector
 instead of a local stdio command. Not implemented now; noted here so the
 same-machine setup above isn't mistaken for the only option.
 
+## After updating the assistant
+
+Claude Desktop leaves the server running, and Python reads its code once, so a server started
+before an update keeps the old code. Before each tool call the server compares the `.py` files on
+disk with the ones it loaded (`freshness.py`). If they differ it runs nothing and answers "job-o-matic
+was updated on disk after this server started … Fully quit Claude Desktop and open it again". This
+replaces the misleading error a stale server used to give, such as a profile field "Extra inputs are
+not permitted" when the vault is newer than the old code.
+
 ## Tests
 
 ```bash
-python3 -m pytest tests/test_mcp_server.py tests/test_mcp_prompts.py tests/test_mcp_access.py -q
+python3 -m pytest tests/test_mcp_server.py tests/test_mcp_prompts.py tests/test_mcp_access.py tests/test_mcp_freshness.py -q
 ```
 
 Calls each tool function directly (no live MCP transport needed) against

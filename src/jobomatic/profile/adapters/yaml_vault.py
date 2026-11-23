@@ -141,4 +141,10 @@ def _describe(file: str, exc: ValidationError, key: str = "") -> str:
         for part in err["loc"]:
             where += f"[{part}]" if isinstance(part, int) else f"{'.' if where else ''}{part}"
         lines.append(f"  {where or '<root>'}: {err['msg']}")
+    if any(err["type"] == "extra_forbidden" for err in exc.errors()):
+        lines.append(
+            "  These fields are not known to the job-o-matic code that is running. If the vault was "
+            "just updated, this is an older copy of the code: update the assistant checkout, and "
+            "restart Claude Desktop if it is the one running (it keeps the old code until restarted)."
+        )
     return "\n".join(lines)
