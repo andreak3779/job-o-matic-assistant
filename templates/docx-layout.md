@@ -41,6 +41,7 @@ that names no font never falls back to a serif face. Colours: blue `2E6DA4` for 
 | Section heading | 11pt | yes | ALL CAPS blue, 0.75pt blue rule under it |
 | Resume summary, skills, bullets | 9.5pt | label only | skill label bold; bullets `•  ` with 0.25" hanging indent |
 | Role line | 10pt | yes | `Title \| Company, Location`, dates italic 9.5pt on a right tab at 7.0", keep-with-next |
+| Project line | 10pt | yes | `Name \| stack`, public link italic 9.5pt on the same right tab; same spacing as a role line |
 | Letter body | 10.5pt | no | bullets are `•  **Label:** body`; bold `Re: Role — Company` line |
 | Later-page header | 8.5pt | no | `NAME \| contact \| links` over a gray rule; page 1 has none |
 
@@ -94,6 +95,10 @@ change its constant there and recalibrate against LibreOffice (see the comments 
 │ Backend: C#, ASP.NET Core, ...                     │  ← skill lines
 │ Frontend: Angular, TypeScript, ...                 │
 │ Database: SQL Server, T-SQL, ...                   │
+│                                                     │
+│ SELECTED PROJECTS (section heading, optional)      │
+│ Project | stack                         link       │  ← pinned projects first
+│ • What it is, what it shows                        │
 │                                                     │
 │ PROFESSIONAL EXPERIENCE (section heading)          │
 │ Senior Full-Stack Developer                        │  ← job title

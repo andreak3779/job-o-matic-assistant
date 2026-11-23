@@ -44,6 +44,17 @@ exit: 0
       "skills": "Azure App Service, Azure Functions, Azure Monitor, monitoring and observability, infrastructure as code, Bicep, Terraform, PowerShell and Python scripting for automation, Azure DevOps Pipelines, Azure Application Insights"
     }
   ],
+  "projects": [
+    {
+      "name": "CookingTime",
+      "subtitle": "C# · .NET 10",
+      "link": "github.com/example-user/CookingTime",
+      "bullets": [
+        "Rebuilt a legacy desktop calculator as a .NET 10 Blazor app with layered architecture and a coverage-gated CI pipeline.",
+        "Recorded each design decision in a written ADR, and fixed three bugs an AI assistant had introduced, found in a security review."
+      ]
+    }
+  ],
   "experience": [
     {
       "title": "Senior Full-Stack Developer",
