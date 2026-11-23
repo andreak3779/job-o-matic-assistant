@@ -114,7 +114,7 @@ value of `output` inside the JSON, not derived from the filename).
 
 ### Certification urgency
 
-Read current status from `profile-facts.md` (or
+Read current status from
 `python -m jobomatic profile show section "Cert Registry"`
 — don't load the full ~11.5K-token `profile show` just for this)
 at generation time rather than assuming the row below is still accurate — a cert shown

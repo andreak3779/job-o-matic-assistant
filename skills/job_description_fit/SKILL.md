@@ -95,7 +95,7 @@ For reference, the status meanings and rating thresholds the script applies:
 |---|---|
 | ✅ | Production experience in resume, OR resolved framing gap |
 | 🟡 | Portfolio-level (GitHub project) or course-level only (Pluralsight / MS Learn) |
-| 🕰️ | Only evidenced by legacy employment (`Career_History.md`) — real experience, deliberately not on the active resume |
+| 🕰️ | Only evidenced by legacy employment (the legacy roles in the profile (from before the resume window)) — real experience, deliberately not on the active resume |
 | 🔴 | Not present in resume, portfolio, coursework, or legacy history — genuine gap |
 
 - **Strong** — All required skills ✅; 0–2 required skills are 🟡; no 🕰️; at least 2 nice-to-haves present

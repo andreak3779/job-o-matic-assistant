@@ -25,19 +25,19 @@ scores the answer, coaches, and moves on. Questions come from
 session mechanics come from `reference/interview-practice-rubric.md`.
 
 This is rehearsal, not document generation. Nothing here writes a DOCX, and
-nothing writes to the vault's `profile/star-bank.md`.
+nothing writes to the vault's `profile/stories.yaml`.
 
 > **Source files — load as indicated** (`reference/` is the repo-root `reference/` folder; `profile/` is the vault's profile folder):
 > - `reference/interview-question-bank.md` — the question pool and the assessor's "Look for" key. **Never show a question's "Look for" text before the user has answered.**
 > - `reference/interview-practice-rubric.md` — read in full before asking the first question; it defines the loop, scoring, feedback format and wrap-up.
 > - `python -m jobomatic profile show facts` — the candidate's evidence tiers, differentiators and known gaps. Needed for the honesty check and for grounding model answers. Don't run `full` unless a behavioural model answer needs work-history detail.
 > - the vault's `profile/gap-coaching.md` — load when a question touches a known gap or a 🟡/🔴/🕰️ skill (rubric §5).
-> - the vault's `profile/star-bank.md` — load for `BE-` questions; model behavioural answers use these stories only.
+> - `python -m jobomatic profile show section "STAR Stories"` — load for `BE-` questions; model behavioural answers use these stories only.
 > - `outputs/interview-practice/sessions.md` — optional; if it exists, read it to prioritise weak and untouched topics.
 >
 > **If any required file is missing:** stop and tell the user exactly which one, rather than improvising questions from memory.
 >
-> **Grounding rule:** every employer, project, course, number or outcome in a model answer must trace to the profile output or `star-bank.md`. If the evidence isn't there, give a generic best-practice answer *labelled as generic*. Never invent experience to make an answer sound stronger.
+> **Grounding rule:** every employer, project, course, number or outcome in a model answer must trace to the profile output or the STAR Stories section. If the evidence isn't there, give a generic best-practice answer *labelled as generic*. Never invent experience to make an answer sound stronger.
 
 ---
 
@@ -101,7 +101,7 @@ Follow `reference/interview-practice-rubric.md` §1 (ground rules) and §6
 
 Coach mode only: after the feedback, add a 2–3 line concept recap and one link or search term for further reading.
 
-For `BE-` questions the 🎯 model answer is built from a `star-bank.md` story
+For `BE-` questions the 🎯 model answer is built from a STAR story
 selected by its JD tags and "Use for" list; name the story, adapt the framing,
 never change the facts. If no story fits, say that and coach the structure only.
 
@@ -125,7 +125,7 @@ Offer follow-ups where they fit:
 
 - Does not tailor questions to a job posting — use `interview-practice-job-description`.
 - Does not generate the interview prep DOCX — use `interview-prep`.
-- Does not write to the vault's `profile/star-bank.md` or any file other than the optional session log.
+- Does not write to the vault's `profile/stories.yaml` or any file other than the optional session log.
 - Does not reveal answer keys before the user answers.
 - Does not invent experience, projects or numbers for the user, and does not state cert status or course counts from memory — those come from the profile.
 - Does not ask about or record protected-characteristic information.

@@ -29,13 +29,13 @@ thing the employer asked for.
 > - `reference/interview-question-bank.md` — the question pool. Never show "Look for" notes before the user answers.
 > - `python -m jobomatic profile show facts` — evidence tiers, differentiators, known gaps (honesty check + grounding).
 > - the vault's `profile/gap-coaching.md` — for every required skill rated 🟡/🔴/🕰️.
-> - the vault's `profile/star-bank.md` — for behavioural model answers. Read-only here.
+> - `python -m jobomatic profile show section "STAR Stories"` — for behavioural model answers. Read-only here.
 > - `reference/recruiter-briefing-template.md` — only if the user wants a template to send the recruiter (Step 1).
 > - `outputs/interview-practice/sessions.md` — optional prior progress.
 >
 > **If a required file is missing:** stop and tell the user which one.
 >
-> **Grounding rule:** every employer, project, course, number or outcome in a model answer traces to the profile output or `star-bank.md`; otherwise label the answer as generic. Never invent experience.
+> **Grounding rule:** every employer, project, course, number or outcome in a model answer traces to the profile output or the STAR Stories section; otherwise label the answer as generic. Never invent experience.
 
 ---
 
@@ -161,7 +161,7 @@ Offer, in one line:
 
 - Does not decide whether to apply and does not gate on the fit rating — use `job-description-fit` or `gap-analysis-job-description` for that.
 - Does not generate the interview prep DOCX — use `interview-prep`.
-- Does not write to the vault's `profile/star-bank.md`, to application tracking, or to any file other than the optional session log (and the scratch JD file).
+- Does not write to the vault's `profile/stories.yaml`, to application tracking, or to any file other than the optional session log (and the scratch JD file).
 - Does not reveal the question list, "Look for" notes or model answers before the user has answered.
 - Does not invent experience, state cert status or course counts from memory, or coach the user to bluff about a gap.
 - Does not ask about or record protected-characteristic information.

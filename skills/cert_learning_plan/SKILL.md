@@ -40,7 +40,7 @@ If the user provides only an exam name, construct and fetch the standard MS Lear
 
 Read all of these before proceeding — never rely on cached values:
 
-1. `profile-facts.md` — cert status, completed domains, known gaps
+1. `python -m jobomatic profile show facts` — cert status, completed domains, known gaps
 2. The learning data, read with `python -m jobomatic learning list`/`lookup`/`stats` — completed Pluralsight courses and labs and completed Microsoft Learn paths and modules. Anything not in it counts as not started.
 3. (Microsoft Learn completions are in the same learning data: `learning list --provider mslearn`.)
 4. `course-urls.md` — verified Pluralsight slugs and MS Learn paths by gap type
@@ -58,7 +58,7 @@ From the study guide (fetched or user-pasted), extract:
 
 Group bullets by domain. Each domain becomes its own coverage block in Step 3.
 
-**If the exam is AI-200:** Note that AZ-900 (per `profile-facts.md` Cert Status — confirm current certification date, don't assume April 18, 2026 is still accurate) satisfies the Azure fundamentals prerequisite. Count Azure Functions courses in `pluralsight-courses.md` (search titles containing "Azure Functions") at generation time and cite the actual current count when noting that the Azure Functions objective is covered — don't state a fixed number here, it drifts as new courses complete.
+**If the exam is AI-200:** Note that AZ-900 (per the Cert Registry in `profile show facts` — confirm current certification date, don't assume April 18, 2026 is still accurate) satisfies the Azure fundamentals prerequisite. Count Azure Functions courses in the learning data (`python -m jobomatic learning list`, titles containing "Azure Functions") at generation time and cite the actual current count when noting that the Azure Functions objective is covered — don't state a fixed number here, it drifts as new courses complete.
 
 ---
 
@@ -68,7 +68,7 @@ For each domain, score every skill-measured bullet against existing coursework:
 
 | Rating | Criteria |
 |---|---|
-| ✅ Strong | Completed full course(s) covering this exact service/topic; or prior production experience confirmed in `profile-facts.md` |
+| ✅ Strong | Completed full course(s) covering this exact service/topic; or prior production experience confirmed in the profile (`profile show full`) |
 | 🟡 Partial | In-progress course (>10%), short course, a lab but no lecture depth, or course-level-only coverage |
 | 🔴 Gap | No course, no lab, no MS Learn module on this specific service or skill |
 

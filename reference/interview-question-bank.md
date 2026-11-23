@@ -199,7 +199,7 @@ Tags: `performance` `debugging` `production-support` `observability` `code-revie
 ## 13. Behavioural and collaboration (STAR)
 Tags: `behavioural` `communication` `teamwork` `leadership` `agile`
 
-For every `BE-` question the answer is assessed with the **behavioural (STAR) rubric** in `interview-practice-rubric.md`. Model answers come from `star-bank.md`, never invented.
+For every `BE-` question the answer is assessed with the **behavioural (STAR) rubric** in `interview-practice-rubric.md`. Model answers come from the profile's STAR stories (`profile show section "STAR Stories"`), never invented.
 
 - **BE-01 [J]** Walk me through your background. — *Look for:* ~2 minutes, past → present → why this role, relevant highlights, no life story.
 - **BE-02 [J]** Why this role and this company? — *Look for:* two specific, researched reasons; not generic flattery.

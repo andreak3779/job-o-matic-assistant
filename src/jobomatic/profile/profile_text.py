@@ -106,6 +106,36 @@ def resume_section(profile: Profile) -> Section:
     return "Resume", "\n\n".join(parts)
 
 
+def stories_section(profile: Profile) -> Section:
+    """The STAR stories, for the interview skills that model behavioural answers on them.
+
+    Private (ADR 0018): it is offered by ``profile show section "STAR Stories"`` only, never in
+    ``full`` or ``facts`` (to keep their size) and never in the public view.
+    """
+    blocks = []
+    for number, story in enumerate(profile.stories, 1):
+        lines = [f"### Story {number} — {story.title}"]
+        if story.use_for:
+            lines.append("**Use for:** " + " · ".join(story.use_for))
+        if story.jd_tags:
+            lines.append("**JD tags:** " + " ".join(f"`{tag}`" for tag in story.jd_tags))
+        lines.append(f"**Last used:** {story.last_used or 'never'}")
+        if story.used_for:
+            lines.append("**Used for:** " + ", ".join(story.used_for))
+        for label, text in (
+            ("Situation", story.situation),
+            ("Task", story.task),
+            ("Action", story.action),
+            ("Result", story.result),
+        ):
+            if text:
+                lines.append(f"**{label}:** {text}")
+        if story.adapt_when:
+            lines.append("**Adapt when:**\n" + _bullets(story.adapt_when))
+        blocks.append("\n\n".join(lines))
+    return "STAR Stories", "\n\n".join(blocks) if blocks else "No stories in the profile."
+
+
 def contact_text(profile: Profile) -> str:
     ident = profile.identity
     lines = [

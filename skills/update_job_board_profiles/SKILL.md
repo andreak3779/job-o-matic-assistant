@@ -25,7 +25,7 @@ description: >
 > final paste-ready text — never leave a literal `{fragment_name}` in delivered
 > output. If that section is missing (older profile data, pre-fragments), fall
 > back to computing the value the same way the Copy Fragments rules in `src/jobomatic/profile/copy_fragments.py`
-> Step 2.5 does, from `profile-facts.md` / `skills-summary.md` directly.
+> Step 2.5 does, from `python -m jobomatic profile show --public` directly.
 
 Indeed and ZipRecruiter are treated as one skill because their candidate profile
 shape is nearly identical — headline, summary, skills, and job preferences, both
@@ -48,8 +48,8 @@ Both platforms parse an uploaded resume into most of the profile automatically.
 Before writing any field content below:
 
 1. Check the modification date of `outputs/templates/resume.docx` in the vault
-   against the public profile's `generated` date (and the `last_modified` dates of
-   `profile-facts.md` / `Resume_Snapshot.md` / `skills-summary.md` in Project 2).
+   against the public profile's `generated` date (and the date the vault's `profile/` folder last changed, from
+   `git log -1 --format=%cd -- profile`).
 2. If the resume file predates any of those sources, tell the user it's stale and
    offer to run the `fullstack_net_profile_resume` skill to regenerate it before
    they upload — the typed fields below only cover headline/summary/skills/preferences,

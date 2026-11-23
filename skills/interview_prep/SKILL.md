@@ -37,7 +37,7 @@ Output length scales to the interview stage (phone screen → lean; final round 
 >   callouts. Read it anyway so anything you author in Step 4 stays honest
 >   about the same gaps instead of contradicting the script's auto-attached
 >   notes.
-> - `star-bank.md` — only load this if Step 5 needs you to author a
+> - `python -m jobomatic profile show section "STAR Stories"` — only load this if Step 5 needs you to author a
 >   brand-new story; the script selects and renders existing stories
 >   automatically, so you don't need to load this for a normal run.
 > - `recruiter-briefing-template.md` — template to send the recruiter if no
@@ -50,7 +50,7 @@ Output length scales to the interview stage (phone screen → lean; final round 
 > under `outputs/applications/`. Tell the user the file path.
 >
 > **Grounding rule:** every employer, project, course, or metric named in Q&A
-> answers and STAR stories must trace to the profile output above or `star-bank.md`.
+> answers and STAR stories must trace to the profile output above or the STAR Stories section.
 > Never invent a project detail, number, or outcome to make an answer sound
 > stronger — if the evidence isn't there, frame it as a genuine gap instead
 > (see Step 2's gap-coaching awareness).
@@ -239,15 +239,15 @@ format an existing story yourself.
 
 **To record that this run used them:** pass `--update-star-bank` in Step 7.
 It writes updated `last_used`/`used_for` metadata back to the real
-the vault's `profile/star-bank.md` for every story the script actually selected —
+the vault's `profile/stories.yaml` for every story the script actually selected —
 this is the only way stories get written back now; there's no more manual
-"append this to star-bank.md" step for an existing story. It prints a diff
+"append this to the story bank" step for an existing story. It prints a diff
 of the change to stdout — relay that in your inline delivery summary.
 
 **If the JD needs a story type not in the bank:** the script never invents
 S/T/A/R prose — a genuinely new story still needs you to write it. Author
 it yourself (Situation/Task/Action/Result, grounded in the profile output),
-then add it to the vault's `profile/star-bank.md` **by hand**,
+then add it to the vault's `profile/stories.yaml` **by hand**,
 following the existing story format. `shared/star_bank_writer.py` has an
 append mode built for exactly this (`new_story`), but it isn't wired into
 the CLI yet — there is no `--new-star-story` flag to do this for you.
@@ -321,7 +321,7 @@ Fix any errors before presenting. Then tell the user the file's path.
 **Inline summary after delivery (5–6 sentences):**
 - Stage and which optional sections were included
 - Which STAR stories the script selected and what question types they cover
-- Any new STAR story you wrote and appended to `star-bank.md` by hand
+- Any new STAR story you wrote and added to `stories.yaml` by hand
 - Whether `--update-star-bank` was used and what it changed (relay the diff)
 - Any gaps and the coaching approach the script auto-attached for each
 - Company research sources used

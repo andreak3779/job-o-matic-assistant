@@ -82,3 +82,20 @@ def test_the_mcp_summary_is_the_public_view_and_a_broken_profile_is_a_tool_error
 ) -> None:
     with pytest.raises(ToolError, match=r"\[ERROR\]"):
         server.profile_summary()
+
+
+def test_the_stories_are_a_section_by_name_and_not_part_of_full_or_facts() -> None:
+    stories = commands.show("section", ("STAR Stories",))
+    assert stories.status == "ok" and stories.data is not None
+    text = stories.data.text
+    assert text.startswith("## STAR Stories") and "**Situation:**" in text and "**Result:**" in text
+    assert "**JD tags:**" in text and "**Adapt when:**" in text
+    for part in ("full", "facts"):
+        other = commands.show(part)
+        assert other.data is not None and "STAR Stories" not in other.data.text
+
+
+def test_the_stories_are_never_in_the_public_view() -> None:
+    result = commands.show("section", ("STAR Stories",), public=True)
+    assert result.status == "error"
+    assert result.messages[0].text == "[ERROR] no section called 'STAR Stories'"
