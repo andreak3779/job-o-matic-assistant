@@ -100,6 +100,25 @@ class ResumeJob(_Content):
     )
 
 
+class ResumeProject(_Content):
+    """A project shown in the resume's Selected Projects section."""
+
+    name: str = Field(min_length=1)
+    subtitle: str = Field(
+        default="", description="The stack in a few words, e.g. 'Python · MCP · SQLite'"
+    )
+    link: str = Field(
+        default="", description="A public URL, shown at the right margin; empty to omit"
+    )
+    bullets: list[str] = Field(
+        min_length=1,
+        description=(
+            f"At most {b.PROJECT_BULLETS}, most relevant first, each {b.BULLET_WORDS} words or "
+            "fewer: what it is, then what it shows"
+        ),
+    )
+
+
 class TailoredResume(_Content):
     """A resume for one posting (or the platform-ready one): 1 to 2 pages, ATS-safe."""
 
@@ -119,6 +138,14 @@ class TailoredResume(_Content):
     skills: list[SkillLine] = Field(
         min_length=1,
         description=f"At most {b.SKILL_LINES} lines of {b.SKILL_LINE_WORDS} words, the posting's own terms first",
+    )
+    projects: list[ResumeProject] = Field(
+        default_factory=list,
+        max_length=b.PROJECTS,
+        description=(
+            f"Selected Projects, shown between the skills and the experience: at most "
+            f"{b.PROJECTS}, the ones that speak to this posting first. Empty to omit the section."
+        ),
     )
     experience: list[ResumeJob] = Field(min_length=1, description="Reverse chronological")
     additional_experience: str = Field(default="", description="One undated line, or empty")

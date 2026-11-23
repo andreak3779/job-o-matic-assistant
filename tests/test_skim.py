@@ -207,3 +207,18 @@ def test_a_title_that_names_no_backed_skill_falls_back_to_production_evidence() 
         [_match("testing", "match", "Globex Corp: production")],
     )
     assert "asks for Testing" in hook or "asks for testing" in hook
+
+
+def test_a_project_over_its_bullet_or_word_budget_is_reported() -> None:
+    from jobomatic.documents.model import ResumeProject
+
+    jd = STRONG.read_text(encoding="utf-8")
+    from jobomatic import bootstrap
+    from jobomatic.commands.resume import draft_resume
+    from jobomatic.fit.parser import parse_jd
+
+    resume = draft_resume(bootstrap.load_profile(), parse_jd(jd), jd)
+    long = ResumeProject(name="Big", bullets=["word " * 40, "ok", "ok"])
+    found = skim.problems(resume.model_copy(update={"projects": [long]}))
+    assert any("projects[0] (Big)" in line and "bullets" in line for line in found)
+    assert any("projects[0] (Big) bullet 0" in line for line in found)

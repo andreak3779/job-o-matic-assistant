@@ -15,6 +15,9 @@ bullet of a role is the one to drop, and the oldest role gives up bullets before
 4. the roles older than the ``RECENT_ROLES`` most recent go to 2 bullets first; as a last resort 5
    skill lines of 5 items, one bullet for the self-directed role and for those older roles, and only
    then 2 for the recent ones.
+5. the Selected Projects, in two places: after the roles are down to 3 bullets, the projects
+   beyond the second (the pinned ones come first, so these are the unpinned best matches) go;
+   only after every other step is the section cut to one bullet each, then one project.
 
 A role is never dropped, and a recent role never goes below ``MIN_BULLETS``. If that still does
 not fit, the content is refused (ADR 0007) instead of producing a resume that runs onto a third
@@ -95,8 +98,20 @@ def estimate_height(content: TailoredResume) -> float:
         for i, s in enumerate(content.skills)
     )
 
-    total += _heading()
     width = _TEXT_WIDTH_PT - _BULLET_INDENT_PT
+    if content.projects:
+        total += _heading()
+        for index, project in enumerate(content.projects):
+            left = f"{project.name} | {project.subtitle}" if project.subtitle else project.name
+            total += _para(
+                f"{left}  {project.link}", _TITLE, before=_NEXT_JOB_BEFORE if index else 0
+            )
+            total += sum(
+                _para(f"•  {b}", _BODY, before=1 if i else 0, width=width)
+                for i, b in enumerate(project.bullets)
+            )
+
+    total += _heading()
     for index, job in enumerate(content.experience):
         left = job.title
         if job.company:
@@ -200,6 +215,17 @@ def _cap_bullets(
     return current
 
 
+def _cap_project_bullets(content: TailoredResume, floor: int) -> TailoredResume:
+    """Keep at most ``floor`` bullets of each project (they are ordered most relevant first)."""
+    projects = [p.model_copy(update={"bullets": p.bullets[:floor]}) for p in content.projects]
+    return content.model_copy(update={"projects": projects})
+
+
+def _cap_projects(content: TailoredResume, count: int) -> TailoredResume:
+    """Keep the first ``count`` projects: the pinned ones come first, then the best match."""
+    return content.model_copy(update={"projects": list(content.projects[:count])})
+
+
 def fit_resume(content: TailoredResume, max_pages: int = RESUME_MAX_PAGES) -> TailoredResume:
     """Trim ``content`` until it is estimated to fit ``max_pages``; raise if it cannot."""
     limit = budget_height(max_pages)
@@ -213,12 +239,16 @@ def fit_resume(content: TailoredResume, max_pages: int = RESUME_MAX_PAGES) -> Ta
         lambda c: _cap_bullets(c, 4, limit),
         lambda c: _cap_skill_items(c, 9),
         lambda c: _cap_bullets(c, 3, limit),
+        lambda c: _cap_projects(c, 2),  # the unpinned ones go before a role falls below 3 bullets
         lambda c: _cap_skill_items(c, 6),
         lambda c: _cap_bullets(c, MIN_BULLETS, limit, from_index=RECENT_ROLES),
         lambda c: _cap_skill_lines(c, LAST_RESORT_SKILL_LINES, 5),
         lambda c: _cap_bullets(c, 1, limit, own_work_only=True),
         lambda c: _cap_bullets(c, 1, limit, from_index=RECENT_ROLES),
         lambda c: _cap_bullets(c, MIN_BULLETS, limit),
+        # Last of all, the pinned projects: one bullet each, then one project.
+        lambda c: _cap_project_bullets(c, 1),
+        lambda c: _cap_projects(c, 1),
     ]
     for step in steps:
         if estimate_height(fitted) <= limit:

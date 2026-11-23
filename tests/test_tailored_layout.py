@@ -208,3 +208,63 @@ def test_a_letter_date_has_no_zero_padded_day() -> None:
 
     assert long_date(date(2026, 11, 5)) == "November 5, 2026"
     assert long_date(date(2026, 11, 15)) == "November 15, 2026"
+
+
+# --- the Selected Projects section ---------------------------------------------------------
+
+
+def _resume_with_projects(tmp_path: Path, projects: list) -> Document:
+    content = service.parse_content(
+        "resume", (FIXTURES / "resume.json").read_text(encoding="utf-8")
+    )
+    content = content.model_copy(update={"projects": projects})
+    return Document(
+        str(service.render_document(content, DocxTailoredResume(), tmp_path / "p.docx"))
+    )
+
+
+def _project(name: str = "CookingTime", link: str = "github.com/example/cookingtime"):
+    from jobomatic.documents.model import ResumeProject
+
+    return ResumeProject(
+        name=name,
+        subtitle="C# · .NET 10",
+        link=link,
+        bullets=["Rebuilt a legacy app.", "Fixed bugs."],
+    )
+
+
+def test_projects_sit_between_the_skills_and_the_experience(tmp_path: Path) -> None:
+    doc = _resume_with_projects(tmp_path, [_project()])
+    headings = [p.text for p in doc.paragraphs if p.text.isupper() and len(p.text) < 40]
+    assert headings.index("TECHNICAL SKILLS") < headings.index("SELECTED PROJECTS")
+    assert headings.index("SELECTED PROJECTS") < headings.index("PROFESSIONAL EXPERIENCE")
+
+
+def test_a_project_line_is_bold_with_its_link_at_the_right_margin(tmp_path: Path) -> None:
+    doc = _resume_with_projects(tmp_path, [_project()])
+    line = next(p for p in doc.paragraphs if p.text.startswith("CookingTime | C# · .NET 10"))
+    assert line.text.endswith("\tgithub.com/example/cookingtime")
+    assert line.runs[0].bold
+    assert line.paragraph_format.tab_stops[0].alignment == WD_TAB_ALIGNMENT.RIGHT
+    assert any(p.text == "•  Rebuilt a legacy app." for p in doc.paragraphs)
+
+
+def test_a_project_without_a_link_has_no_tab(tmp_path: Path) -> None:
+    doc = _resume_with_projects(tmp_path, [_project(link="")])
+    line = next(p for p in doc.paragraphs if p.text.startswith("CookingTime"))
+    assert "\t" not in line.text
+
+
+def test_no_projects_means_no_heading(tmp_path: Path) -> None:
+    doc = _resume_with_projects(tmp_path, [])
+    assert not any(p.text == "SELECTED PROJECTS" for p in doc.paragraphs)
+
+
+def test_a_resume_written_before_projects_existed_still_parses() -> None:
+    from jobomatic.documents.model import TailoredResume
+
+    content = service.parse_content(
+        "resume", (FIXTURES / "resume.json").read_text(encoding="utf-8")
+    )
+    assert isinstance(content, TailoredResume) and content.projects == []

@@ -148,6 +148,14 @@ class DocxTailoredResume:
             run.font.name = FONT_NAME
             run.font.size = RESUME_BODY_SIZE
 
+        if content.projects:  # no projects, no heading
+            heading("Selected Projects", above=1.75)
+            for index, project in enumerate(content.projects):
+                left = f"{project.name} | {project.subtitle}" if project.subtitle else project.name
+                _job_line(doc, left, project.link, first=index == 0)
+                for position, text in enumerate(project.bullets):
+                    _bullet(doc, text, first=position == 0)
+
         heading("Professional Experience", above=1.75)
         for index, job in enumerate(content.experience):
             left = job.title

@@ -24,12 +24,18 @@ from jobomatic.commands.support import (
     require_path,
     verify_pages,
 )
-from jobomatic.documents import skim
+from jobomatic.documents import budget, skim
 from jobomatic.documents.adapters.docx_layout import (
     DEFAULT_SIGNATURE_NAME,
 )
 from jobomatic.documents.adapters.docx_tailored import DocxTailoredResume
-from jobomatic.documents.model import ResumeContact, ResumeJob, SkillLine, TailoredResume
+from jobomatic.documents.model import (
+    ResumeContact,
+    ResumeJob,
+    ResumeProject,
+    SkillLine,
+    TailoredResume,
+)
 from jobomatic.documents.pagefit import fit_resume
 from jobomatic.fit.engine import FitResult, profile_has_skill_text, rate_parsed_jd
 from jobomatic.fit.parser import parse_jd
@@ -84,9 +90,68 @@ def _skill_content(profile: Any, parsed: Any) -> list[SkillLine]:
     return lines
 
 
-def _job_content(profile: Any, parsed: Any) -> list[ResumeJob]:
-    """The resume-window roles with their bullets ordered by relevance to the posting."""
+def _subtitle(stack: list[str]) -> str:
+    """The first stack items that fit beside a project's name: at most ``PROJECT_SUBTITLE_ITEMS``
+    and ``PROJECT_SUBTITLE_CHARS`` characters, always at least the first."""
+    shown: list[str] = []
+    for item in stack[: budget.PROJECT_SUBTITLE_ITEMS]:
+        if shown and len(" · ".join([*shown, item])) > budget.PROJECT_SUBTITLE_CHARS:
+            break
+        shown.append(item)
+    return " · ".join(shown)
+
+
+def _project_content(profile: Any, parsed: Any) -> list[ResumeProject]:
+    """The Selected Projects: the pinned projects first (the work every employer should see), then
+    the best matches for the posting, at most ``budget.PROJECTS`` in all.
+
+    A project without ``resume_bullets`` is never used. A private repository shows no link.
+    """
     jd_pool = " ".join(parsed.required + parsed.nice_to_have)
+
+    def relevance(project: Any) -> int:
+        text = " ".join([project.name, *project.stack, *project.skills_evidence])
+        return _bullet_score(text, jd_pool) + sum(
+            _bullet_score(b, jd_pool) for b in project.resume_bullets
+        )
+
+    usable = [p for p in profile.projects if p.resume_bullets]
+    pinned = [p for p in usable if p.resume_pin]
+    rest = sorted((p for p in usable if not p.resume_pin), key=relevance, reverse=True)  # stable
+    return [
+        ResumeProject(
+            name=p.name,
+            subtitle=_subtitle(p.stack),
+            link="" if p.repo_private else p.url.removeprefix("https://").removeprefix("http://"),
+            bullets=[
+                skim.shorten(b, skim.BULLET_WORDS)
+                for b in sorted(
+                    p.resume_bullets, key=lambda b: _bullet_score(b, jd_pool), reverse=True
+                )[: budget.PROJECT_BULLETS]
+            ],
+        )
+        for p in [*pinned, *rest][: budget.PROJECTS]
+    ]
+
+
+def _job_content(
+    profile: Any, parsed: Any, shown_projects: frozenset[str] = frozenset()
+) -> list[ResumeJob]:
+    """The resume-window roles with their bullets ordered by relevance to the posting.
+
+    A bullet of a self-directed role (no employer) that names a project already shown in Selected
+    Projects is left out, so the same work is not on the page twice. If that would empty the role,
+    its own bullets are kept.
+    """
+    jd_pool = " ".join(parsed.required + parsed.nice_to_have)
+
+    def bullets_of(job: Any) -> list[str]:
+        own = list(job.bullets)
+        if job.company or not shown_projects:
+            return own
+        kept = [b for b in own if not any(name in b.lower() for name in shown_projects)]
+        return kept or own
+
     return [
         ResumeJob(
             title=job.title,
@@ -95,9 +160,9 @@ def _job_content(profile: Any, parsed: Any) -> list[ResumeJob]:
             dates=job.dates or "",
             bullets=[
                 skim.shorten(b, skim.BULLET_WORDS)
-                for b in sorted(job.bullets, key=lambda b: _bullet_score(b, jd_pool), reverse=True)[
-                    : skim.JOB_BULLETS
-                ]
+                for b in sorted(
+                    bullets_of(job), key=lambda b: _bullet_score(b, jd_pool), reverse=True
+                )[: skim.JOB_BULLETS]
             ],
         )
         for job in profile.resume_roles
@@ -154,6 +219,7 @@ def _resume_content(profile: Any, parsed: Any, tagline: str) -> TailoredResume:
         if paragraphs
         else [""]
     )
+    projects = _project_content(profile, parsed)
     full = TailoredResume(
         contact=ResumeContact(
             name=ident.name or DEFAULT_SIGNATURE_NAME,
@@ -167,7 +233,8 @@ def _resume_content(profile: Any, parsed: Any, tagline: str) -> TailoredResume:
         tagline=tagline,
         summary=summary,
         skills=_skill_content(profile, parsed),
-        experience=_job_content(profile, parsed),
+        projects=projects,
+        experience=_job_content(profile, parsed, frozenset(p.name.lower() for p in projects)),
         additional_experience=ident.additional_experience.strip(),
         education=_education_lines(profile),
         certifications=_certification_lines(profile),

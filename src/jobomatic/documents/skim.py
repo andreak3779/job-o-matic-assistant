@@ -31,6 +31,7 @@ from jobomatic.documents.budget import (
     HOOK_WORDS,
     JOB_BULLETS,
     LETTER_WORDS,
+    PROJECT_BULLETS,
     SKILL_LINE_WORDS,
     SKILL_LINES,
     SUMMARY_WORDS,
@@ -150,6 +151,20 @@ def resume_problems(resume: TailoredResume) -> list[str]:
                         words(bullet),
                         BULLET_WORDS,
                         advice="one fact, one result",
+                    )
+                )
+    for i, project in enumerate(resume.projects):
+        where = f"projects[{i}] ({project.name})"
+        if len(project.bullets) > PROJECT_BULLETS:
+            found.append(_over(where, len(project.bullets), PROJECT_BULLETS, "bullets"))
+        for j, bullet in enumerate(project.bullets):
+            if words(bullet) > BULLET_WORDS:
+                found.append(
+                    _over(
+                        f"{where} bullet {j}",
+                        words(bullet),
+                        BULLET_WORDS,
+                        advice="what it is, then what it shows",
                     )
                 )
     return found

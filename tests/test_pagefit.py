@@ -360,3 +360,50 @@ def test_a_chosen_tool_that_is_missing_is_an_error_not_a_fallback(
     monkeypatch.setenv("JOBOMATIC_LIBREOFFICE", "nothing-here")
     with pytest.raises(PageCountUnavailable, match="nothing-here"):
         _names(tmp_path)
+
+
+# --- the Selected Projects section ---------------------------------------------------------
+
+
+def _with_projects(content: TailoredResume, count: int = 3, bullets: int = 2) -> TailoredResume:
+    from jobomatic.documents.model import ResumeProject
+
+    projects = [
+        ResumeProject(
+            name=f"Project{n}",
+            subtitle="Python · MCP",
+            link=f"github.com/example/project{n}",
+            bullets=[f"{BULLET}(project {n}, bullet {b})" for b in range(bullets)],
+        )
+        for n in range(count)
+    ]
+    return content.model_copy(update={"projects": projects})
+
+
+def test_the_projects_are_part_of_the_estimated_height() -> None:
+    plain = _resume(roles=2, bullets=2, skill_lines=3)
+    assert pagefit.estimate_height(_with_projects(plain)) > pagefit.estimate_height(plain) + 150
+    assert pagefit.estimate_height(_with_projects(plain, count=0)) == pagefit.estimate_height(plain)
+
+
+def test_the_roles_give_up_bullets_before_the_pinned_projects_do() -> None:
+    fitted = pagefit.fit_resume(_with_projects(_resume(roles=6, bullets=10), count=2))
+    assert [p.name for p in fitted.projects] == ["Project0", "Project1"]
+    assert all(len(p.bullets) == 2 for p in fitted.projects)  # untouched while roles can still give
+    assert pagefit.estimate_height(fitted) <= pagefit.budget_height()
+
+
+def test_a_third_project_goes_before_a_recent_role_falls_below_three_bullets() -> None:
+    fitted = pagefit.fit_resume(_with_projects(_resume(roles=6, bullets=10), count=3))
+    assert len(fitted.projects) == 2
+    assert all(n >= 3 for n in _bullets(fitted)[: pagefit.RECENT_ROLES])
+
+
+def test_projects_are_cut_only_as_a_last_resort_and_never_below_one() -> None:
+    # Roles at their floor already: only the projects can give.
+    content = _with_projects(_resume(roles=6, bullets=2, skill_lines=7), count=3)
+    big = content.model_copy(update={"summary": ["Full-stack developer. " * 10]})
+    fitted = pagefit.fit_resume(big)
+    assert len(fitted.projects) >= 1
+    assert all(len(p.bullets) >= 1 for p in fitted.projects)
+    assert pagefit.estimate_height(fitted) <= pagefit.budget_height()

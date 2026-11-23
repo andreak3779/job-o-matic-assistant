@@ -49,3 +49,4 @@ status below says so.
 | [0033](0033-python-version-support-and-ci-matrix.md) | Which Python versions are supported, and what CI tests | Accepted |
 | [0034](0034-dependabot-for-the-lock-and-the-actions.md) | Dependabot keeps the lock file and the Actions current | Accepted |
 | [0035](0035-render-tools-for-claude-desktop.md) | Claude Desktop writes tailored documents through render tools (schema, draft, render), gated like the generators, instead of only the rule-based generators | Accepted |
+| [0036](0036-resume-selected-projects-section.md) | The resume has a Selected Projects section: pinned projects first, the best match next, trimmed after the roles | Accepted |

@@ -215,6 +215,12 @@ class Project(Record):
     # The GitHub repo is private: its URL will not open for a recruiter, so link lists skip
     # it. The project itself is still public evidence. Not the same as ``visibility``.
     repo_private: bool = Field(default=False, json_schema_extra=PUBLIC)
+    # What the resume's Selected Projects section says about it: short bullets (at most two are
+    # used). A project with none is never put on a resume.
+    resume_bullets: list[str] = Field(default_factory=list, json_schema_extra=PUBLIC)
+    # Always on the resume (while its section has room), whatever the posting asks for: the
+    # work the candidate wants every employer to see. The other slots go to the best match.
+    resume_pin: bool = Field(default=False, json_schema_extra=PUBLIC)
 
 
 class Story(Record):

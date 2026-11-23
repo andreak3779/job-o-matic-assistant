@@ -89,6 +89,44 @@ status: ok
       "title": "ResumeJob",
       "type": "object"
     },
+    "ResumeProject": {
+      "additionalProperties": false,
+      "description": "A project shown in the resume's Selected Projects section.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "subtitle": {
+          "default": "",
+          "description": "The stack in a few words, e.g. 'Python \u00b7 MCP \u00b7 SQLite'",
+          "title": "Subtitle",
+          "type": "string"
+        },
+        "link": {
+          "default": "",
+          "description": "A public URL, shown at the right margin; empty to omit",
+          "title": "Link",
+          "type": "string"
+        },
+        "bullets": {
+          "description": "At most 2, most relevant first, each 35 words or fewer: what it is, then what it shows",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Bullets",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "bullets"
+      ],
+      "title": "ResumeProject",
+      "type": "object"
+    },
     "SkillLine": {
       "additionalProperties": false,
       "properties": {
@@ -141,6 +179,15 @@ status: ok
       },
       "minItems": 1,
       "title": "Skills",
+      "type": "array"
+    },
+    "projects": {
+      "description": "Selected Projects, shown between the skills and the experience: at most 3, the ones that speak to this posting first. Empty to omit the section.",
+      "items": {
+        "$ref": "#/$defs/ResumeProject"
+      },
+      "maxItems": 3,
+      "title": "Projects",
       "type": "array"
     },
     "experience": {
