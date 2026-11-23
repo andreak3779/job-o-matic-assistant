@@ -51,8 +51,8 @@ If only one gap analysis is provided, stop and suggest `learning-plan-gap-analys
 Always read fresh, never trust the numbers in an uploaded prior plan:
 
 1. The learning data (`python -m jobomatic learning list`, `stats`, `lookup`) — completed Pluralsight courses/labs and Microsoft Learn completions. Anything not in it counts as not started; progress percentages are no longer recorded.
-3. `profile-facts.md` — resolved gaps, known genuine gaps, cert status
-4. `skills-summary.md` — course counts (sanity-check totals in the plan header against this)
+3. `python -m jobomatic profile show facts` — resolved gaps, known genuine gaps, cert status
+4. `python -m jobomatic learning stats` — course counts (sanity-check totals in the plan header against this)
 
 If the file's "Last updated" date is later than the uploaded plan's date, the plan is stale by definition — flag this in the "About This Plan" text (as in prior versions, e.g. "since the June 4 baseline, N items completed").
 
@@ -73,7 +73,7 @@ Tag every gap with its source label before merging — this tag must survive int
 
 This is the core value of this skill over running plans separately. For each candidate course:
 
-1. **Check `profile-facts.md` resolved gaps / `skills-summary.md`** — if a skill is already resolved (e.g. DDD, 2 courses complete Apr 2026), it is a **resume-surfacing issue, not a learning gap**. Exclude it from the plan and note the correction in "About This Plan" (mirror the DDD precedent from the June 26 plan).
+1. **Check the resolved gaps in `profile show facts` and the skills in `profile show full`** — if a skill is already resolved (e.g. DDD, 2 courses complete Apr 2026), it is a **resume-surfacing issue, not a learning gap**. Exclude it from the plan and note the correction in "About This Plan" (mirror the DDD precedent from the June 26 plan).
 2. **Check the learning data** (`learning lookup`) — if the exact course is already completed, move it to Recently Completed (Step 5), not the active plan.
 3. **Merge same-topic gaps from different sources onto one course card.** If Acme Payroll and Example Finance both need Kubernetes depth via different named items, pick the single best course/lab and list both sources in the "Closes" line, exactly as the existing plan does for the K8s volumes/orchestration lab overlap.
 4. **Never duplicate a course across two phases.** Once assigned, remove it from consideration for any other gap.
@@ -164,7 +164,7 @@ After stating the output path, give a 5–6 sentence summary covering:
 - Total remaining items and hours
 - Whether any prior-plan item couldn't be confirmed and needs the candidate's check
 
-This skill never edits the profile on its own. A profile change is a separate, explicitly-requested step — even if this session's dedup pass surfaces a correction that belongs in `profile-facts.md` or `skills-summary.md`, note it to the candidate and wait for the candidate to ask for the profile run.
+This skill never edits the profile on its own. A profile change is a separate, explicitly-requested step — even if this session's dedup pass surfaces a correction that belongs in the profile YAML (`identity.yaml`, `skills.yaml`), note it to the candidate and wait for the candidate to ask for the profile run.
 
 ---
 

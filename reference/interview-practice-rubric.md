@@ -64,8 +64,8 @@ Other things to credit or flag in any answer: a short pause to think is fine (do
 
 Before writing any model answer or "stronger version":
 
-1. Load facts with `python -m jobomatic profile show facts` (small). Use `full` only if a behavioural answer needs work-history detail you can't get from `star-bank.md`.
-2. Every employer, project, course, number or outcome in a model answer must trace to the profile output or the vault's `profile/star-bank.md`. If the evidence isn't there, say so and give a generic best-practice answer **labelled as such** — don't borrow a plausible-sounding project.
+1. Load facts with `python -m jobomatic profile show facts` (small). Use `full` only if a behavioural answer needs work-history detail you can't get from the STAR Stories section.
+2. Every employer, project, course, number or outcome in a model answer must trace to the profile output or the STAR Stories section (`profile show section "STAR Stories"`). If the evidence isn't there, say so and give a generic best-practice answer **labelled as such** — don't borrow a plausible-sounding project.
 3. **Overclaim check.** If the user's answer claims experience, compare it with the profile. Flag any claim that is stronger than the evidence tier (production > portfolio > course/lab > none). Example: "I run Kubernetes in production" when the profile shows course-level only. Offer the honest-floor wording instead.
 4. **Known gaps / learning-level skills.** If the question touches a profile "Known Genuine Gap", or a 🟡/🔴/🕰️ skill, read the vault's `profile/gap-coaching.md` and score *calibration* against its **Honest floor**. The right answer to "do you have X?" for a real gap is honest + bridge + willingness, never bluffing. Use that entry's "what to say" / "what not to say" in your coaching.
 5. **Legacy experience (🕰️).** Real, but deliberately kept off the resume. In a model answer, don't surface it silently — say it exists and ask the user whether they want to raise it in this interview.

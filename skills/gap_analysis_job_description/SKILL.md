@@ -77,7 +77,7 @@ For reference, the status meanings and rating thresholds the script applies:
 | ✅ Match | Production experience in resume, OR resolved framing gap |
 | 🟡 Portfolio | Demonstrated in own GitHub project; no production employment use |
 | 🟡 Coursework | Pluralsight only; no production or project use |
-| 🕰️ Legacy | Only evidenced by legacy employment (`Career_History.md`); real experience kept off the active resume by design. Surfacing it is a per-application decision — never automatic. |
+| 🕰️ Legacy | Only evidenced by legacy employment (the legacy roles in the profile (from before the resume window)); real experience kept off the active resume by design. Surfacing it is a per-application decision — never automatic. |
 | 🔴 Gap | Not in resume, portfolio, coursework, or legacy history |
 
 | Rating | Meaning |

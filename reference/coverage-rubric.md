@@ -9,7 +9,7 @@ and assign phases when building a certification learning plan.
 
 | Rating | Criteria |
 |---|---|
-| ✅ Strong | Completed full course(s) covering this exact service/topic; or prior production experience confirmed in `profile-facts.md` |
+| ✅ Strong | Completed full course(s) covering this exact service/topic; or prior production experience confirmed in the profile (`profile show full`) |
 | 🟡 Partial | In-progress course (>10%), short course, a lab but no lecture depth, or course-level-only coverage |
 | 🔴 Gap | No course, no lab, no MS Learn module on this specific service or skill |
 

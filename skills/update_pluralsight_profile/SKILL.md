@@ -24,8 +24,8 @@ description: >
 > output before presenting the final paste-ready text — never leave a literal
 > `{fragment_name}` in delivered output. If that section is missing (older profile
 > version, pre-fragments), fall back to computing the value the same way
-> the Copy Fragments rules in `src/jobomatic/profile/copy_fragments.py` Step 2.5 does, from `profile-facts.md` /
-> `skills-summary.md` directly.
+> the Copy Fragments rules in `src/jobomatic/profile/copy_fragments.py` Step 2.5 does, from
+> `python -m jobomatic profile show --public` directly.
 
 Profile URL: https://app.pluralsight.com/profile/<pluralsight-user>
 

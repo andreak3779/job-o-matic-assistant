@@ -22,7 +22,7 @@ description: >
 > final paste-ready text — never leave a literal `{fragment_name}` in delivered
 > output. If that section is missing (older profile data, pre-fragments), fall
 > back to computing the value the same way the Copy Fragments rules in `src/jobomatic/profile/copy_fragments.py`
-> Step 2.5 does, from `profile-facts.md` / `skills-summary.md` directly.
+> Step 2.5 does, from `python -m jobomatic profile show --public` directly.
 
 Jobgether is an AI-matching job board: it scores candidates against postings
 using the profile fields below plus the uploaded resume, rather than surfacing
@@ -51,8 +51,8 @@ Jobgether's matching algorithm scores against the uploaded resume alongside
 the typed fields below. Before writing any field content:
 
 1. Check the modification date of `outputs/templates/resume.docx` in the vault
-   against the public profile's `generated` date (and the `last_modified` dates of
-   `profile-facts.md` / `Resume_Snapshot.md` / `skills-summary.md` in Project 2).
+   against the public profile's `generated` date (and the date the vault's `profile/` folder last changed, from
+   `git log -1 --format=%cd -- profile`).
 2. If the resume file predates any of those sources, tell the user it's stale and
    offer to run the `fullstack_net_profile_resume` skill to regenerate it before
    they upload — a stale resume weakens Jobgether's match scoring even if the

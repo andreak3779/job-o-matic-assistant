@@ -79,7 +79,7 @@ This skill surfaces **ONLY roles where your existing profile matches 80%+ of req
 - **List of target job descriptions** (5–15 actual postings; pasted text, URLs, or file names)
 
 Everything else loads automatically from your job search project:
-- `python -m jobomatic profile show facts` — certifications, differentiators, known gaps, portfolio projects, ATS keywords, and AI-200 domain coverage, including the `{course_count_sentence}` Copy Fragment for course/lab counts. Do NOT load `pluralsight-courses.md` (~15K tokens) for this — the fragment is recomputed fresh on every build, so it's never stale
+- `python -m jobomatic profile show facts` — certifications, differentiators, known gaps, portfolio projects, ATS keywords, and AI-200 domain coverage, including the `{course_count_sentence}` Copy Fragment for course/lab counts. Do NOT list every completed course (~15K tokens) for this — the fragment is recomputed fresh on every build, so it's never stale
 - `python -m jobomatic learning list --provider mslearn` — completed Microsoft Learn modules and paths
 
 ---

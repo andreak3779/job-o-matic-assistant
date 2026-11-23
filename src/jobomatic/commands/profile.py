@@ -132,6 +132,8 @@ def _show(part: str, names: list[str], public: bool) -> CommandResult[ShowData]:
             sections = facts
     missing: tuple[str, ...] = ()
     if part == "section":
+        if not public:  # the stories are offered by name only: not in ``full`` or ``facts``
+            sections = [*sections, profile_text.stories_section(profile)]
         sections, not_found = profile_text.pick(sections, names)
         missing = tuple(not_found)
         if not sections:

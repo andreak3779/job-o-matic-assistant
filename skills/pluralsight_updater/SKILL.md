@@ -51,9 +51,9 @@ course that was in progress last time and is finished now simply shows up as new
 
    | Condition | Action to flag |
    |---|---|
-   | A new course fills a **Genuine Gap** from `profile-facts.md` | "Consider updating Known Genuine Gaps: this is now course-level coverage" |
-   | A new course is in a **critical AI-200 domain** (Service Bus, Cosmos DB, Redis, Key Vault, Event Grid, Azure OpenAI, vector databases, agentic patterns) | "This closes an AI-200 gap: update the AI-200 Domain Coverage table in skills-summary.md" |
-   | A new **technology area** not in `skills-summary.md` | "New skill area: consider adding a bullet to skills-summary.md" |
+   | A new course fills a **Genuine Gap** from the Known Genuine Gaps in `profile show facts` | "Consider updating Known Genuine Gaps: this is now course-level coverage" |
+   | A new course is in a **critical AI-200 domain** (Service Bus, Cosmos DB, Redis, Key Vault, Event Grid, Azure OpenAI, vector databases, agentic patterns) | "This closes an AI-200 gap: update the AI-200 domain coverage in `certifications.yaml`" |
+   | A new **technology area** not in `skills.yaml` | "New skill area: consider adding it to `skills.yaml`" |
 
    Then run `python -m jobomatic profile validate`: it warns when counts written in the
    profile text (for example "Pace of learning: N courses") no longer match the imported data.

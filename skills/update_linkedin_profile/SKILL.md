@@ -23,7 +23,7 @@ description: >
 > output. If that section is missing (older profile data, pre-fragments),
 > fall back to computing the value the same way
 > the Copy Fragments rules in `src/jobomatic/profile/copy_fragments.py` Step 2.5 does, from
-> `profile-facts.md` / `skills-summary.md` directly.
+> `python -m jobomatic profile show --public` directly.
 
 ## Character Limits
 | Field | Limit | Notes |
@@ -131,7 +131,7 @@ Re-check the total against the 2,000-char limit after substituting the repo bull
 ## Step 3.5 — Sync Existing Experience Entries
 *(Keep LinkedIn's Acme Software, Globex Industrial, Example Hauling, and Example Health
 entries bullet-for-bullet consistent with the resume. This is the step that closes the
-drift the resume/LinkedIn comparison surfaced — Resume_Snapshot.md is the source of
+drift the resume/LinkedIn comparison surfaced — the profile's roles (`roles.yaml`) are the source of
 truth, and LinkedIn must not fall behind it.)*
 
 **Legacy roles:** the resume now starts at the resume-window start date by design;
@@ -141,7 +141,7 @@ may need manual removal or compression on LinkedIn itself — this skill only dr
 copy, it can't edit LinkedIn. Never draft sync copy for a legacy role.
 
 The profile output's `## Professional Experience` section is rendered directly from
-`Resume_Snapshot.md`'s per-employer bullets (via the profile's typed `experience` list) —
+the per-employer bullets of the profile's typed roles (`roles.yaml`) —
 it is not a paraphrase and not hand-maintained, so it's safe to treat as the exact
 target text for each LinkedIn role.
 
