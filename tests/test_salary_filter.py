@@ -15,6 +15,13 @@ MINS = SearchConstraints(min_permanent_base_cad=85000, min_contract_hourly_cad=6
         ("Salary $90-110k", 90000, 110000, "annual"),
         ("Rate: $60-$75/hr", 60, 75, "hourly"),
         ("We pay $45 per hour", 45, 45, "hourly"),
+        # a currency code in place of the "$" (Clover Health posting)
+        ("base salary range for this role is: CAD 134,000 - 175,000.", 134000, 175000, "annual"),
+        ("Salary: CAD 120,000", 120000, 120000, "annual"),
+        # the code after each number (Samsara, Quantum World postings)
+        ("base pay is below.: $126,225 CAD - $184,800 CAD", 126225, 184800, "annual"),
+        ("100K CAD/yr - 115K CAD/yr", 100000, 115000, "annual"),
+        ("Rate: $40/hr - $60/hr", 40, 60, "hourly"),
     ],
 )
 def test_finds_pay(text, low, high, period) -> None:
@@ -36,6 +43,24 @@ def test_finds_pay(text, low, high, period) -> None:
     ],
 )
 def test_ignores_things_that_are_not_pay(text) -> None:
+    assert find_pay(text) == []
+
+
+def test_a_currency_code_without_a_dollar_sign_is_read_as_that_currency() -> None:
+    [cad] = find_pay("Base salary range: CAD 134,000 - 175,000")
+    [usd] = find_pay("Base salary range: USD 134,000 - 175,000")
+    assert (cad.currency, usd.currency) == ("CAD", "USD")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "CAD 5 million in funding",  # not pay
+        "Offices in CAD 134,000 square feet",  # no pay word, period unstated
+        "We pay a CAD 5,000 signing bonus.",
+    ],
+)
+def test_a_currency_code_alone_does_not_make_a_number_pay(text) -> None:
     assert find_pay(text) == []
 
 
@@ -123,3 +148,10 @@ def test_render_marks_below_and_asks_to_confirm() -> None:
 def test_render_confirms_when_ok() -> None:
     out = render_salary_screen(assess_salary("Salary: $95,000 per year", MINS), configured=True)
     assert "✅" in out
+
+
+@pytest.mark.parametrize(
+    "text", ["about 100K employees", "raised $50M in 2025", "5+ years, 100k users"]
+)
+def test_a_k_figure_without_a_currency_code_or_dollar_sign_is_not_pay(text) -> None:
+    assert find_pay(text) == []

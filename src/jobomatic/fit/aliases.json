@@ -2,6 +2,9 @@
   "description": "Alias registry for the fit engine. Keys are normalized JD skill phrases; values are normalized terms that should also be searched in the profile.",
   "aliases": {
     "html5": ["html"],
+    "data modeling": ["data models", "data model", "database design"],
+    "fullstack": ["full-stack", "full stack"],
+    "backend development experience": ["backend", "back-end"],
     "microsoft .net platform": [".net platform", ".net framework", ".net", "dotnet"],
     "microsoft team foundation server": ["team foundation server", "tfs"],
     "microsoft dynamics crm": ["dynamics crm", "dynamics 365", "dynamics 365 sales"],

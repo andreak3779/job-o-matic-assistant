@@ -326,7 +326,9 @@ def test_label_value_headings_and_indented_unmarked_lines_are_parsed() -> None:
     # "Strong SQL" asks for SQL: the filler word is not part of what is searched for.
     assert "SQL" in parsed.required
     assert "strong sql" not in joined_required
-    assert "troubleshooting production issues" in joined_required
+    # A sentence naming no known skill is listed for the user to read, not rated as a gap (A).
+    assert "troubleshooting production issues" not in joined_required
+    assert any("troubleshooting production issues" in line for line in parsed.unscored_required)
     joined_nice = " ".join(parsed.nice_to_have).lower()
     assert "healthcare" in joined_nice
     # Nice-to-have lines must not leak into required, nor the intro prose in.
@@ -1111,3 +1113,229 @@ def test_a_soa_line_names_soap_wsdl_and_wcf_as_requirements() -> None:
 def test_soap_in_lowercase_prose_is_not_the_protocol() -> None:
     parsed = parse_jd("Dev\n\n## Requirements\n- Comfortable working with soap and water\n- C#\n")
     assert "soap" not in {item.lower() for item in parsed.required_for_rating}
+
+
+# ── fixes found by running real LinkedIn pastes (Quest, Clover, Atlassian, IDENTOS, Lime, ...) ──
+
+
+def test_an_even_better_heading_opens_the_nice_to_have_list() -> None:
+    """Atlassian: "If You've Got These Skills, Even Better" put AWS, Java and Rust in required."""
+    text = "# Dev\n\n## Qualifications\n- C#\n\nIf You've Got These Skills, Even Better\n\n- AWS\n- Rust\n"
+    parsed = parse_jd(text)
+    assert parsed.required == ["C#"]
+    assert parsed.nice_to_have == ["AWS", "Rust"]
+
+
+def test_a_plus_in_brackets_makes_only_those_words_optional() -> None:
+    """IDENTOS: "(UML a plus)" moved object-oriented, OpenAPI and Swagger to nice-to-have."""
+    text = (
+        "# Dev\n\n## Must-Have\n"
+        "- Solid object-oriented design and documenting designs with OpenAPI/Swagger (UML a plus)\n"
+        "- Git\n"
+    )
+    parsed = parse_jd(text)
+    assert "object-oriented" in parsed.required
+    assert "OpenAPI" in parsed.required and "Git" in parsed.required
+    assert parsed.nice_to_have == []
+
+
+def test_a_bracket_with_only_a_marker_still_makes_the_whole_line_optional() -> None:
+    parsed = parse_jd("# Dev\n\n## Requirements\n- C#\n- Terraform (a bonus)\n")
+    assert parsed.required == ["C#"]
+    assert parsed.nice_to_have == ["Terraform"]
+
+
+def test_two_slash_stacks_joined_by_or_are_one_choice() -> None:
+    """IDENTOS: Java/Spring/Hibernate or React/TypeScript required both stacks (Spring a core gap)."""
+    text = (
+        "# Dev\n\n## Must-Have\n"
+        "- 2+ years of working experience and proficiency in Java/Spring/Hibernate or "
+        "React/TypeScript, with working familiarity with the other\n"
+    )
+    assert parse_jd(text).required == ["Java / Spring / Hibernate / React / TypeScript"]
+
+
+def test_a_company_name_ending_in_a_period_does_not_hide_the_title() -> None:
+    """IDENTOS: the "." of "Inc." made the first line look like a sentence ("Unknown Role")."""
+    parsed = parse_jd(
+        "Software Developer (12 month Contract) | IDENTOS Inc.\n\n## Requirements\n- C#\n"
+    )
+    assert parsed.title.startswith("Software Developer")
+    assert "IDENTOS" in parsed.company
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "- Technical proficiency to understand the design and implementation of projects",
+        "    Technical proficiency to understand the design of projects",
+        "    Experience with large lumber mill equipment.",  # six words: rated whole before
+    ],
+)
+def test_a_required_sentence_naming_no_skill_is_listed_not_rated(line: str) -> None:
+    """Part A: rated whole, such a line could only ever read as a gap (Clover, Lime, Super.com)."""
+    parsed = parse_jd(f"# Dev\n\n## Requirements\n- C#\n{line}\n")
+    assert parsed.required == ["C#"]
+    assert [item.strip() for item in parsed.unscored_required] == [
+        line.strip().removeprefix("- ").rstrip(".")
+    ]
+
+
+def test_a_description_of_the_employers_stack_is_not_a_requirement_list() -> None:
+    """Super.com: "Our Technology" bullets were read as nice-to-haves, with duplicate rows."""
+    text = (
+        "# Dev\n\n## Requirements\n- C#\n\nBonus Points For\n- SQL\n\n"
+        "Our Technology\n- We use Postgres, Redis and Kubernetes on AWS.\n"
+    )
+    assert parse_jd(text).nice_to_have == ["SQL"]
+
+
+def test_imp_heading_opens_a_quoted_paragraph_of_requirements() -> None:
+    """Accion Labs: "Imp:" then a quoted paragraph (ending in ."), none of it was read."""
+    text = (
+        '# Dev\n\nQualifications:\n\n    Strong C#.\n\nImp:\n\n"Proven expertise in designing '
+        'RESTful APIs, including authentication using JWT tokens. Strong grasp of design patterns."\n'
+    )
+    required = parse_jd(text).required
+    assert any("JWT" in item for item in required) and "design patterns" in required
+
+
+def test_a_heading_that_merely_contains_imp_is_not_a_requirements_heading() -> None:
+    """ "Implementation details" does not open the required list: Kubernetes stays out of it."""
+    parsed = parse_jd("# Dev\n\n## Preferred\n- C#\n\nImplementation details\n- Kubernetes\n")
+    assert "Kubernetes" not in parsed.required
+
+
+# ── fixes found by the HCLTech paste (a flat page: no bullets, no indent, a "Company • City" line) ──
+
+
+def test_the_company_is_read_from_a_company_and_location_header_line() -> None:
+    parsed = parse_jd(
+        "C# SQL Developer (Remote)\n\nHCLTech • Canada (Remote)\n\n## Requirements\n- C#\n"
+    )
+    assert parsed.title == "C# SQL Developer (Remote)"
+    assert parsed.company == "HCLTech"
+
+
+def test_flat_lines_under_a_colon_heading_are_its_items_until_the_closing_sentence() -> None:
+    text = (
+        "# Dev\n\n✅ Required Skills:\n\n5-8 years of experience\n\n"
+        "Strong programming expertise in C#\n\nStrong experience with SQL Server and database "
+        "development\n\n📩 Interested or know someone who would be a great fit? Apply now.\n"
+    )
+    parsed = parse_jd(text)
+    assert parsed.required == ["C#", "SQL Server"]
+    assert parsed.unscored_required == ()
+
+
+def test_flat_lines_after_a_heading_with_no_colon_are_still_not_items() -> None:
+    parsed = parse_jd("# Dev\n\nRequirements\n\nPython\n\nAzure\n")
+    assert parsed.required == []
+
+
+def test_flat_lines_after_an_unknown_colon_heading_are_not_items() -> None:
+    text = "# Dev\n\nRequired Skills:\n\nC#\n\nSomething else entirely:\n\nSomeone's hobbies\n"
+    assert parse_jd(text).required == ["C#"]
+
+
+def test_work_authorization_is_listed_for_the_user_and_never_scored() -> None:
+    parsed = parse_jd("# Dev\n\n## Requirements\n- C#\n- Authorized to work in Canada\n")
+    assert parsed.required == ["C#"]
+    assert [s.kind for s in parsed.soft_requirements if s.kind == "eligibility"] == ["eligibility"]
+
+
+# --- Round three: the LinkedIn job card, trait lines, either/or lines ---------------------------
+
+_CARD = (
+    "Company logo for, {company}.\n\n{company}\n\n{title} \n\n"
+    "Canada · 6 days ago · Over 100 applicants\n\nRemote\nFull-time\n\nAbout the job\n\n"
+    "What we're looking for\n\n    Angular\n    Python\n"
+)
+
+
+@pytest.mark.parametrize(
+    "company,title",
+    [
+        ("ClickUp", "Staff Frontend Engineer"),
+        ("Quantum World Technologies Inc.", "Full Stack Engineer"),
+        ("Prompt.io", "Software Engineer"),
+    ],
+)
+def test_a_linkedin_job_card_header_gives_title_and_company(company: str, title: str) -> None:
+    parsed = parse_jd(_CARD.format(company=company, title=title))
+    assert (parsed.title, parsed.company) == (title, company)
+
+
+def test_the_job_card_title_wins_over_a_body_label() -> None:
+    text = _CARD.format(company="AspiringIT", title="Software Architect (C#, .Net, Azure)")
+    parsed = parse_jd(text + "\nJob title: Something else\n")
+    assert parsed.title == "Software Architect (C#, .Net, Azure)"
+
+
+def test_ideal_candidate_also_has_opens_the_nice_to_have_list() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nMinimum requirements for the role:\n    Python\n\n"
+        "An ideal candidate also has:\n    Docker\n"
+    )
+    assert "Python" in parsed.required
+    assert "Docker" not in parsed.required
+    assert "Docker" in parsed.nice_to_have
+
+
+def test_ideal_candidate_alone_is_still_a_requirements_heading() -> None:
+    parsed = parse_jd("# Dev\n\nIdeal candidate\n    Python\n")
+    assert parsed.required == ["Python"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "You are motivated by accountability",
+        "You are results-oriented",
+        "Customer obsessed. You put the customer first",
+        "Strong programming/coding fundamentals",
+    ],
+)
+def test_trait_lines_are_soft_skills_not_skill_rows(line: str) -> None:
+    parsed = parse_jd(f"# Dev\n\n## Requirements\n- C#\n- {line}\n")
+    assert parsed.required == ["C#"]
+    assert [s.kind for s in parsed.soft_requirements] == ["soft skill"]
+
+
+def test_how_you_work_is_a_soft_section() -> None:
+    parsed = parse_jd(
+        "# Dev\n\n## What we're looking for\n- C#\n\nHOW YOU WORK\n"
+        "    You take ownership of your work and follow through on commitments.\n"
+        "    You write Python every day.\n"
+    )
+    assert parsed.required == ["C#"]
+
+
+def test_a_call_to_action_ends_the_requirements_list() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nWhat We're Looking For\n\nGit workflows\n\nAccess to a computer\n\n"
+        "Why Apply?\n\n100% Asynchronous & Flexible: pick tasks around your schedule\n\nApply Now!\n"
+    )
+    joined = " ".join(parsed.required).lower()
+    assert "apply" not in joined
+    assert "asynchronous" not in joined
+    assert not any("apply" in line.lower() for line in parsed.unscored_required)
+
+
+def test_a_linkedin_category_suffix_is_not_part_of_the_skill() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nRequirements\n\n• 2+ years of work experience with Python (Programming Language)\n"
+    )
+    assert not any("programming language" in item.lower() for item in parsed.required)
+
+
+def test_a_plain_or_line_is_one_choice_row() -> None:
+    parsed = parse_jd("# Dev\n\n## Requirements\n- Fullstack or backend development experience\n")
+    assert parsed.required == ["Fullstack / backend development experience"]
+
+
+def test_eligibility_in_closing_boilerplate_is_listed_but_a_long_paragraph_is_not() -> None:
+    short = "Applicants must be authorized to work in the United States or Canada."
+    long = " ".join(["word"] * 45) + " the legal right to work at the company."
+    parsed = parse_jd(f"# Dev\n\n## Requirements\n- C#\n\nEqual opportunity\n{short}\n{long}\n")
+    assert [s.line for s in parsed.soft_requirements if s.kind == "eligibility"] == [short]

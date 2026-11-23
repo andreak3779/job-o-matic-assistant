@@ -13,6 +13,7 @@ from jobomatic.fit.soft_requirements import (
     classify_optional,
     has_years_figure,
     is_education,
+    is_eligibility,
     soft_skill,
     title_level,
 )
@@ -96,6 +97,9 @@ _REQUIRED_HEADING_RE = re.compile(
     r"your (?:skills|background|experience|profile)|ideal candidate|who we.?re looking for)",
     re.IGNORECASE,
 )
+# "Imp:" / "Important:" on a line of its own introduces requirements. Anchored, so a heading such
+# as "Implementation details" is not read as one.
+_IMPORTANT_HEADING_RE = re.compile(r"^\W*(?:imp|important)\W*$", re.IGNORECASE)
 # A bare "Experience" heading ("Experience", "Relevant Experience:") opens the requirements list.
 _EXPERIENCE_HEADING_RE = re.compile(
     r"^\W*(?:relevant\s+|required\s+)?experience\W*$", re.IGNORECASE
@@ -126,12 +130,13 @@ def _drop_term_details(item: str) -> str:
 # A section of qualities, not tools (ADR 0023): its lines are listed as soft skills, never scored.
 _SOFT_HEADING_RE = re.compile(
     r"(soft skills?|personal (?:qualities|attributes|characteristics)|interpersonal skills|"
-    r"competenc(?:y|ies)|attributes)",
+    r"competenc(?:y|ies)|attributes|how you work)",
     re.IGNORECASE,
 )
 # "Nice-to-Have", "Nice to have", "Nice to Haves" all appear in real postings.
 _NICE_HEADING_RE = re.compile(
-    r"(nice[\s-]to[\s-]haves?|good[\s-]to[\s-]haves?|preferred|bonus|asset|desirable)",
+    r"(nice[\s-]to[\s-]haves?|good[\s-]to[\s-]haves?|preferred|bonus|asset|desirable|even\s+better|"
+    r"ideal\s+candidate\s+(?:would\s+)?also)",
     re.IGNORECASE,
 )
 # A single line that marks itself optional while sitting under a required heading (ADR 0021):
@@ -155,6 +160,26 @@ _NICE_PHRASE_RE = re.compile(
 
 # "Nice to have but strongly preferred" is not optional: the line stays required (owner's call).
 _STRONGLY_PREFERRED_RE = re.compile(r"\bstrongly\s+preferred\b", re.IGNORECASE)
+
+
+# "OpenAPI/Swagger (UML a plus)": a bracket that says some words are a plus applies to those words
+# only; the rest of the line stays required. A bare "(a bonus)" or "(preferred)" has no words of
+# its own and still marks the whole line.
+_SCOPED_NICE_PAREN_RE = re.compile(
+    r"\(\s*([^()]*?[A-Za-z0-9][^()]*?)\s+(?:is\s+|are\s+)?(?:an?\s+)?"
+    r"(?:(?:strong|real|big|great)\s+)?(?:plus|asset|bonus)\s*\)",
+    re.IGNORECASE,
+)
+_ARTICLE_WORDS = frozenset({"a", "an", "is", "are", "it", "this", "that", "the"})
+
+
+def _split_scoped_nice(item: str) -> tuple[str, str] | None:
+    """``(item without the bracket, the words the bracket marks optional)``, else ``None``."""
+    match = _SCOPED_NICE_PAREN_RE.search(item)
+    if not match or set(match.group(1).lower().split()) <= _ARTICLE_WORDS:
+        return None
+    rest = re.sub(r"\s+", " ", item[: match.start()] + " " + item[match.end() :]).strip(" ,;:-")
+    return rest, match.group(1).strip()
 
 
 def _strip_nice_marker(item: str) -> tuple[str, bool]:
@@ -233,13 +258,14 @@ def _unglue_bullets(lines: list[str]) -> list[str]:
 # see tests/fixtures for a real posting that silently absorbed its entire
 # benefits list as "required skills" this way.
 _SECTION_END_HEADING_RE = re.compile(
-    r"(what we offer|benefits?|perks|compensation|why (?:join|work)|"
+    r"(what we offer|benefits?|perks|compensation|why (?:join|work|apply|us)\b|apply now|"
     r"what you(?:\W?ll| can| will)? (?:expect|get|receive)|what we (?:provide|give)|"
     r"what.s in it for you|in return|our offer|we offer|total rewards|life at|"
     r"about (?:us|the company)|our culture|company overview|"
     r"responsibilit(?:y|ies)|what you.?ll do|salary|pay range|how to apply|"
     r"equal opportunity|culture by|our values|core values|how we work|"
     r"why (?:this role|you.?ll love)|what you.?ll find|additional perks|"
+    r"(?:our|the) tech(?:nology)?(?: stack)?\W*$|our stack\W*$|"
     r"^\W*about\s+(?!you\b|the\s+(?:role|job|position|opportunity)\b|this\s+(?:role|job|position)\b))",
     re.IGNORECASE,
 )
@@ -265,7 +291,15 @@ _CLOSING_BOILERPLATE_RE = re.compile(
 # characterization tests).
 # A trailing ellipsis ("You have...") is a heading flourish, not sentence-ending
 # punctuation — the lookbehind keeps "..." from counting as a full stop.
-_SENTENCE_PUNCT_RE = re.compile(r"(?<!\.)[.!?]\s*$")
+# LinkedIn appends its category to a skill it lists: "Python (Programming Language)".
+_LINKEDIN_NAME_SUFFIX_RE = re.compile(r"\s*\((?:programming language)\)", re.IGNORECASE)
+_QUESTION_HEADING_RE = re.compile(
+    r"^\W*(?:why\s+\w+|apply\s+now|how\s+to\s+apply)\W*$", re.IGNORECASE
+)
+_QUESTION_HEADING_MAX_WORDS = 5
+# A longer line is a boilerplate paragraph that happens to mention the right to work.
+_ELIGIBILITY_LINE_MAX_WORDS = 40
+_SENTENCE_PUNCT_RE = re.compile(r"(?<!\.)[.!?][\"'\u201d\u2019)]*\s*$")
 _YEARS_PREFIX_RE = re.compile(
     r"^\d+\s*\+?\s*(?:(?:[-–—]|to)\s*\d+\s*\+?\s*)?(?:years?|yrs?)\s*(?:of\s*)?",
     re.IGNORECASE,
@@ -385,6 +419,10 @@ def _company_from_text(text: str) -> str:
     return max(best, key=lambda w: counts[w]) if best else ""
 
 
+# "Software Developer | IDENTOS Inc." ends in a period that belongs to the company name.
+_CORPORATE_SUFFIX_RE = re.compile(r"\b(?:Inc|Ltd|Corp|Co|Cos|Bros|Mfg|Intl|Pty|Assoc)\.$")
+
+
 def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
     """Title and company from the first line of a pasted posting, when it looks like a title.
 
@@ -394,7 +432,9 @@ def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
         line = raw.strip().lstrip("#*_> \t").rstrip("*_ \t")
         if not line:
             continue
-        if len(line) > 140 or line.endswith((".", "!", "?", ":")):
+        if len(line) > 140 or (
+            line.endswith((".", "!", "?", ":")) and not _CORPORATE_SUFFIX_RE.search(line)
+        ):
             return None, None
         parts = [part.strip() for part in line.split("|")]
         if len(parts) < 2:
@@ -407,6 +447,45 @@ def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
         )
         return parts[0], company
     return None, None
+
+
+# LinkedIn's header: "C# SQL Developer (Remote)" on one line, "HCLTech • Canada (Remote)" on the next.
+_HEADER_COMPANY_RE = re.compile(r"^([^•|]{2,60}?)\s+•\s+\S")
+
+
+def _header_company(text: str) -> str | None:
+    """The company of a "Title" line followed by a "Company • Location" line, else ``None``."""
+    lines = [raw.strip().lstrip("#*_> \t") for raw in text.splitlines() if raw.strip()]
+    if len(lines) < 2 or not _ROLE_WORD_RE.search(lines[0]):
+        return None
+    match = _HEADER_COMPANY_RE.match(lines[1])
+    if not match:
+        return None
+    name = match.group(1).strip(" *_")
+    if len(name.split()) > 6 or name.lower() in _NOT_A_COMPANY:
+        return None
+    return name
+
+
+# LinkedIn's job card: "Company logo for, ClickUp." / "ClickUp" / "Staff Frontend Engineer" / then
+# "Canada · Reposted 2 weeks ago · Over 100 applicants". The title is the line above that one.
+_CARD_LOGO_RE = re.compile(r"^Company logo for,?\s*(.+?)\.?$", re.IGNORECASE)
+_CARD_META_RE = re.compile(r"\s·\s.*\b(?:ago|applicants?|clicked apply)\b", re.IGNORECASE)
+
+
+def _card_header(text: str) -> tuple[str | None, str | None]:
+    """Title and company of a pasted LinkedIn job card, else ``(None, None)``."""
+    lines = [
+        raw.strip().lstrip("#*_> \t").rstrip("*_ \t") for raw in text.splitlines() if raw.strip()
+    ]
+    if not lines or not (logo := _CARD_LOGO_RE.match(lines[0])):
+        return None, None
+    company = logo.group(1).strip()  # "Inc.." keeps the "." of "Inc." and drops the sentence's
+    for index, line in enumerate(lines[1:6], start=1):
+        if _CARD_META_RE.search(line):
+            title = lines[index - 1] if index >= 2 else None
+            return (title if title and title.lower() != company.lower() else None), company
+    return None, company
 
 
 def _is_bullet(line: str) -> bool:
@@ -507,6 +586,11 @@ def _split_required_or_nice(
             if whole and " / " in whole[0]:
                 pieces = whole
                 is_choice = True
+    elif not entries and _PLAIN_CHOICE_RE.fullmatch(item) and len(pieces) == 2:
+        # "Fullstack or backend development experience" names no known skill, but "or" still
+        # offers a choice: one row, met by whichever the profile shows better.
+        pieces = [" / ".join(pieces)]
+        is_choice = True
     # "Strong Postgresql skills" asks for Postgresql: search for the term, not the whole phrase.
     reduced: list[str] = []
     for piece in pieces:
@@ -522,7 +606,11 @@ def _split_required_or_nice(
         items.extend(pieces)
 
 
+# Two plain phrases joined by "or" and nothing else: no "and", slash, comma or bracket.
+_PLAIN_CHOICE_RE = re.compile(r"[^/,;()]+?\s+or\s+(?!and\b)[^/,;()]+?", re.IGNORECASE)
 FIRST_REQUIRED_LINES_ARE_CORE = 5
+# A flat line longer than this is a paragraph, not a list item.
+_FLAT_ITEM_MAX_WORDS = 25
 
 
 def _item_terms(item: str) -> list[str]:
@@ -575,6 +663,9 @@ def parse_jd(text: str) -> ParsedJD:
     list_is_marked = False  # the current section's items are bullets or indented lines
     required_line_no = 0
     positional_core: set[str] = set()
+    # After a heading that ends in a colon ("Required Skills:"), plain unindented lines with no
+    # end punctuation are its items: a copied page often loses the bullets and the indent.
+    flat_items_ok = False
 
     for raw in _unglue_bullets(_split_glued(text.splitlines())):
         stripped = raw.strip()
@@ -591,6 +682,12 @@ def parse_jd(text: str) -> ParsedJD:
         # bullet noting something is "nice to have but preferred").
         looks_like_heading = (
             not is_bullet and not is_indented and not _SENTENCE_PUNCT_RE.search(stripped)
+        ) or (
+            # "Why Apply?" / "Apply Now!": a short call to action is a heading, not a sentence
+            not is_bullet
+            and not is_indented
+            and len(stripped.split()) <= _QUESTION_HEADING_MAX_WORDS
+            and _QUESTION_HEADING_RE.match(stripped) is not None
         )
         # Nice-to-have is tested first: "Preferred Qualifications" and
         # "Nice-to-Have Qualifications" also contain the required-heading word
@@ -598,26 +695,33 @@ def parse_jd(text: str) -> ParsedJD:
         if looks_like_heading and _SOFT_HEADING_RE.search(lower) and "technical" not in lower:
             section = "soft"
             list_is_marked = False
+            flat_items_ok = False
             continue
         if looks_like_heading and _NICE_HEADING_RE.search(lower):
             section = "nice"
             list_is_marked = False
+            flat_items_ok = stripped.endswith(":")
             continue
         if looks_like_heading and (
-            _REQUIRED_HEADING_RE.search(lower) or _EXPERIENCE_HEADING_RE.match(stripped)
+            _REQUIRED_HEADING_RE.search(lower)
+            or _EXPERIENCE_HEADING_RE.match(stripped)
+            or _IMPORTANT_HEADING_RE.match(stripped)
         ):
             section = "required"
             list_is_marked = False
+            flat_items_ok = stripped.endswith(":")
             continue
         if looks_like_heading and _SECTION_END_HEADING_RE.search(lower):
             section = None
             list_is_marked = False
+            flat_items_ok = False
             continue
         if (not is_bullet and _LABEL_LINE_END_RE.match(stripped)) or _CLOSING_BOILERPLATE_RE.search(
             stripped
         ):
             section = None
             list_is_marked = False
+            flat_items_ok = False
             continue
         # Content is either a real bullet, or (for postings that flatten
         # bullets to plain indented sentences when copy-pasted) any
@@ -636,9 +740,17 @@ def parse_jd(text: str) -> ParsedJD:
             section = None
             list_is_marked = False
             continue
-        if section and (is_bullet or not looks_like_heading):
-            list_is_marked = list_is_marked or is_bullet or is_indented
-            raw_item = _BULLET_MARKER_RE.sub("", stripped).strip()
+        if looks_like_heading and stripped.endswith(":"):
+            flat_items_ok = False  # a heading the parser does not know: its lines are not items
+        flat_item = (
+            flat_items_ok
+            and section in ("required", "nice")
+            and looks_like_heading
+            and len(stripped.split()) <= _FLAT_ITEM_MAX_WORDS
+        )
+        if section and (is_bullet or not looks_like_heading or flat_item):
+            list_is_marked = list_is_marked or is_bullet or is_indented or flat_item
+            raw_item = _LINKEDIN_NAME_SUFFIX_RE.sub("", _BULLET_MARKER_RE.sub("", stripped)).strip()
             item = _drop_term_details(_strip_years_prefix(raw_item))
             line_section = section
             if section == "soft":
@@ -646,6 +758,11 @@ def parse_jd(text: str) -> ParsedJD:
                 continue
             prose = _is_prose(item)  # decided before a marker is removed, as before this rule
             if section == "required":
+                if (scoped := _split_scoped_nice(item)) is not None:
+                    item, optional = scoped
+                    optional_terms = extract_skill_terms(optional)
+                    _add_unique(nice, optional_terms)
+                    _add_unique(nice_items, optional_terms)
                 item, marked = _strip_nice_marker(item)
                 if marked:
                     line_section = "nice"
@@ -695,12 +812,20 @@ def parse_jd(text: str) -> ParsedJD:
             if terms:
                 _add_unique(required if line_section == "required" else nice, terms)
                 _add_unique(required_items if line_section == "required" else nice_items, terms)
+            elif prose and line_section == "required":
+                # A required sentence naming no known skill is reported, not guessed at, whether
+                # or not it kept its bullet marker: rated whole it could only ever read as a gap.
+                unscored.append(item)
             elif prose and is_bullet:
-                # A real bullet sentence naming no known skill is reported, not
-                # guessed at. Unmarked lines (bullets flattened by copy-paste)
-                # take the split path below instead, so they still get rated.
-                if line_section == "required":
-                    unscored.append(item)
+                pass  # an optional bullet sentence naming no known skill is not listed
+            elif (
+                line_section == "required"
+                and is_prose_requirement(item)
+                and not extract_skill_terms(item)
+            ):
+                # six words with no known skill ("Outcomes oriented. You focus on impact.") would
+                # be rated whole too: same rule, same list
+                unscored.append(item)
             else:
                 _split_required_or_nice(
                     item, line_section, required, nice, required_items, nice_items
@@ -710,9 +835,30 @@ def parse_jd(text: str) -> ParsedJD:
             ):
                 positional_core.update(i.lower() for i in required_items[items_before:])
 
+    # "Applicants must be authorized to work in Canada" sits in closing boilerplate as often as in
+    # a requirements list: list it for the user wherever it stands.
+    listed = {entry.line for entry in soft}
+    for line in text.splitlines():
+        line = _BULLET_MARKER_RE.sub("", line.strip()).strip()
+        if (
+            line
+            and len(line.split()) <= _ELIGIBILITY_LINE_MAX_WORDS
+            and is_eligibility(line)
+            and line not in listed
+        ):
+            soft.extend(entry for entry in classify(line) if entry.kind == "eligibility")
+            listed.add(line)
+
     first_title, first_company = _first_line_title_company(text)
+    if first_title and not first_company:
+        first_company = _header_company(text)
+    card_title, card_company = _card_header(text)
+    first_title = card_title or first_title
+    first_company = card_company or first_company
     title_match = (
-        _POSITION_HEADING_RE.search(text)
+        None
+        if card_title
+        else _POSITION_HEADING_RE.search(text)
         or _TITLE_H1_RE.search(text)
         or _LABEL_TITLE_RE.search(text)
     )

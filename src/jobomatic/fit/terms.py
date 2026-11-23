@@ -267,6 +267,44 @@ def load_or_other(
     return phrase_group
 
 
+def load_caps_only_quiet(
+    path: Path | None = None, vocabulary: tuple[str, ...] | None = None
+) -> dict[str, str]:
+    """Terms that count only in capitals and are never queried when written otherwise, with the
+    skill each stands for ("rest" -> "REST API"); fail loudly if unknown."""
+    if path is None:
+        path = Path(__file__).with_name("skill_vocabulary.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    known = set(vocabulary if vocabulary is not None else load_vocabulary(path))
+    raw = data.get("caps_only_quiet", {})
+    if not isinstance(raw, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in raw.items()
+    ):
+        raise ValueError("skill_vocabulary.json 'caps_only_quiet' must map strings to strings")
+    quiet = {k.strip().lower(): v.strip() for k, v in raw.items()}
+    for term in sorted(set(quiet) - known):
+        raise ValueError(f"caps_only_quiet term {term!r} is not in 'terms'")
+    return quiet
+
+
+def load_subsumed(
+    path: Path | None = None, vocabulary: tuple[str, ...] | None = None
+) -> dict[str, frozenset[str]]:
+    """Terms that already name the terms inside them ("ruby on rails" -> ruby, rails)."""
+    if path is None:
+        path = Path(__file__).with_name("skill_vocabulary.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    known = set(vocabulary if vocabulary is not None else load_vocabulary(path))
+    raw = data.get("subsumed", {})
+    result: dict[str, frozenset[str]] = {}
+    for key, parts in raw.items():
+        names = {key.lower(), *(part.lower() for part in parts)}
+        for name in sorted(names - known):
+            raise ValueError(f"subsumed term {name!r} is not in 'terms'")
+        result[key.lower()] = frozenset(part.lower() for part in parts)
+    return result
+
+
 def _compile(terms: tuple[str, ...]) -> re.Pattern[str]:
     # Longest first so "azure devops" wins over "azure" at the same position.
     alternation = "|".join(re.escape(t) for t in sorted(terms, key=len, reverse=True))
@@ -277,6 +315,7 @@ _VOCABULARY = load_vocabulary()
 _TERM_RE = _compile(_VOCABULARY)
 _GROUP_OF = load_alternative_groups(vocabulary=_VOCABULARY)
 _CAPS_ONLY = load_caps_only(vocabulary=_VOCABULARY)
+_CAPS_ONLY_QUIET = load_caps_only_quiet(vocabulary=_VOCABULARY)
 _CATEGORY_TERMS = load_category_terms(vocabulary=_VOCABULARY)
 _UMBRELLA_TERMS = load_umbrella_terms(vocabulary=_VOCABULARY)
 _UMBRELLAS = load_umbrellas(vocabulary=_VOCABULARY)
@@ -284,6 +323,7 @@ _PHRASE_EXPANSIONS = load_phrase_expansions(vocabulary=_VOCABULARY)
 _LIST_ONLY = load_list_only(vocabulary=_VOCABULARY)
 _KIND_NOUNS = load_kind_nouns(vocabulary=_VOCABULARY)
 _OR_OTHER = load_or_other(vocabulary=_VOCABULARY)
+_SUBSUMED = load_subsumed(vocabulary=_VOCABULARY)
 _MEMBERS_OF: dict[str, list[str]] = {}
 for _term, _group in _GROUP_OF.items():
     _MEMBERS_OF.setdefault(_group, []).append(_term)
@@ -403,6 +443,8 @@ def _name(sentence: str, span: tuple[int, int], known: set[str]) -> str:
     engine adds the plural when it searches the profile, so the singular finds both."""
     text = sentence[span[0] : span[1]]
     lower = text.lower()
+    if lower in _CAPS_ONLY_QUIET:
+        return _CAPS_ONLY_QUIET[lower]
     if lower in known:
         return text
     for suffix in ("es", "s"):
@@ -468,6 +510,87 @@ def _alternative_runs(
         current, group = ([span], this_group) if this_group else ([], None)
     close()
     return runs
+
+
+# "Java/Spring/Hibernate or React/TypeScript": slash-joined stacks offered as a choice. The terms
+# need not share a group (Java is a language, React a front-end framework): the "or" between the
+# two "/" lists says any one stack will do, so the whole chain is one row met by its best term.
+_CHAIN_LINK_RE = re.compile(r"\s*/\s*|\s*,?\s+or\s+", re.IGNORECASE)
+
+
+def _choice_chains(
+    sentence: str, spans: list[tuple[int, int]], taken: set[tuple[int, int]]
+) -> list[list[tuple[int, int]]]:
+    chains: list[list[tuple[int, int]]] = []
+    current: list[tuple[int, int]] = []
+
+    def close() -> None:
+        if len(current) < 3:
+            return
+        links = [sentence[a[1] : b[0]] for a, b in zip(current, current[1:], strict=False)]
+        if any("/" in link for link in links) and any(
+            re.search(r"\bor\b", link, re.IGNORECASE) for link in links
+        ):
+            chains.append(list(current))
+
+    for span in spans:
+        if span in taken:
+            close()
+            current = []
+            continue
+        link = sentence[current[-1][1] : span[0]] if current else ""
+        if current and _CHAIN_LINK_RE.fullmatch(link):
+            current.append(span)
+            continue
+        close()
+        current = [span]
+    close()
+    return chains
+
+
+# "SQL and/or NoSQL", "Java or another object-oriented language": either one meets the requirement,
+# whatever group the two terms are in, so they are one row met by the better evidence.
+_EITHER_LINK_RE = re.compile(r"\s+(?:and/or|or\s+(?:another|any\s+other))\s+", re.IGNORECASE)
+
+
+def _either_runs(
+    sentence: str, spans: list[tuple[int, int]], taken: set[tuple[int, int]]
+) -> list[list[tuple[int, int]]]:
+    runs: list[list[tuple[int, int]]] = []
+    current: list[tuple[int, int]] = []
+
+    def close() -> None:
+        if len(current) >= 2:
+            runs.append(list(current))
+
+    for span in spans:
+        if span in taken:
+            close()
+            current = []
+            continue
+        link = sentence[current[-1][1] : span[0]] if current else ""
+        if current and _EITHER_LINK_RE.fullmatch(link):
+            current.append(span)
+            continue
+        close()
+        current = [span]
+    close()
+    return runs
+
+
+# "including concepts like layout, specificity, and accessibility": the examples illustrate the
+# skill named before them, they are not further requirements.
+_CONCEPT_EXAMPLES_RE = re.compile(
+    r"\b(?:including|such as|like|e\.g\.?)\s+(?:concepts|topics|areas|aspects|principles)\b|"
+    r"\b(?:concepts|topics|areas|aspects)\s+(?:like|such as|including)\b",
+    re.IGNORECASE,
+)
+
+
+def _drop_subsumed(terms: list[str]) -> list[str]:
+    present = {term.lower() for term in terms}
+    hidden = {part for key, parts in _SUBSUMED.items() if key in present for part in parts}
+    return [term for term in terms if term.lower() not in hidden]
 
 
 # "Solid understanding of…" says the understanding is good; it is not SOLID, the design principles.
@@ -547,7 +670,7 @@ def find_unknown_names(sentence: str) -> list[str]:
     found: list[str] = []
     for segment in segments:
         for piece in _NAME_SPLIT_RE.split(segment):
-            name = piece.strip(" .:()")
+            name = piece.strip(" :()").rstrip(". ")
             if not name or not name[0].isupper() or len(name.split()) > 3:
                 continue
             if extract_skill_terms(name) or name.lower() in (n.lower() for n in found):
@@ -595,10 +718,21 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
         ]
         if not spans:
             return []
+    if vocabulary is None:  # "REST" is the skill; "the rest of the team" is not
+        spans = [
+            (s, e)
+            for s, e in spans
+            if sentence[s:e].lower() not in _CAPS_ONLY_QUIET or sentence[s:e].isupper()
+        ]
+        if not spans:
+            return []
     if vocabulary is None:
         spans = _drop_kind_nouns(sentence, _drop_unlisted_list_only(sentence, spans))
         if not spans:
             return []
+    concept = _CONCEPT_EXAMPLES_RE.search(sentence)
+    if concept and any(e <= concept.start() for _, e in spans):
+        spans = [(s, e) for s, e in spans if e <= concept.start()]
     known = set(_VOCABULARY if vocabulary is None else vocabulary)
     alternatives: list[tuple[int, int]] = []
     dropped: set[tuple[int, int]] = set()  # umbrella labels, replaced by their examples
@@ -619,6 +753,16 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
         if examples and clause_start < examples.end() <= alt.start():
             clause_start = examples.end()  # the label before "such as" is not an alternative
         alternatives = [(s, e) for s, e in spans if clause_start <= s and e <= alt.start()]
+        # "Generative AI, GitHub Copilot, or equivalent AI coding tools": the "AI" after the
+        # marker names the kind of tool the alternatives are, not a further requirement.
+        tail_end = _CLAUSE_BREAK_RE.search(sentence, alt.end())
+        dropped.update(
+            (s, e)
+            for s, e in spans
+            if s >= alt.end()
+            and (tail_end is None or e <= tail_end.start())
+            and sentence[s:e].lower() in _UMBRELLA_TERMS
+        )
         found = _category_label(sentence, spans, examples.start()) if examples else None
         if found and alternatives and found[0] not in alternatives:
             if found[1]:
@@ -648,7 +792,12 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
 
     if len(alternatives) >= 2:
         add(" / ".join(_name(sentence, span, known) for span in alternatives))
-    runs = _alternative_runs(sentence, spans, set(alternatives))
+    chains = _choice_chains(sentence, spans, set(alternatives))
+    chained = {span for chain in chains for span in chain}
+    either = _either_runs(sentence, spans, set(alternatives) | chained)
+    eithered = {span for run in either for span in run}
+    runs = _alternative_runs(sentence, spans, set(alternatives) | chained | eithered)
+    runs = sorted([*runs, *chains, *either], key=lambda run: run[0])
     run_starting_at = {run[0]: run for run in runs}
     in_a_run = {span for run in runs for span in run}
     for span in spans:
@@ -664,7 +813,7 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
     for term in expanded:
         if term.lower() not in {o.lower() for o in out}:
             out.append(term)
-    return _expand_or_other(sentence, out)
+    return _drop_subsumed(_expand_or_other(sentence, out))
 
 
 # Words that frame a skill without adding to it: "Strong Postgresql skills", "Knowledge of Git".
@@ -672,8 +821,8 @@ _FILLER_WORDS = frozenset(
     "strong good solid excellent great working hands-on handson proven deep basic advanced "
     "practical demonstrated extensive proficient proficiency familiarity familiar knowledge "
     "knowledgeable experience experienced skills skill understanding expertise background "
-    "command ability with of in using the a an and or to development methodology "
-    "methodologies practices pipeline pipelines".split()
+    "command ability with of in using the a an and or to development methodology professional "
+    "methodologies practices pipeline pipelines work programming".split()
 )
 
 

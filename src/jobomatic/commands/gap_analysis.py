@@ -218,7 +218,7 @@ def _render_report(
     if result.low_confidence:
         lines.append("")
         lines.append("### Low-confidence result")
-        lines.append(LOW_CONFIDENCE_MESSAGE)
+        lines.append(result.low_confidence_message or LOW_CONFIDENCE_MESSAGE)
     if result.soft_requirements:
         lines.append("")
         lines.append("### Soft requirements")
