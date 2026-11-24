@@ -388,3 +388,32 @@ def test_a_body_that_says_it_is_located_in_the_home_city_states_the_city() -> No
     )
     result = assess_location(text, load_rules())
     assert not any("no stated city" in f for f in result.flags)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "Pacific Time zone preferred. Remote-first.",
+        "Hours are in PST or MT.",
+        "We work on Pacific Standard Time hours.",
+        "West coast hours preferred.",
+    ],
+)
+def test_a_pacific_time_zone_mention_is_flagged_but_never_disqualifies(body: str) -> None:
+    result = assess_location(_jd("Remote (Canada)", f"{body}\n"), load_rules())
+    assert not result.disqualified
+    assert any("Pacific time zone mentioned" in f for f in result.flags)
+    assert any("not a reason to skip" in f for f in result.flags)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "Experience with pest control on the Pacific coast.",
+        "Eastern time zone preferred.",
+        "Works in PT roles.",
+    ],
+)
+def test_other_text_is_not_a_pacific_time_zone_flag(body: str) -> None:
+    result = assess_location(_jd("Remote (Canada)", f"{body}\n"), load_rules())
+    assert not any("Pacific time zone" in f for f in result.flags)

@@ -951,6 +951,7 @@ _FILLER_WORDS = frozenset(
     "practical demonstrated extensive proficient proficiency familiarity familiar knowledge "
     "framework frameworks library libraries language languages technology technologies tool tools "
     "platform platforms some firm awareness aware required mandatory essential desirable "
+    "application applications "
     "knowledgeable experience experienced skills skill understanding expertise background "
     "command ability with of in using the a an and or to development methodology professional "
     "methodologies practices pipeline pipelines work programming".split()

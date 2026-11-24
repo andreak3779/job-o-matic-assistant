@@ -1084,3 +1084,11 @@ def test_dot_net_web_services_and_webapi_are_searched_as_web_api() -> None:
     assert "web api" in skill_match_terms(".net web services")
     assert "web api" in skill_match_terms("WebAPI")
     assert skill_match_terms(".net core")[0] == ".net core"
+
+
+def test_sast_is_searched_as_sonarqube_and_sca_as_dependency_scanning() -> None:
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert "sonarqube" in skill_match_terms("sast")
+    assert "dependabot" in skill_match_terms("software composition analysis")
+    assert "sonarqube" not in skill_match_terms("dast")

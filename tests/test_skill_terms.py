@@ -1251,3 +1251,39 @@ def test_strip_skill_punctuation_keeps_the_dot_of_dot_net(text: str, expected: s
     from jobomatic.fit.terms import strip_skill_punctuation
 
     assert strip_skill_punctuation(text) == expected
+
+
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        ("Experience as a full-stack developer", ["full-stack"]),
+        ("Experience as a full stack developer", ["full stack"]),
+        ("Fullstack application development", ["Fullstack"]),
+    ],
+)
+def test_full_stack_is_a_known_skill_in_all_its_spellings(
+    sentence: str, expected: list[str]
+) -> None:
+    assert [t.lower() for t in extract_skill_terms(sentence)] == [e.lower() for e in expected]
+
+
+def test_full_stack_spellings_are_searched_as_each_other() -> None:
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert {"full-stack", "full stack", "fullstack"} <= set(skill_match_terms("full-stack"))
+    assert {"full-stack", "full stack", "fullstack"} <= set(skill_match_terms("fullstack"))
+
+
+# --- Application security testing: SAST, DAST, SCA ----------------------------------------------
+
+
+def test_sast_dast_and_sca_are_known_terms_and_the_tools_are_one_choice() -> None:
+    sentence = "Hands-on experience with DAST, SAST, and SCA tools such as AppScan, Checkmarx, SonarQube, or equivalent."
+    terms = extract_skill_terms(sentence)
+    assert "DAST" in terms and "SAST" in terms
+    assert "software composition analysis" in terms
+    assert "AppScan / Checkmarx / SonarQube" in terms
+
+
+def test_a_lowercase_sca_is_not_the_skill() -> None:
+    assert extract_skill_terms("the sca of the problem") == []
