@@ -346,24 +346,91 @@ def _located_in_home_city(text: str, rules: _Rules) -> bool:
     )
 
 
-# A posting that names the Pacific time zone ("Pacific Time zone preferred", "PST or MT hours"):
-# flagged so the hours can be checked, never a reason not to apply.
-_PACIFIC_RE = re.compile(
-    r"\bpacific\s+(?:standard\s+|daylight\s+)?(?:time|tz|zone)\b|\b(?:pst|pdt)\b|"
-    r"\bwest\s+coast\s+(?:hours|time)\b",
-    re.IGNORECASE,
-)
+# Time zones the user works comfortably in (Central, Mountain, Eastern) are never flagged. A posting
+# that names any other zone ("Pacific Time zone preferred", "PST or MT", "UK hours", "Asia") is
+# flagged so the hours can be checked: a to-do, never a reason not to apply, never a Pass.
+_ZONE = r"(?:\s+(?:standard\s+|daylight\s+)?(?:time|tz|zone)s?)"
+_FLAGGED_ZONES: dict[str, tuple[re.Pattern[str], re.Pattern[str] | None]] = {
+    # label: (phrases, abbreviations). Abbreviations are matched in capitals only, so "wet" and "bst"
+    # in ordinary words never count.
+    "Pacific": (
+        re.compile(r"\bpacific" + _ZONE + r"\b|\bwest\s+coast\s+(?:hours|time)\b", re.IGNORECASE),
+        re.compile(r"\b(?:PST|PDT)\b"),
+    ),
+    "Atlantic": (
+        re.compile(r"\batlantic" + _ZONE + r"\b", re.IGNORECASE),
+        re.compile(r"\b(?:ADT)\b|\bAST\b(?=\s+(?:hours|time|zone))"),
+    ),
+    "Newfoundland": (
+        re.compile(r"\bnewfoundland" + _ZONE + r"\b", re.IGNORECASE),
+        re.compile(r"\b(?:NST|NDT)\b"),
+    ),
+    "Alaska or Hawaii": (
+        re.compile(r"\b(?:alaska|hawaii)(?:an)?" + _ZONE + r"\b", re.IGNORECASE),
+        re.compile(r"\b(?:AKST|AKDT|HST)\b"),
+    ),
+    "UTC or GMT": (
+        re.compile(
+            r"\b(?:utc|gmt)\s*[+±-]\s*\d{1,2}\b|\b(?:utc|gmt)(?:\s+time|\s+hours|\s+zone)\b",
+            re.IGNORECASE,
+        ),
+        None,
+    ),
+    "European": (
+        re.compile(
+            r"\b(?:european|europe|uk|emea|london|dublin|berlin|paris|amsterdam|madrid)"
+            r"\s+(?:time|hours|time\s*zones?)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\b(?:CET|CEST|EET|BST)\b"),
+    ),
+    "Indian": (
+        re.compile(r"\b(?:india|indian)\s+(?:standard\s+)?(?:time|hours)\b", re.IGNORECASE),
+        None,
+    ),
+    "Asia-Pacific": (
+        re.compile(
+            r"\b(?:singapore|japan|tokyo|hong\s+kong|sydney|melbourne|beijing|shanghai|manila)"
+            r"\s+(?:time|hours)\b|"
+            r"\b(?:asia|asian|apac|australia|australian|new\s+zealand)\b[^.]{0,60}"
+            r"\b(?:time\s*zones?|hours|team|collaborat\w*|communicat\w*)\b|"
+            r"\b(?:time\s*zones?|hours|team|collaborat\w*|communicat\w*)\b[^.]{0,60}"
+            r"\b(?:asia|asian|apac)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\b(?:AEST|AEDT|JST|SGT|HKT|NZST|NZDT)\b"),
+    ),
+    "Several": (
+        re.compile(
+            r"\bacross\s+(?:multiple\s+|different\s+|various\s+)?time\s*zones\b|"
+            r"\b(?:multiple|different|various)\s+time\s*zones\b",
+            re.IGNORECASE,
+        ),
+        None,
+    ),
+}
 
 
 def _timezone_flags(text: str, rules: _Rules) -> list[str]:
+    flags: list[str] = []
+    seen: set[str] = set()
     for sentence in _SENTENCE_RE.split(text):
-        if _PACIFIC_RE.search(sentence):
-            return [
-                "Pacific time zone mentioned — check the working hours suit "
-                f"{rules.home_label}; this is not a reason to skip the posting: "
-                f"“{_snippet(' '.join(sentence.split()))}”"
-            ]
-    return []
+        for label, (phrases, abbreviations) in _FLAGGED_ZONES.items():
+            if label in seen:
+                continue
+            if phrases.search(sentence) or (abbreviations and abbreviations.search(sentence)):
+                seen.add(label)
+                named = (
+                    "Several time zones mentioned"
+                    if label == "Several"
+                    else f"{label} time zone mentioned"
+                )
+                flags.append(
+                    f"{named} — check the working hours suit "
+                    f"{rules.home_label}; this is not a reason to skip the posting: "
+                    f"“{_snippet(' '.join(sentence.split()))}”"
+                )
+    return flags
 
 
 def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessment:
