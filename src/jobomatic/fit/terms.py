@@ -308,6 +308,15 @@ def load_subsumed(
     return result
 
 
+def strip_skill_punctuation(text: str) -> str:
+    """``text`` without the spaces and punctuation around it, keeping the dot of ".NET".
+
+    "Git." and ", SQL," lose their punctuation; ".NET Core" keeps its leading dot, because it is
+    part of the name; "..." and ". " at the start still go."""
+    text = re.sub(r"^[ ,/:;]+|[ ,./:;]+$", "", text)
+    return re.sub(r"^\.+(?![A-Za-z0-9])\s*", "", text)
+
+
 def _compile(terms: tuple[str, ...]) -> re.Pattern[str]:
     # Longest first so "azure devops" wins over "azure" at the same position.
     alternation = "|".join(re.escape(t) for t in sorted(terms, key=len, reverse=True))

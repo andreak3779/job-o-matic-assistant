@@ -27,6 +27,7 @@ from jobomatic.fit.terms import (
     is_kind_term,
     phrase_expansion,
     reduce_to_terms,
+    strip_skill_punctuation,
 )
 
 
@@ -206,6 +207,12 @@ def _split_scoped_nice(item: str) -> tuple[str, str] | None:
     return rest, match.group(1).strip()
 
 
+def _trim_edges(text: str) -> str:
+    """``text`` without punctuation at either end, keeping the leading dot of ".NET"."""
+    text = re.sub(r"^[ ,;:-]+", "", text).rstrip(" ,.;:-")
+    return re.sub(r"^\.+(?![A-Za-z0-9])\s*", "", text)
+
+
 def _strip_nice_marker(item: str) -> tuple[str, bool]:
     """Return ``item`` without any "preferred"-style marker, and whether it had one."""
     if _STRONGLY_PREFERRED_RE.search(item):
@@ -213,8 +220,8 @@ def _strip_nice_marker(item: str) -> tuple[str, bool]:
     cleaned = _NICE_PREFIX_RE.sub("", item)
     cleaned = _NICE_PAREN_RE.sub(" ", cleaned)
     cleaned = _NICE_PHRASE_RE.sub(" ", cleaned)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip(" ,.;:-")
-    return cleaned, cleaned != item.strip(" ,.;:-")
+    cleaned = _trim_edges(re.sub(r"\s+", " ", cleaned))
+    return cleaned, cleaned != _trim_edges(item)
 
 
 # "8+ years of experience, preferably in SaaS": only what follows the word is optional; the part
@@ -442,11 +449,11 @@ _JOB_ID_BOLD_RE = re.compile(
 
 
 def _strip_years_prefix(item: str) -> str:
-    item = _YEARS_PREFIX_RE.sub("", item).strip(" ,./:;")
+    item = strip_skill_punctuation(_YEARS_PREFIX_RE.sub("", item))
     item = _LEADING_PLUS_RE.sub("", item)
-    item = _BARE_YEARS_RE.sub("", item).strip(" ,./:;")
-    item = _PAREN_YEARS_RE.sub("", item).strip(",. ")
-    return item
+    item = strip_skill_punctuation(_BARE_YEARS_RE.sub("", item))
+    item = _PAREN_YEARS_RE.sub("", item).lstrip(", ").rstrip(",. ")
+    return re.sub(r"^\.+(?![A-Za-z0-9])\s*", "", item)  # the dot of ".NET" is part of its name
 
 
 # "26WD100016, Principal Software Developer": a requisition number in front of the title.
@@ -620,6 +627,37 @@ def _card_header(text: str) -> tuple[str | None, str | None]:
     return None, company
 
 
+_H1_LINE_RE = re.compile(r"^#[ \t]+(\S[^\n]*)$")
+
+
+def _h1_title_company(text: str) -> tuple[str | None, str | None]:
+    """ "# Siemens Healthineers" followed at once by "# Senior Software Developer": the two
+    top-level headings are the company and the title, in either order."""
+    headings: list[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            if headings:
+                break  # a blank line ends the run of headings
+            continue
+        match = _H1_LINE_RE.match(line)
+        if not match:
+            break
+        headings.append(match.group(1).strip(" *_"))
+        if len(headings) == 2:
+            break
+    if len(headings) != 2:
+        return None, None
+    first, second = headings
+    first_is_role = bool(_ROLE_WORD_RE.search(first))
+    second_is_role = bool(_ROLE_WORD_RE.search(second))
+    if second_is_role and not first_is_role and _looks_like_a_company_name(first):
+        return second, first
+    if first_is_role and not second_is_role and _looks_like_a_company_name(second):
+        return first, second
+    return None, None
+
+
 def _is_bullet(line: str) -> bool:
     return bool(_BULLET_RE.match(line))
 
@@ -681,7 +719,7 @@ def split_compound(item: str) -> list[str]:
     ):
         pieces = [part for piece in pieces for part in piece.split(",")]
     restored = [re.sub(r"\x00(\d+)\x00", lambda m: groups[int(m.group(1))], p) for p in pieces]
-    return [p.strip(" ,./:;") for p in restored]
+    return [strip_skill_punctuation(p) for p in restored]
 
 
 _TRAILING_BRACKET_RE = re.compile(r"^(.*?)\s*\(([^()]*)\)\s*$")
@@ -1027,6 +1065,9 @@ def parse_jd(text: str) -> ParsedJD:
     if first_title and not first_company:
         first_company = _header_company(text)
     card_title, card_company = _card_header(text)
+    pair_title, pair_company = _h1_title_company(text)
+    card_title = card_title or pair_title
+    card_company = card_company or pair_company
     first_title = card_title or first_title
     first_company = card_company or first_company
     title_match = (

@@ -1237,3 +1237,17 @@ def test_chatgpt_is_a_known_ai_tool_and_the_umbrella_is_not_repeated() -> None:
         "AI",
         "machine learning",
     ]
+
+
+def test_webapi_written_as_one_word_is_a_known_term() -> None:
+    assert extract_skill_terms("Experience with WebAPI") == ["WebAPI"]
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [(".NET Core", ".NET Core"), (", SQL,", "SQL"), ("Git.", "Git"), ("... Python", "Python")],
+)
+def test_strip_skill_punctuation_keeps_the_dot_of_dot_net(text: str, expected: str) -> None:
+    from jobomatic.fit.terms import strip_skill_punctuation
+
+    assert strip_skill_punctuation(text) == expected
