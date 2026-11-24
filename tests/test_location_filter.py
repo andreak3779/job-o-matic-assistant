@@ -417,3 +417,52 @@ def test_a_pacific_time_zone_mention_is_flagged_but_never_disqualifies(body: str
 def test_other_text_is_not_a_pacific_time_zone_flag(body: str) -> None:
     result = assess_location(_jd("Remote (Canada)", f"{body}\n"), load_rules())
     assert not any("Pacific time zone" in f for f in result.flags)
+
+
+@pytest.mark.parametrize(
+    "body,label",
+    [
+        ("Pacific Time zone preferred.", "Pacific"),
+        ("Hours in PST or MT.", "Pacific"),
+        ("Hours aligned to Atlantic time.", "Atlantic"),
+        ("Newfoundland Standard Time hours.", "Newfoundland"),
+        ("Overlap with UK hours is needed.", "European"),
+        ("We work CET hours.", "European"),
+        ("Responsibilities in Singapore time.", "Asia-Pacific"),
+        ("Close collaboration across North America and Asia.", "Asia-Pacific"),
+        ("Work in UTC+1.", "UTC or GMT"),
+        ("Flexibility across time zones is required.", "Several"),
+    ],
+)
+def test_any_time_zone_outside_central_mountain_and_eastern_is_flagged(
+    body: str, label: str
+) -> None:
+    result = assess_location(_jd("Remote (Canada)", f"{body}\n"), load_rules())
+    assert not result.disqualified
+    assert any(f.startswith(f"{label} time zone") for f in result.flags)
+    assert any("not a reason to skip" in f for f in result.flags)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "Central time zone preferred.",
+        "Mountain Time hours.",
+        "Eastern Time zone, EST or CST hours.",
+        "Hours are MST or EST.",
+        "We use an AST parser and a wet lab.",
+        "Experience with pest control.",
+    ],
+)
+def test_central_mountain_and_eastern_hours_are_not_flagged(body: str) -> None:
+    result = assess_location(_jd("Remote (Canada)", f"{body}\n"), load_rules())
+    assert not any("time zone mentioned" in f for f in result.flags)
+
+
+def test_each_zone_is_flagged_once() -> None:
+    body = "Pacific Time zone preferred. Pacific time hours matter. UK hours too."
+    flags = assess_location(_jd("Remote (Canada)", f"{body}\n"), load_rules()).flags
+    assert sorted(f.split(" time zone")[0] for f in flags if "time zone mentioned" in f) == [
+        "European",
+        "Pacific",
+    ]

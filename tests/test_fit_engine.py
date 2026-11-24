@@ -1099,3 +1099,9 @@ def test_mobile_development_is_met_by_ios_or_android_evidence_not_by_the_word_mo
 
     assert {"ios", "android", "react native"} <= set(skill_match_terms("mobile development"))
     assert _rated(["mobile development"]).required[0].status == "gap"
+
+
+def test_dast_is_also_searched_as_penetration_testing_coursework() -> None:
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert {"penetration testing", "pen testing"} <= set(skill_match_terms("dast"))
