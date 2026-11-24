@@ -626,6 +626,30 @@ _CONCEPT_EXAMPLES_RE = re.compile(
 )
 
 
+# "web, backend, and mobile": mobile is a requirement of its own, met by iOS or Android work.
+_MOBILE_LIST_RE = re.compile(
+    r"\b(?:web|front-?end|back-?end|server-?side|desktop)\b[^.;:\n]{0,40}?"
+    r"(?:,\s*(?:and\s+|or\s+)?|\s+(?:and|or)\s+|\s*/\s*)mobile"
+    r"(?=\s*(?:[,.;:)]|$)|\s+(?:and|not|apps?|applications?|development|platforms?|clients?)\b)",
+    re.IGNORECASE,
+)
+_MOBILE_TERMS = frozenset(
+    {
+        "mobile development",
+        "mobile apps",
+        "mobile app development",
+        "android",
+        "ios",
+        "react native",
+    }
+)
+
+
+def names_mobile_in_a_list(text: str) -> bool:
+    """True for "across web, backend, and mobile": a list that asks for mobile development."""
+    return _MOBILE_LIST_RE.search(text) is not None
+
+
 # "modern web frameworks such as Next.js": the examples stand for any framework of that kind.
 _FRAMEWORK_LABEL_RE = re.compile(
     r"(?:web |front-?end |frontend |modern |ui )*frameworks?\s*$", re.IGNORECASE
@@ -815,6 +839,19 @@ def find_possible_typos(sentence: str) -> list[tuple[str, str]]:
 
 
 def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None) -> list[str]:
+    """The skill terms in ``sentence`` (see ``_extract_terms``), plus mobile development when the
+    sentence asks for it in a list such as "web, backend, and mobile"."""
+    found = _extract_terms(sentence, vocabulary)
+    if (
+        vocabulary is None
+        and names_mobile_in_a_list(sentence)
+        and not any(part.lower() in _MOBILE_TERMS for t in found for part in t.split(" / "))
+    ):
+        found = [*found, "mobile development"]
+    return found
+
+
+def _extract_terms(sentence: str, vocabulary: tuple[str, ...] | None = None) -> list[str]:
     """Return the skill terms found in ``sentence``, in its own spelling, de-duplicated.
 
     Terms joined by "or comparable/similar/…", and the examples listed after "such as" /

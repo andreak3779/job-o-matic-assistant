@@ -1092,3 +1092,10 @@ def test_sast_is_searched_as_sonarqube_and_sca_as_dependency_scanning() -> None:
     assert "sonarqube" in skill_match_terms("sast")
     assert "dependabot" in skill_match_terms("software composition analysis")
     assert "sonarqube" not in skill_match_terms("dast")
+
+
+def test_mobile_development_is_met_by_ios_or_android_evidence_not_by_the_word_mobile() -> None:
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert {"ios", "android", "react native"} <= set(skill_match_terms("mobile development"))
+    assert _rated(["mobile development"]).required[0].status == "gap"

@@ -24,7 +24,8 @@ from jobomatic.results import CommandResult
 OVERRIDES = {
     gate.CONFIRM_GAPS: (
         "gaps",
-        "I know this posting rates below Good on skills, and I want the documents anyway.",
+        "I know this posting rates below Good on skills, or that its rating rests on a thin read "
+        "of the posting, and I want the documents anyway.",
     ),
     gate.CONFIRM_REAPPLY: (
         "reapply",

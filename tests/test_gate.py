@@ -142,3 +142,36 @@ def test_the_full_document_gate_runs_fit_duplicate_and_pay(profile, tmp_path: Pa
 
 def test_the_letter_gate_checks_location_and_duplicate_but_not_skills(tmp_path: Path) -> None:
     assert gate.check_letter(PASS, log_path=tmp_path / "applications.jsonl") == []
+
+
+# A Good or Strong rating that rests on a thin read of the posting needs the user's yes too.
+THIN = _jd(
+    "Dev",
+    "C#",
+    "SQL",
+    "Experience with large lumber mill equipment",
+    "Ability to dance in the rain",
+)
+
+
+def test_the_thin_fixture_rates_good_or_strong_with_a_low_confidence_notice(profile) -> None:
+    result = rate_parsed_jd(parse_jd(THIN), profile)
+    assert result.rating in gate.PASSING_RATINGS
+    assert result.low_confidence
+
+
+def test_a_good_rating_with_a_low_confidence_notice_is_refused_until_confirmed(profile) -> None:
+    with pytest.raises(gate.GateRefusal) as refused:
+        gate.check_fit(THIN, profile)
+    assert refused.value.override == gate.CONFIRM_GAPS
+    assert "rests on very little" in str(refused.value)
+
+
+def test_confirming_lets_a_low_confidence_rating_through_with_a_note(profile) -> None:
+    result = gate.check_fit(THIN, profile, confirm_gaps=True)
+    assert result.fit is not None
+    assert any("thin read" in note for note in result.notes)
+
+
+def test_a_well_read_posting_is_not_held_by_the_low_confidence_check(profile) -> None:
+    assert gate.check_fit(GOOD, profile).notes == []

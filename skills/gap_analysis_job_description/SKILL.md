@@ -53,7 +53,8 @@ actual posting.
 
 If the report has a **Low-confidence result** section, more than half of the required
 skills show no evidence. Say so, and tell the user to read the posting themselves
-before relying on the rating. It does not change the rating.
+before relying on the rating. It does not change the rating, but documents for a Strong or
+Good rating with this notice need the user's explicit yes (ADR 0037).
 
 If the report has a **Soft requirements** section, those are education,
 years-of-experience, title-level and soft-skill lines (communication, teamwork and the

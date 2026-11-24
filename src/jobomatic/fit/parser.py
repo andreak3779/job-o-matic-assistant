@@ -25,6 +25,7 @@ from jobomatic.fit.terms import (
     find_terms_to_confirm,
     find_unknown_names,
     is_kind_term,
+    names_mobile_in_a_list,
     phrase_expansion,
     reduce_to_terms,
     strip_skill_punctuation,
@@ -118,8 +119,8 @@ def _drop_term_details(item: str) -> str:
     Only for a short head that is exactly one known skill and not a kind of tool ("Monitoring:
     Datadog, Splunk" keeps its list, because the list is the requirement)."""
     match = _TERM_DETAIL_RE.match(item)
-    if not match:
-        return item
+    if not match or names_mobile_in_a_list(item):
+        return item  # "...across web, backend, and mobile" is a requirement, not detail
     head = match.group(1).strip()
     terms = extract_skill_terms(head)
     if (

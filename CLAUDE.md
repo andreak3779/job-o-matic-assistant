@@ -25,7 +25,7 @@ Applies to every project, skill, tool and generator in this repo (resumes, cover
 - The rating is computed in code (`src/jobomatic/fit/`). Skills read it from `fit-check` or `gap-analysis` output and never re-derive it. Call `rate_parsed_jd(parsed, profile)`, not a hand-built `rate_fit(...)`, so the location rules and the unscored-lines list are never forgotten.
 - A location Pass (Quebec, hybrid or on-site outside the home city, Atlantic-only remote, French required) is a Pass whatever the skills say. Pass it through as "skills aren't the blocker" and do not recommend a learning plan (ADR 0008).
 - Sentence-style JD bullets are reduced to skill terms by `src/jobomatic/fit/skill_vocabulary.json` (ADR 0009). Add a term there when a real posting names a technology that shows up under "Required lines not scored".
-- The gate (`jobomatic.gate`, ADR 0003) decides when documents may be generated; its overrides (`--confirm-gaps`, `--confirm-reapply`, `--confirm-below-minimum`) are used only when the user says so.
+- The gate (`jobomatic.gate`, ADR 0003) decides when documents may be generated; its overrides (`--confirm-gaps`, `--confirm-reapply`, `--confirm-below-minimum`) are used only when the user says so. A Strong or Good rating that carries a low-confidence notice (the posting was read thinly) is held by the same `--confirm-gaps` until the user says yes (ADR 0037).
 
 ## Hardcoded facts in skills
 
