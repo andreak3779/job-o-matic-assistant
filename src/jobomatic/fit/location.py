@@ -257,6 +257,69 @@ def _check_french(text: str, rules: _Rules) -> tuple[list[str], list[str]]:
     return disqualifiers, flags
 
 
+_PROVINCES = (
+    "british columbia",
+    "alberta",
+    "saskatchewan",
+    "ontario",
+    "quebec",
+    "new brunswick",
+    "nova scotia",
+    "prince edward island",
+    "newfoundland",
+    "labrador",
+    "yukon",
+    "northwest territories",
+    "nunavut",
+)
+_RESIDENCY_RE = re.compile(
+    r"\b(?:resid(?:e|es|ing|ents?)|live|living|based|located)\s+(?:in|within|of)\b", re.IGNORECASE
+)
+_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+|\n+")
+
+
+def _residency_flags(text: str, rules: _Rules) -> list[str]:
+    """ "Open to candidates residing in British Columbia, Alberta, or Saskatchewan": a
+    remote role limited to a list of provinces. Flagged only when the home province is not in it."""
+    flags: list[str] = []
+    for sentence in _SENTENCE_RE.split(text):
+        if not _RESIDENCY_RE.search(sentence):
+            continue
+        norm = _norm(sentence)
+        named = [p for p in _PROVINCES if _term_hits((p,), norm)]
+        if len(named) < 2 or _term_hits(rules.home_province, norm):
+            continue
+        flags.append(
+            f"Limited to residents of {', '.join(named)} — {rules.home_province_label} is not "
+            f"listed, so confirm you are eligible: “{_snippet(sentence.strip())}”"
+        )
+    return flags
+
+
+def _hybrid_office_flags(text: str, rules: _Rules) -> list[str]:
+    """A posting whose body says "hybrid" and names an office outside the home city (the title may
+    still say Remote): flagged, never a Pass, because remote work may be allowed."""
+    flags: list[str] = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        norm = _norm(paragraph)
+        hybrid = _term_hits(rules.hybrid, norm)
+        if not hybrid or _term_hits(rules.home_city, norm):
+            continue
+        outside = _place_hits(rules.other_terms, rules.other_abbr, norm)
+        if outside:
+            places = ", ".join(dict.fromkeys(outside))
+            sentence = next(
+                (s for s in _SENTENCE_RE.split(paragraph) if _term_hits(rules.hybrid, _norm(s))),
+                paragraph,
+            )
+            flags.append(
+                f"Hybrid arrangement with an office in {places} — confirm remote work from "
+                f"{rules.home_label} is allowed (hybrid outside {rules.home_label} is a Pass): "
+                f"“{_snippet(' '.join(sentence.split()))}”"
+            )
+    return flags
+
+
 def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessment:
     """Check a JD's text against the job-search location rules.
 
@@ -363,4 +426,7 @@ def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessmen
     french_disq, french_flags = _check_french(text, rules)
     disqualifiers.extend(french_disq)
     flags.extend(french_flags)
+    if not disqualifiers:
+        flags.extend(_residency_flags(text, rules))
+        flags.extend(_hybrid_office_flags(text, rules)[:1])
     return LocationAssessment(tuple(disqualifiers), tuple(flags))

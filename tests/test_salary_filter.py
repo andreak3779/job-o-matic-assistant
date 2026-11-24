@@ -168,3 +168,11 @@ def test_a_k_figure_without_a_currency_code_or_dollar_sign_is_not_pay(text) -> N
 def test_pay_with_a_code_and_no_dollar_sign(text, low, high, period) -> None:
     [pay] = find_pay(text)
     assert (pay.low, pay.high, pay.period) == (low, high, period)
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Job Type: Fixed term contract", "Fixed-term position", "a fixed term role"],
+)
+def test_a_fixed_term_posting_counts_as_a_contract(text) -> None:
+    assert is_contract_posting(text) is True

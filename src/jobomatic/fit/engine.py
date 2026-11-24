@@ -529,10 +529,13 @@ _CAPITALISED_WORD_RE = re.compile(r"(?<![A-Za-z0-9])[A-Z][A-Za-z0-9.+#]*")
 
 
 def _only_skill_names_capitalised(sentence: str) -> bool:
-    """True when every capitalised word after the first is itself a known skill name."""
+    """True when every capitalised word after the first belongs to a skill name in the sentence
+    ("Web Security", "REST"), so none of them is another proper name ("Factory")."""
+    terms = [part.lower() for entry in extract_skill_terms(sentence) for part in entry.split(" / ")]
+    known_words = {word for term in terms for word in re.findall(r"[a-z0-9.+#]+", term)}
     words = _CAPITALISED_WORD_RE.findall(sentence)
     first = sentence.split()[0] if sentence.split() else ""
-    return all(word == first or extract_skill_terms(word) for word in words)
+    return all(word == first or word.lower() in known_words for word in words)
 
 
 def _has_prose_skill(

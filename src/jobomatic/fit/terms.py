@@ -481,7 +481,7 @@ def _category_label(
     if not joins and not stems & _UMBRELLA_TERMS:
         return None
     between = sentence[label[1] : marker_start]
-    if len(between.split()) > 4 or re.search(r"[,;:]|\band\b", between, re.IGNORECASE):
+    if len(between.split()) > 4 or re.search(r"[,;:]|\band\b|\s[-–—]\s", between, re.IGNORECASE):
         return None
     return label, joins
 
@@ -580,6 +580,14 @@ def _either_runs(
     return runs
 
 
+# "solid JavaScript" praises the language; "Solid CI/CD practices" stays a question for the user.
+_ADJECTIVE_BEFORE_GROUPS = frozenset(
+    {"server-side language", "javascript family", "front-end framework", "relational database"}
+)
+_NEGATED_BEFORE_RE = re.compile(
+    r"\bwithout\s+(?:(?:the\s+)?(?:reliance|use|need)\s+(?:on|of)\s+)?$", re.IGNORECASE
+)
+
 # "including concepts like layout, specificity, and accessibility": the examples illustrate the
 # skill named before them, they are not further requirements.
 _CONCEPT_EXAMPLES_RE = re.compile(
@@ -640,6 +648,12 @@ def find_terms_to_confirm(sentence: str) -> list[str]:
     ordinary English. They are not scored; the caller asks the user which meaning is intended."""
     found: list[str] = []
     adjective = {m.start() for m in _SOLID_ADJECTIVE_RE.finditer(sentence)}
+    lower = sentence.lower()
+    for solid in re.finditer(r"\bsolid\s+", lower):  # "solid JavaScript": the adjective again
+        following = lower[solid.end() :]
+        named = _TERM_RE.match(following)
+        if named and _group_of(named.group()) in _ADJECTIVE_BEFORE_GROUPS:
+            adjective.add(solid.start())
     for match in _TERM_RE.finditer(sentence.lower()):
         if match.start() in adjective:
             continue
@@ -764,6 +778,12 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
         spans = _drop_kind_nouns(sentence, _drop_unlisted_list_only(sentence, spans))
         if not spans:
             return []
+    # "comfortable working directly with T-SQL without reliance on Entity Framework": not asked for
+    spans = [
+        (s, e) for s, e in spans if not _NEGATED_BEFORE_RE.search(sentence[max(0, s - 40) : s])
+    ]
+    if not spans:
+        return []
     concept = _CONCEPT_EXAMPLES_RE.search(sentence)
     if concept and any(e <= concept.start() for _, e in spans):
         spans = [(s, e) for s, e in spans if e <= concept.start()]
@@ -857,6 +877,8 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
 _FILLER_WORDS = frozenset(
     "strong good solid excellent great working hands-on handson proven deep basic advanced "
     "practical demonstrated extensive proficient proficiency familiarity familiar knowledge "
+    "framework frameworks library libraries language languages technology technologies tool tools "
+    "platform platforms some firm awareness aware "
     "knowledgeable experience experienced skills skill understanding expertise background "
     "command ability with of in using the a an and or to development methodology professional "
     "methodologies practices pipeline pipelines work programming".split()

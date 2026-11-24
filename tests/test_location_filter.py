@@ -343,3 +343,39 @@ def test_french_required_only_disqualifies_when_the_candidate_excludes_it(tmp_pa
 def test_messages_name_the_configured_home_not_a_hard_coded_city() -> None:
     result = assess_location(_jd("Toronto, ON (Hybrid)"))
     assert result.disqualified and "outside Springfield" in result.disqualifiers[0]
+
+
+# ── Residency lists and hybrid offices named in the body ─────────────────────────────────────
+
+
+def test_a_remote_role_limited_to_other_provinces_is_flagged_not_failed() -> None:
+    text = _jd(
+        "Remote",
+        "This role is open to candidates residing in British Columbia, Alberta, or Saskatchewan.\n",
+    )
+    result = assess_location(text, load_rules())
+    assert not result.disqualified
+    assert any(
+        "Limited to residents of british columbia, alberta, saskatchewan" in f for f in result.flags
+    )
+
+
+def test_a_residency_list_that_names_the_home_province_is_not_flagged() -> None:
+    text = _jd("Remote", "Open to candidates residing in Alberta, Midland, or Ontario.\n")
+    assert not any("Limited to residents" in f for f in assess_location(text, load_rules()).flags)
+
+
+def test_one_province_named_in_a_residency_sentence_is_not_a_list() -> None:
+    text = _jd("Remote", "You must reside in Ontario to be eligible.\n")
+    assert not any("Limited to residents" in f for f in assess_location(text, load_rules()).flags)
+
+
+def test_a_hybrid_office_outside_the_home_city_is_flagged_when_remote_is_allowed() -> None:
+    text = _jd(
+        "Remote",
+        "We operate in a hybrid working environment with all staff able to work remotely. "
+        "Normally you will work out of the Ottawa office.\n",
+    )
+    result = assess_location(text, load_rules())
+    assert not result.disqualified
+    assert any("Hybrid arrangement with an office in Ottawa" in f for f in result.flags)
