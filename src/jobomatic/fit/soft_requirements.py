@@ -18,7 +18,7 @@ from dataclasses import dataclass, replace
 from typing import Protocol
 
 _YEARS_RE = re.compile(
-    r"(\d+)\s*(?:\+|plus)?\s*(?:(?:[-–—]|to)\s*\d+\s*\+?\s*)?(?:years?|yrs?)\b",
+    r"(?:\b[A-Za-z]+\s*\(\s*)?(\d+)\s*(?:\+|plus)?\)?\s*(?:(?:[-–—]|to)\s*\d+\s*\+?\s*)?(?:years?|yrs?)\b",
     re.IGNORECASE,
 )
 _SENIOR_RE = re.compile(r"\bsenior[\s-]*level\b", re.IGNORECASE)
@@ -82,7 +82,12 @@ def has_years_figure(text: str) -> bool:
 # read; never scored, so it can never read as a gap.
 _ELIGIBILITY_RE = re.compile(
     r"\b(?:author[iz]{1,2}ed|eligible|legally\s+(?:entitled|permitted|able|eligible)|"
-    r"right|permitted)\s+to\s+work\b|\bwork\s+(?:permit|authori[sz]ation)\b",
+    r"right|permitted)\s+to\s+work\b|\bwork\s+(?:permit|authori[sz]ation)\b|"
+    # "must be a Canadian Citizen or Permanent Resident", "Level 3 Security Clearance"
+    r"\b(?:must\s+be\s+an?\s+(?:\w+\s+)?(?:citizen|permanent\s+resident)|citizenship|"
+    r"security\s+clearance|controlled\s+goods|export\s+control)\b|"
+    r"\b(?:must|need\s+to|required\s+to)\s+(?:currently\s+)?reside\s+in\b|"
+    r"\bopen\s+to\s+(?:candidates|applicants)\s+residing\b",
     re.IGNORECASE,
 )
 

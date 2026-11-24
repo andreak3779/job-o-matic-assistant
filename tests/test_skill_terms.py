@@ -551,7 +551,7 @@ def test_a_phrase_with_nothing_to_strip_or_a_meaningful_extra_word_is_left_alone
             "Experience with Entity Framework or other ORMs",
             [
                 "Entity Framework / Entity Framework Core / EF Core / Dapper / Nhibernate / "
-                "Hibernate"
+                "Hibernate / Mongoose / Sequelize / Prisma"
             ],
         ),
     ],
@@ -1067,3 +1067,60 @@ def test_css3_react_js_and_visual_studio_code_are_known_names() -> None:
     assert extract_skill_terms("CSS3") == ["CSS3"]
     assert extract_skill_terms("React.js") == ["React.js"]
     assert extract_skill_terms("Visual Studio Code") == ["Visual Studio Code"]
+
+
+# --- Round five ----------------------------------------------------------------------------
+
+
+def test_a_skill_after_without_is_not_asked_for() -> None:
+    sentence = (
+        "You must be comfortable working directly with T-SQL without reliance on Entity Framework "
+        "or other ORMs."
+    )
+    terms = extract_skill_terms(sentence)
+    assert terms[0] == "T-SQL"
+    assert not any("Entity Framework" in term for term in terms)
+
+
+def test_a_dash_ends_a_category_label() -> None:
+    sentence = "Experience with DevOps, deployments, and monitoring - including AWS/cloud setup"
+    terms = extract_skill_terms(sentence)
+    assert "monitoring" in [t.lower() for t in terms]
+    assert not any("monitoring /" in t.lower() for t in terms)
+
+
+def test_solid_before_a_language_is_the_adjective_and_before_ci_cd_still_asks() -> None:
+    assert find_terms_to_confirm("Proficiency with React; solid JavaScript skills") == []
+    assert find_terms_to_confirm("Solid CI/CD practices") == ["solid"]
+
+
+@pytest.mark.parametrize(
+    "phrase,expected",
+    [
+        ("Experience with the React framework", ["React"]),
+        ("Some understanding of XML", ["XML"]),
+        ("Firm awareness of Docker tools", ["Docker"]),
+    ],
+)
+def test_framework_and_hedging_words_are_filler(phrase: str, expected: list[str]) -> None:
+    from jobomatic.fit.terms import reduce_to_terms
+
+    assert reduce_to_terms(phrase) == expected
+
+
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        ("Object Oriented Programming and UML", ["object oriented", "UML"]),
+        ("Experience with RESTful APIs", ["RESTful API"]),
+        ("Deep knowledge of message queues (RabbitMQ, Redis, AWS SQS)", None),
+        ("Applied knowledge of container technologies", ["container technologies"]),
+        ("Continuous Delivery pipelines", ["Continuous Delivery"]),
+    ],
+)
+def test_round_five_vocabulary(sentence: str, expected: list[str] | None) -> None:
+    terms = [t.lower() for t in extract_skill_terms(sentence)]
+    if expected is None:
+        assert any("aws sqs" in t for t in terms) and not any(t == "aws" for t in terms)
+    else:
+        assert terms == [e.lower() for e in expected]

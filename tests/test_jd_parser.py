@@ -1136,7 +1136,7 @@ def test_a_plus_in_brackets_makes_only_those_words_optional() -> None:
     parsed = parse_jd(text)
     assert "object-oriented" in parsed.required
     assert "OpenAPI" in parsed.required and "Git" in parsed.required
-    assert parsed.nice_to_have == []
+    assert parsed.nice_to_have == ["UML"]
 
 
 def test_a_bracket_with_only_a_marker_still_makes_the_whole_line_optional() -> None:
@@ -1401,3 +1401,109 @@ def test_the_required_line_count_includes_soft_and_unscored_lines() -> None:
         "- Experience with large lumber mill equipment\n"
     )
     assert parsed.required_line_count == 3
+
+
+# --- Round five: Indeed header, "plus" per sentence, eligibility, years in words -----------------
+
+
+@pytest.mark.parametrize(
+    "first_lines,title",
+    [
+        (
+            "ca.indeed.com\nSenior Full Stack Engineer - Remote - Indeed.com\n",
+            "Senior Full Stack Engineer",
+        ),
+        (
+            "ca.indeed.com\nSenior Full-Stack Web Developer (C#/MS-SQL/Front-end) - Western Canada - "
+            "Saskatoon, SK S7K 5T6 - Indeed.com\n",
+            "Senior Full-Stack Web Developer (C#/MS-SQL/Front-end)",
+        ),
+        (
+            "ca.indeed.com\nWeb Front End Developer - Canada - Indeed.com\n",
+            "Web Front End Developer",
+        ),
+    ],
+)
+def test_an_indeed_paste_with_the_domain_on_its_own_line_gives_the_title(
+    first_lines: str, title: str
+) -> None:
+    assert parse_jd(first_lines + "\nRequirements\n    Python\n").title == title
+
+
+def test_a_company_that_opens_a_sentence_with_was_founded_is_the_company() -> None:
+    parsed = parse_jd(
+        "ca.indeed.com\nWeb Developer - Canada - Indeed.com\n\nBluestream was founded in 1997 as a "
+        "database company.\n\nRequirements\n    Python\n"
+    )
+    assert parsed.company == "Bluestream"
+
+
+def test_job_title_words_and_places_are_not_the_company() -> None:
+    body = " ".join(["The Software team in Canada builds Software for Canada."] * 4)
+    parsed = parse_jd(
+        f"Senior Software Developer - Remote - Indeed.com\n\n{body}\n\nRequirements\n    Python\n"
+    )
+    assert parsed.company == "Unknown Company"
+
+
+def test_a_plus_applies_only_to_the_sentence_it_stands_in() -> None:
+    parsed = parse_jd(
+        "# Dev\\n\\n## Requirements\\n".replace("\\n", "\n")
+        + "- 5+ years of core front-end skills: HTML, CSS, Javascript. Experience with Vue is a plus.\n"
+    )
+    assert {"HTML", "CSS", "Javascript"} <= set(parsed.required)
+    assert "Vue" in parsed.nice_to_have
+    assert "Vue" not in parsed.required
+
+
+def test_a_plus_in_a_one_sentence_line_still_moves_the_whole_line() -> None:
+    parsed = parse_jd("# Dev\n\n## Requirements\n- Python\n- Docker is a plus\n")
+    assert parsed.required == ["Python"]
+    assert parsed.nice_to_have == ["Docker"]
+
+
+def test_a_colon_run_into_a_years_figure_is_split() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nRequirements:\n"
+        "    Minimums apply - do not apply without them herein:5+ years of C# web development.\n"
+    )
+    assert parsed.required == ["C# web development"]
+    assert any(
+        s.kind == "years" and s.line.startswith("5+ years") for s in parsed.soft_requirements
+    )
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "The successful candidate must be a Canadian Citizen or Permanent Resident.",
+        "Candidates must be eligible to hold a Government of Canada Level 3 Security Clearance.",
+        "This role is open to candidates residing in British Columbia, Alberta, or Ontario.",
+    ],
+)
+def test_citizenship_clearance_and_residency_lines_are_listed_as_eligibility(line: str) -> None:
+    parsed = parse_jd(f"# Dev\n\n## Requirements\n- Python\n\n{line}\n")
+    assert [s.line for s in parsed.soft_requirements if s.kind == "eligibility"] == [line]
+
+
+def test_years_written_with_a_word_and_a_bracketed_figure() -> None:
+    parsed = parse_jd(
+        "# Dev\n\n## Requirements\n- Six (6+) years of experience in software development.\n"
+    )
+    assert [s.note for s in parsed.soft_requirements if s.kind == "years"] == ["minimum 6 years"]
+
+
+def test_additional_information_ends_the_preferred_list() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nAdditional (Preferred) Requirements:\n    Docker\n\nAdditional Information\n"
+        "Total compensation for this role is market competitive.\n"
+    )
+    assert parsed.nice_to_have == ["Docker"]
+
+
+def test_a_vendor_named_before_its_product_is_not_the_company() -> None:
+    body = "Microsoft SQL Server and Microsoft Azure; Microsoft SQL Server again.\n" * 3
+    parsed = parse_jd(
+        f"Senior Developer - Remote - Indeed.com\n\n{body}\nRequirements\n    Python\n"
+    )
+    assert parsed.company == "Unknown Company"

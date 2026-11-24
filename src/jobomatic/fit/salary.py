@@ -64,6 +64,7 @@ _PAY_WORD_RE = re.compile(
 )
 _CONTRACT_RE = re.compile(
     r"\b(?:contract (?:role|position|opportunity|basis|assignment|term|to hire)|"
+    r"fixed[- ]term(?: contract)?|"
     r"contract-to-hire|contractor|freelance|c2c|corp[- ]to[- ]corp|\d+[- ]months? contract|"
     r"(?:employment|job)?\s*type\W+contract)\b",
     re.IGNORECASE,

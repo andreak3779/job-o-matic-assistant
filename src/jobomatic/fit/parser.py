@@ -176,6 +176,25 @@ _SCOPED_NICE_PAREN_RE = re.compile(
 _ARTICLE_WORDS = frozenset({"a", "an", "is", "are", "it", "this", "that", "the"})
 
 
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
+
+
+def _split_marked_sentences(item: str) -> tuple[str, str] | None:
+    """ "5+ years of HTML. Experience with Vue is a plus." -> ("5+ years of HTML.", "Experience with
+    Vue ..."): a "plus" or "asset" marks only the sentence it stands in. ``None`` when the line is
+    one sentence, or none or all of its sentences are marked."""
+    sentences = _SENTENCE_SPLIT_RE.split(item.strip())
+    if len(sentences) < 2:
+        return None
+    marked = [
+        s for s in sentences if _NICE_PHRASE_RE.search(s) and not _STRONGLY_PREFERRED_RE.search(s)
+    ]
+    if not marked or len(marked) == len(sentences):
+        return None
+    kept = [s for s in sentences if s not in marked]
+    return " ".join(kept), " ".join(marked)
+
+
 def _split_scoped_nice(item: str) -> tuple[str, str] | None:
     """``(item without the bracket, the words the bracket marks optional)``, else ``None``."""
     match = _SCOPED_NICE_PAREN_RE.search(item)
@@ -219,6 +238,8 @@ _GLUED_BULLET_RE = re.compile(r"(?<=[.!?])-\s+(?=[A-Z])")
 # A sentence that ends and is followed at once by a capital word starts a new line; and a known
 # heading followed at once by a capital word is split from what follows it.
 _GLUED_SENTENCE_RE = re.compile(r"(?<=[a-z]{3}[.!?])(?=[A-Z][a-z]{2})")
+# "...skills identified herein:5+ years of experience": a colon run into the figure after it
+_GLUED_COLON_RE = re.compile(r"(?<=[a-z]):(?=\d+\+?\s*years)")
 _GLUED_HEADING_RE = re.compile(
     r"^(\W*(?:what you.?ll find here|what you bring|what you.?ll bring|benefits overview|"
     r"why this role is unique|the tech stack|about the role|responsibilities|qualifications|"
@@ -234,6 +255,8 @@ def _split_glued(lines: list[str]) -> list[str]:
         if _is_bullet(line.strip()):
             out.append(line)
             continue
+        indent = line[: len(line) - len(line.lstrip())]
+        line = _GLUED_COLON_RE.sub(":\n" + indent, line)
         for piece in _GLUED_SENTENCE_RE.sub("\n", line).split("\n"):
             heading = _GLUED_HEADING_RE.match(piece)
             if heading:
@@ -264,7 +287,7 @@ _SECTION_END_HEADING_RE = re.compile(
     r"(what we offer|benefits?|perks|compensation|why (?:join|work|apply|us)\b|apply now|"
     r"what you(?:\W?ll| can| will)? (?:expect|get|receive)|what we (?:provide|give)|"
     r"what.s in it for you|in return|our offer|we offer|total rewards|life at|"
-    r"about (?:us|the company)|our culture|company overview|"
+    r"about (?:us|the company)|our culture|company overview|additional information|"
     r"responsibilit(?:y|ies)|what you.?ll do|salary|pay range|how to apply|"
     r"equal opportunity|culture by|our values|core values|how we work|"
     r"why (?:this role|you.?ll love)|what you.?ll find|additional perks|"
@@ -398,16 +421,21 @@ _REQUISITION_PREFIX_RE = re.compile(
 )
 # "AutoCanada is the largest Canadian owned…": a line that opens by naming the employer.
 _OPENING_COMPANY_RE = re.compile(
-    r"^([A-Z][A-Za-z0-9&'.-]*(?: [A-Z][A-Za-z0-9&'.-]*){0,3}) (?:is|are) (?:the|a|an|one of)\b",
+    r"^([A-Z][A-Za-z0-9&'.-]*(?: [A-Z][A-Za-z0-9&'.-]*){0,3}) "
+    r"(?:(?:is|are) (?:the|a|an|one of)\b|was founded\b)",
     re.MULTILINE,
 )
 _NOT_AN_OPENING_COMPANY = frozenset(
     {"we", "it", "this", "that", "there", "our", "you", "your", "position", "role", "job", "team"}
 )
 _REPEATED_NAME_MIN = 3
+# A place or nationality repeated through a posting is not the employer.
+_PLACE_WORDS = frozenset(
+    {"canada", "canadian", "american", "america", "north", "united", "states", "european"}
+)
 
 
-def _company_from_text(text: str) -> str:
+def _company_from_text(text: str, title: str = "") -> str:
     """The employer's name when the posting never labels it: a first sentence of the form
     "<Name> is the…", else a capitalised word (not a skill) that appears in the text at least
     three times, mid-sentence. Empty when neither is found."""
@@ -416,9 +444,18 @@ def _company_from_text(text: str) -> str:
         if name.split()[0].lower() not in _NOT_AN_OPENING_COMPANY:
             return name
     counts: dict[str, int] = {}
-    for match in re.finditer(r"(?<=[a-z,] )([A-Z][a-zA-Z]{3,})\b", text):
+    title_words = {word.lower() for word in re.findall(r"[A-Za-z]+", title)}
+    for match in re.finditer(r"(?<=[a-z,] )([A-Z][a-zA-Z]{3,}|[A-Z]{3,})\b", text):
         word = match.group(1)
-        if not extract_skill_terms(word):
+        # a word of the job title ("Software" in "Senior Software Developer") is not the employer
+        following = " ".join(text[match.end() : match.end() + 40].split()[:2])
+        if (
+            word.lower() not in title_words
+            and word.lower() not in _PLACE_WORDS
+            and not extract_skill_terms(word)
+            # "Microsoft SQL Server", "Microsoft Azure": a vendor named before its product
+            and not extract_skill_terms(f"{word} {following}")
+        ):
             counts[word] = counts.get(word, 0) + 1
     best = [w for w, n in counts.items() if n >= _REPEATED_NAME_MIN]
     return max(best, key=lambda w: counts[w]) if best else ""
@@ -428,6 +465,12 @@ def _company_from_text(text: str) -> str:
 _CORPORATE_SUFFIX_RE = re.compile(r"\b(?:Inc|Ltd|Corp|Co|Cos|Bros|Mfg|Intl|Pty|Assoc)\.$")
 
 
+# An Indeed or LinkedIn paste opens with the page's address on a line of its own ("ca.indeed.com").
+_BARE_DOMAIN_RE = re.compile(
+    r"^(?:www\.)?[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|ca|org|net|io)$"
+)
+
+
 def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
     """Title and company from the first line of a pasted posting, when it looks like a title.
 
@@ -435,7 +478,7 @@ def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
     Example Co" -> both; a first line that is a sentence, or names no role, gives nothing."""
     for raw in text.splitlines():
         line = raw.strip().lstrip("#*_> \t").rstrip("*_ \t")
-        if not line:
+        if not line or _BARE_DOMAIN_RE.match(line):
             continue
         if len(line) > 140 or (
             line.endswith((".", "!", "?", ":")) and not _CORPORATE_SUFFIX_RE.search(line)
@@ -790,6 +833,11 @@ def parse_jd(text: str) -> ParsedJD:
                 continue
             prose = _is_prose(item)  # decided before a marker is removed, as before this rule
             if section == "required":
+                if (sentences := _split_marked_sentences(item)) is not None:
+                    item, optional = sentences
+                    optional_terms = extract_skill_terms(_strip_nice_marker(optional)[0])
+                    _add_unique(nice, optional_terms)
+                    _add_unique(nice_items, optional_terms)
                 if (scoped := _split_scoped_nice(item)) is not None:
                     item, optional = scoped
                     optional_terms = extract_skill_terms(optional)
@@ -870,16 +918,18 @@ def parse_jd(text: str) -> ParsedJD:
     # "Applicants must be authorized to work in Canada" sits in closing boilerplate as often as in
     # a requirements list: list it for the user wherever it stands.
     listed = {entry.line for entry in soft}
-    for line in text.splitlines():
-        line = _BULLET_MARKER_RE.sub("", line.strip()).strip()
-        if (
-            line
-            and len(line.split()) <= _ELIGIBILITY_LINE_MAX_WORDS
-            and is_eligibility(line)
-            and line not in listed
+    for raw_line in text.splitlines():
+        for sentence in _SENTENCE_SPLIT_RE.split(
+            _BULLET_MARKER_RE.sub("", raw_line.strip()).strip()
         ):
-            soft.extend(entry for entry in classify(line) if entry.kind == "eligibility")
-            listed.add(line)
+            if (
+                sentence
+                and len(sentence.split()) <= _ELIGIBILITY_LINE_MAX_WORDS
+                and is_eligibility(sentence)
+                and not any(sentence in seen for seen in listed)
+            ):
+                soft.extend(entry for entry in classify(sentence) if entry.kind == "eligibility")
+                listed.add(sentence)
 
     first_title, first_company = _first_line_title_company(text)
     if first_title and not first_company:
@@ -915,7 +965,9 @@ def parse_jd(text: str) -> ParsedJD:
         about_name = about.group(1).strip() if about else ""
         if about_name.split()[0:1] and about_name.split()[0].lower() in _ABOUT_NOT_A_COMPANY:
             about_name = ""
-        company = first_company or about_name or _company_from_text(text) or "Unknown Company"
+        company = (
+            first_company or about_name or _company_from_text(text, title) or "Unknown Company"
+        )
     company = _TITLE_COMPANY_SPLIT_RE.split(company, maxsplit=1)[0].strip()
 
     location_match = _LOCATION_BOLD_RE.search(text)

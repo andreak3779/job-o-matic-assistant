@@ -1057,3 +1057,9 @@ def test_one_skill_read_from_many_required_lines_is_low_confidence() -> None:
     assert message is not None and "1 required skill could be read from 5 required lines" in message
     assert not rate_fit(["C#"], [], profile, required_line_count=2).low_confidence
     assert not rate_fit(["C#", "SQL"], [], profile, required_line_count=6).low_confidence
+
+
+def test_a_sentence_naming_web_security_is_rated_by_its_skills() -> None:
+    """Bluestream: "Web" and "Security" are the capitalised parts of the skill name, not another name."""
+    result = _rated(["Familiarity with Web Security and SSO"])
+    assert result.required[0].status != "gap" or "sso" in result.required[0].skill
