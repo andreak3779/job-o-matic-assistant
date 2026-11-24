@@ -320,7 +320,7 @@ Write `top-choice.md` in the same application folder. Skip this step entirely on
 
 ## Step 6 — Validate and Present
 
-No automated DOCX validator is available locally (the sandbox's `/mnt/skills/public/docx/scripts/office/validate.py` doesn't exist in Claude Code). Open each DOCX in the application's folder and visually confirm formatting — page count, section headings, no broken layout — before delivering it. LibreOffice is installed as a Flatpak (no `soffice` on `PATH`): convert each DOCX to PDF and read the real page count with the command in Project 1's `CLAUDE.md` under "DOCX page-count check" — use absolute paths — rather than estimating.
+No automated DOCX validator is available locally (the sandbox's `/mnt/skills/public/docx/scripts/office/validate.py` doesn't exist in Claude Code). Open each DOCX in the application's folder and visually confirm formatting — page count, section headings, no broken layout — before delivering it. LibreOffice is available (the system `soffice` and the Flatpak both work): read the real page count with `--check-pages` on `render`, or convert each DOCX to PDF by hand with the command in the repo `CLAUDE.md` under page counts — use absolute paths — rather than estimating.
 
 Fix errors before presenting. Naming: the generators write `resume.docx` and `cover-letter.docx` into `outputs/applications/<date>_<company>_<role>/` (the folder name is also the application's id in the log). Confirm the files are there and tell the user their paths: the resume DOCX, the cover letter DOCX, `salary.md`, and `top-choice.md` when requested.
 
