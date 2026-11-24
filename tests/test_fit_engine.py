@@ -1045,3 +1045,15 @@ def test_a_capitalised_rest_in_a_six_word_sentence_is_the_rest_api_skill() -> No
     """Atlassian: "Experience performing platform integrations using REST" read as a gap."""
     result = _rated(["Experience performing platform integrations using REST"])
     assert result.required[0].status == "match"
+
+
+def test_one_skill_read_from_many_required_lines_is_low_confidence() -> None:
+    from jobomatic.bootstrap import load_profile
+    from jobomatic.fit.engine import rate_fit
+
+    profile = load_profile()
+    assert rate_fit(["C#"], [], profile, required_line_count=5).low_confidence
+    message = rate_fit(["C#"], [], profile, required_line_count=5).low_confidence_message
+    assert message is not None and "1 required skill could be read from 5 required lines" in message
+    assert not rate_fit(["C#"], [], profile, required_line_count=2).low_confidence
+    assert not rate_fit(["C#", "SQL"], [], profile, required_line_count=6).low_confidence

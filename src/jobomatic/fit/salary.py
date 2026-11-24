@@ -32,7 +32,7 @@ _PAY_RE = re.compile(
     r"(?<![A-Za-z0-9,.])"
     r"(?:(?:(?P<cur1>USD|CAD|US|CA|C|A)\s?)?(?P<dollar>\$)\s?|(?P<cur3>" + _CODE + r")\s?)?"
     r"(?P<lo>" + _NUM + r")\s?(?P<lok>[kK])?(?:\s?(?P<cur4>" + _CODE + r")\b)?"
-    r"(?:\s?/\s?(?:yr|year|hr|hour|annum)\b(?=\s*(?:-|–|—|to)\s))?"
+    r"(?:(?P<per>\s?/\s?(?:yr|year|hr|hour|annum)\b)(?=\s*(?:-|–|—|to)\s))?"
     r"(?:\s*(?:-|–|—|to)\s*(?:(?P<cur2>USD|CAD|US|CA|C|A)\s?)?\$?\s?(?P<hi>"
     + _NUM
     + r")\s?(?P<hik>[kK])?(?:\s?(?P<cur5>"
@@ -123,7 +123,12 @@ def find_pay(text: str) -> list[Pay]:
             continue
         if not (match["dollar"] or match["cur3"]):
             # No "$" and no leading code: only "100K CAD" (a k figure with its code) is pay.
-            if not ((match["cur4"] or match["cur5"]) and (match["lok"] or match["hik"])):
+            stated_period = bool(
+                match["per"] or _HOURLY_RE.match(after.lstrip()) or _ANNUAL_RE.match(after.lstrip())
+            )
+            if not (
+                (match["cur4"] or match["cur5"]) and (match["lok"] or match["hik"] or stated_period)
+            ):
                 continue
         low = _scaled(match["lo"], match["lok"])
         # "$90-110k": a lone k on the upper bound applies to both ends.
@@ -133,8 +138,9 @@ def find_pay(text: str) -> list[Pay]:
             low *= 1000
         low, high = sorted((low, high))
 
-        explicit_hourly = bool(_HOURLY_RE.search(after))
-        explicit_annual = bool(_ANNUAL_RE.search(after)) or bool(match["lok"] or match["hik"])
+        per = match["per"] or ""
+        explicit_hourly = bool(_HOURLY_RE.search(per + after))
+        explicit_annual = bool(_ANNUAL_RE.search(per + after)) or bool(match["lok"] or match["hik"])
         if explicit_hourly and not explicit_annual:
             period, inferred = "hourly", False
         elif explicit_annual and not explicit_hourly:

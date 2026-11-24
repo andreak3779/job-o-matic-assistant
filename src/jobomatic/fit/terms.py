@@ -31,7 +31,10 @@ _CLAUSE_BREAK_RE = re.compile(r"\s+and\s+|[;:]")
 # "or comparable", the list may end in "and" or "or", so the list stops at a sentence break
 # or at an "and" that starts a new requirement ("... Cursor, and experience with Docker").
 _EXAMPLES_RE = re.compile(
-    r"\b(?:such as|for example|including|like)\b|\be\.g\.?(?![a-z0-9])", re.IGNORECASE
+    r"\b(?:such as|for example|including|like)\b|\be\.g\.?(?![a-z0-9])|"
+    # "any of the technologies the product runs on: Go, Typescript, React": any one will do
+    r"\bany of\b[^:;()\n]{0,80}:|\bany of\b",
+    re.IGNORECASE,
 )
 _PAREN_OPEN_RE = re.compile(r"\(")
 _EXAMPLES_END_RE = re.compile(
@@ -515,7 +518,7 @@ def _alternative_runs(
 # "Java/Spring/Hibernate or React/TypeScript": slash-joined stacks offered as a choice. The terms
 # need not share a group (Java is a language, React a front-end framework): the "or" between the
 # two "/" lists says any one stack will do, so the whole chain is one row met by its best term.
-_CHAIN_LINK_RE = re.compile(r"\s*/\s*|\s*,?\s+or\s+", re.IGNORECASE)
+_CHAIN_LINK_RE = re.compile(r"\s*/\s*|\s*,\s*(?:or\s+)?|\s+or\s+", re.IGNORECASE)
 
 
 def _choice_chains(
@@ -528,9 +531,8 @@ def _choice_chains(
         if len(current) < 3:
             return
         links = [sentence[a[1] : b[0]] for a, b in zip(current, current[1:], strict=False)]
-        if any("/" in link for link in links) and any(
-            re.search(r"\bor\b", link, re.IGNORECASE) for link in links
-        ):
+        # "A, B, or C" and "A/B or C" offer a choice whatever group the terms are in
+        if any(re.search(r"\bor\b", link, re.IGNORECASE) for link in links):
             chains.append(list(current))
 
     for span in spans:
@@ -591,6 +593,38 @@ def _drop_subsumed(terms: list[str]) -> list[str]:
     present = {term.lower() for term in terms}
     hidden = {part for key, parts in _SUBSUMED.items() if key in present for part in parts}
     return [term for term in terms if term.lower() not in hidden]
+
+
+# "back-end (Node.js, Golang)", "tools (GitHub Copilot, Claude similar)": a bracket after a general
+# noun lists examples of it, and any one of them meets the requirement.
+_GENERAL_NOUN_BEFORE_PAREN_RE = re.compile(
+    r"(?:back-?end|front-?end|databases?|tools?|technologies|platforms?|frameworks?|languages?|"
+    r"infrastructure|services|stack)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _bracket_example_runs(
+    sentence: str, spans: list[tuple[int, int]], taken: set[tuple[int, int]]
+) -> list[list[tuple[int, int]]]:
+    runs: list[list[tuple[int, int]]] = []
+    for open_paren in re.finditer(r"\(", sentence):
+        close = sentence.find(")", open_paren.end())
+        if close == -1 or not _GENERAL_NOUN_BEFORE_PAREN_RE.search(sentence[: open_paren.start()]):
+            continue
+        inner = sentence[open_paren.end() : close]
+        if "/" in inner or re.search(r"\band\b|&", inner, re.IGNORECASE):
+            # "(JavaScript/TypeScript, Vue/React)" has rows of its own; "(WSDL, SOAP, and XML)"
+            # asks for all of them
+            continue
+        inside = [
+            span
+            for span in spans
+            if open_paren.end() <= span[0] and span[1] <= close and span not in taken
+        ]
+        if len(inside) >= 2:
+            runs.append(inside)
+    return runs
 
 
 # "Solid understanding of…" says the understanding is good; it is not SOLID, the design principles.
@@ -795,6 +829,9 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
     chains = _choice_chains(sentence, spans, set(alternatives))
     chained = {span for chain in chains for span in chain}
     either = _either_runs(sentence, spans, set(alternatives) | chained)
+    either += _bracket_example_runs(
+        sentence, spans, set(alternatives) | chained | {s for run in either for s in run}
+    )
     eithered = {span for run in either for span in run}
     runs = _alternative_runs(sentence, spans, set(alternatives) | chained | eithered)
     runs = sorted([*runs, *chains, *either], key=lambda run: run[0])

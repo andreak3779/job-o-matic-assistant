@@ -3,7 +3,7 @@
   "terms": [
     "c#", "f#", "vb.net", ".net", ".net core", ".net framework", "asp.net", "asp.net core", "asp.net mvc", "asp.net core mvc", "asp.net core blazor", "asp.net web forms", "web forms", "mvc", "asp.net web api", "web api", "blazor", "razor pages", "entity framework", "entity framework core", "ef core", "dapper", "linq", "signalr", "wpf", "winforms", "maui", "nuget", "nhibernate", "hibernate", "junit",
     "java", "kotlin", "scala", "javascript", "typescript", "python", "golang", "go", "rust", "ruby", "php", "swift", "c++", "sql", "t-sql", "pl/sql", "powershell", "bash", "shell scripting",
-    "angular", "react", "react native", "vue", "vue.js", "svelte", "next.js", "node.js", "nodejs", "express", "nestjs", "rxjs", "ngrx", "html", "html5", "css", "sass", "bootstrap", "jquery", "webpack", "nx",
+    "angular", "react", "react.js", "react native", "vue", "vue.js", "svelte", "next.js", "node.js", "nodejs", "express", "nestjs", "rxjs", "ngrx", "html", "html5", "css", "css3", "sass", "bootstrap", "jquery", "webpack", "nx",
     "django", "flask", "fastapi", "spring", "spring boot", "laravel", "rails", "ruby on rails",
     "azure", "aws", "gcp", "google cloud", "azure functions", "azure devops", "azure openai", "azure ai", "azure ai search", "azure app service", "app service", "container apps", "azure container apps", "azure kubernetes service", "aks", "cosmos db", "service bus", "event grid", "event hubs", "key vault", "app configuration", "application insights", "azure monitor", "azure sql", "azure storage", "blob storage", "api management", "microsoft entra", "entra id", "azure ad", "managed identity", "lambda", "ec2", "s3", "cloudformation", "cloud-native", "serverless",
     "terraform", "bicep", "arm templates", "pulumi", "ansible", "infrastructure as code", "iac",
@@ -16,7 +16,7 @@
     "secure development", "secure coding", "owasp", "oauth", "oauth2", "jwt", "openid connect", "oidc", "saml", "authentication", "authorization", "rbac", "sso", "penetration testing", "pen test", "pen tests", "pentest", "vulnerability assessment", "vulnerability assessments", "web application security", "threat modeling",
     "ai", "generative ai", "llm", "llms", "rag", "prompt engineering", "machine learning", "deep learning", "embeddings", "vector database", "vector databases", "vector search", "agentic", "ai agents", "agents", "ai coding agents", "github copilot", "copilot", "claude code", "claude", "cursor", "windsurf", "mcp", "model context protocol", "langchain", "semantic kernel", "openai", "pytorch", "tensorflow", "scikit-learn", "pandas", "numpy", "mlops",
     "sharepoint", "dynamics 365", "dataverse", "power platform", "power apps", "power automate", "hubspot", "salesforce", "servicenow", "sap", "microsoft graph", "office 365", "m365", "electron", "rpa", "browser extensions",
-    "visual studio", "vs code", "rider", "postman", "sonarqube", "powerbuilder", "vba", "clipper", "cobol", "mainframe", "ux", "ui design", "accessibility", "wcag"
+    "visual studio", "visual studio code", "vs code", "rider", "postman", "sonarqube", "powerbuilder", "vba", "clipper", "cobol", "mainframe", "ux", "ui design", "accessibility", "wcag", "responsive design", "responsive web design"
   ],
   "category_terms_description": "Terms that name a KIND of tool, not a product. In 'NoSQL databases such as MongoDB' the requirement is the category, and MongoDB only illustrates it, so the category and its examples are scored as one entry met by evidence for either. Only these terms join their examples; a product ('Python libraries such as Pandas') does not, or having Python alone would meet it. Every term must also be in 'terms'.",
   "category_terms": ["nosql", "message queue", "message queues", "messaging", "unit testing", "integration testing", "automated testing", "test automation", "testing", "infrastructure as code", "iac", "containers", "observability", "monitoring", "logging", "authentication", "authorization", "serverless", "vector database", "vector databases", "power platform"],
@@ -60,7 +60,7 @@
   "alternative_groups": {
     "orm": ["entity framework", "entity framework core", "ef core", "dapper", "nhibernate", "hibernate"],
     "cloud platform": ["azure", "aws", "gcp", "google cloud"],
-    "front-end framework": ["angular", "react", "vue", "vue.js", "svelte"],
+    "front-end framework": ["angular", "react", "react.js", "vue", "vue.js", "svelte"],
     "server-side language": ["c#", "java", "kotlin", "scala", "python", "golang", "go", "rust", "ruby", "php"],
     "relational database": ["sql server", "postgresql", "postgres", "mysql", "oracle", "sqlite", "db2"],
     "nosql database": ["mongodb", "dynamodb", "cassandra", "cosmos db"],

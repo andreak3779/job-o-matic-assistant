@@ -1015,3 +1015,55 @@ def test_an_umbrella_after_or_equivalent_is_not_a_further_requirement() -> None:
         "Practical experience with Generative AI, GitHub Copilot, or equivalent AI coding tools."
     )
     assert extract_skill_terms(sentence) == ["Generative AI / GitHub Copilot"]
+
+
+# --- Round four ----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        ("Backend Technologies: PHP, Python, Node.js, or Java.", ["PHP / Python / Node.js / Java"]),
+        (
+            "Database Management: MySQL, MongoDB, PostgreSQL, or SQL Server.",
+            ["MySQL / MongoDB / PostgreSQL / SQL Server"],
+        ),
+        ("Frontend Frameworks: React.js, Angular, or Vue.js.", ["React.js / Angular / Vue.js"]),
+        (
+            "Proficiency in both front-end (JavaScript/TypeScript, Vue/React) and back-end "
+            "(Node.js, Golang) technologies.",
+            ["JavaScript / TypeScript", "Vue / React", "Node.js / Golang"],
+        ),
+        (
+            "Experience with AI-assisted development and security tools (GitHub Copilot, Claude "
+            "similar)",
+            ["AI", "GitHub Copilot / Claude"],
+        ),
+        (
+            "Experience with any of the technologies the product runs on: Go, Typescript, React.",
+            ["Go / Typescript / React"],
+        ),
+    ],
+)
+def test_lists_of_choices_and_bracket_examples_are_one_row(
+    sentence: str, expected: list[str]
+) -> None:
+    assert extract_skill_terms(sentence) == expected
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Experience with Azure, Docker and Kubernetes",
+        "Python, SQL, or Excel",
+        "Web Services (WSDL, SOAP, XML, and XML Schemas)",
+    ],
+)
+def test_lists_with_and_stay_separate_requirements(sentence: str) -> None:
+    assert not any(" / " in term for term in extract_skill_terms(sentence))
+
+
+def test_css3_react_js_and_visual_studio_code_are_known_names() -> None:
+    assert extract_skill_terms("CSS3") == ["CSS3"]
+    assert extract_skill_terms("React.js") == ["React.js"]
+    assert extract_skill_terms("Visual Studio Code") == ["Visual Studio Code"]

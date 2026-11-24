@@ -59,6 +59,10 @@ LOW_CONFIDENCE_MESSAGE = (
 # the rating rests on too little to trust however the few score. A short posting whose few
 # skills were all read ("C#, SQL") is not flagged; one read from nothing is.
 LOW_CONFIDENCE_MIN_SKILLS = 4
+# A posting with at least this many required lines, of which no more than one in this many yielded
+# a skill, was probably misread: most of what it asks for is not in the vocabulary.
+LOW_CONFIDENCE_MIN_LINES = 4
+LOW_CONFIDENCE_LINES_PER_SKILL = 4
 
 
 @dataclass(frozen=True)
@@ -84,6 +88,8 @@ class FitResult:
     corrected; shown so the user can check the posting."""
     soft_requirements: tuple[SoftRequirement, ...] = ()
     """Education and years-of-experience lines: listed for the user to read, never scored."""
+    required_line_count: int = 0
+    """How many lines the posting's required section held (soft and unscored ones included)."""
 
     @property
     def low_confidence_message(self) -> str | None:
@@ -105,6 +111,15 @@ class FitResult:
             return (
                 f"Only {skills} could be read{tail}. The rating rests on very little — read the "
                 "posting yourself before relying on it, and check that the text is a job posting."
+            )
+        if (
+            self.required_line_count >= LOW_CONFIDENCE_MIN_LINES
+            and count * LOW_CONFIDENCE_LINES_PER_SKILL <= self.required_line_count
+        ):
+            return (
+                f"Only {count} required skill{'s' if count != 1 else ''} could be read from "
+                f"{self.required_line_count} required lines. The rating rests on very little — "
+                "read the posting yourself before relying on it."
             )
         gaps = sum(1 for m in self.required if m.status == "gap")
         if gaps / count > LOW_CONFIDENCE_RED_SHARE:
@@ -349,6 +364,7 @@ def rate_fit(
     unknown_names: tuple[tuple[str, str], ...] = (),
     soft_requirements: tuple[SoftRequirement, ...] = (),
     core_skills: frozenset[str] = frozenset(),
+    required_line_count: int = 0,
 ) -> FitResult:
     """Rate how well ``profile`` matches a JD with the given required and nice skills.
 
@@ -403,6 +419,7 @@ def rate_fit(
         possible_typos=tuple(possible_typos),
         unknown_names=tuple(unknown_names),
         soft_requirements=with_education_on_file(soft_requirements, profile.education),
+        required_line_count=required_line_count,
     )
 
 
@@ -424,6 +441,7 @@ def rate_parsed_jd(parsed: ParsedJD, profile: Profile) -> FitResult:
         unknown_names=parsed.unknown_names,
         soft_requirements=parsed.soft_requirements,
         core_skills=parsed.core_skills,
+        required_line_count=parsed.required_line_count,
     )
 
 

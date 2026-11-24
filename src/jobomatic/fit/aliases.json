@@ -2,6 +2,10 @@
   "description": "Alias registry for the fit engine. Keys are normalized JD skill phrases; values are normalized terms that should also be searched in the profile.",
   "aliases": {
     "html5": ["html"],
+    "css3": ["css"],
+    "react.js": ["react", "reactjs"],
+    "visual studio code": ["vs code", "vscode"],
+    "responsive web design": ["responsive", "responsive design"],
     "data modeling": ["data models", "data model", "database design"],
     "fullstack": ["full-stack", "full stack"],
     "backend development experience": ["backend", "back-end"],

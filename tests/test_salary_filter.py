@@ -155,3 +155,16 @@ def test_render_confirms_when_ok() -> None:
 )
 def test_a_k_figure_without_a_currency_code_or_dollar_sign_is_not_pay(text) -> None:
     assert find_pay(text) == []
+
+
+@pytest.mark.parametrize(
+    "text,low,high,period",
+    [
+        ("60 CAD/hr - 65 CAD/hr", 60, 65, "hourly"),
+        ("Pay 80 CAD per hour", 80, 80, "hourly"),
+        ("100K CAD/yr - 115K CAD/yr", 100000, 115000, "annual"),
+    ],
+)
+def test_pay_with_a_code_and_no_dollar_sign(text, low, high, period) -> None:
+    [pay] = find_pay(text)
+    assert (pay.low, pay.high, pay.period) == (low, high, period)
