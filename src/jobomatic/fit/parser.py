@@ -62,6 +62,9 @@ class ParsedJD:
     # Education and years-of-experience lines from the required section (ADR 0021): listed for the
     # user to read, never scored. A line that also names a known skill is still scored for it.
     soft_requirements: tuple[SoftRequirement, ...] = ()
+    # How many lines the required section held, counting the soft and unscored ones: a posting
+    # with many required lines and one skill read from them was probably misread.
+    required_line_count: int = 0
     # Lowercased required items that are CORE requirements (ADR 0021, step C2): named in the title,
     # on one of the first five required lines, on a line with a years figure, or mentioned on two
     # or more lines of the posting. Soft-skill lines are never core. Pass to ``rate_fit`` as
@@ -147,7 +150,7 @@ _NICE_PREFIX_RE = re.compile(
 )
 _NICE_PAREN_RE = re.compile(
     r"\(\s*(?:preferred\s+but\s+not\s+mandatory|not\s+mandatory|preferred|nice[\s-]to[\s-]haves?|"
-    r"an?\s+bonus|an?\s+asset|bonus|asset)\s*\)",
+    r"an?\s+bonus|an?\s+asset|bonus|asset|optional)\s*\)",
     re.IGNORECASE,
 )
 _NICE_PHRASE_RE = re.compile(
@@ -279,7 +282,7 @@ _LABEL_LINE_END_RE = re.compile(
 _CLOSING_BOILERPLATE_RE = re.compile(
     r"committed\s+to\s+(?:inclusion|diversity|equity|equal)|encourages?\s+applications|"
     r"thank\s+(?:you\s+to\s+)?all\s+applicants|active\s+job\s+opening|"
-    r"equal\s+opportunity\s+employer",
+    r"equal\s+opportunity\s+employer|don.?t\s+meet\s+(?:100|every|all)\b",
     re.IGNORECASE,
 )
 # A heading-shaped line doesn't end in sentence punctuation — "## Nice to
@@ -297,6 +300,8 @@ _QUESTION_HEADING_RE = re.compile(
     r"^\W*(?:why\s+\w+|apply\s+now|how\s+to\s+apply)\W*$", re.IGNORECASE
 )
 _QUESTION_HEADING_MAX_WORDS = 5
+_HEADING_MAX_WORDS = 10
+_COLON_HEADING_MAX_WORDS = 16
 # A longer line is a boilerplate paragraph that happens to mention the right to work.
 _ELIGIBILITY_LINE_MAX_WORDS = 40
 _SENTENCE_PUNCT_RE = re.compile(r"(?<!\.)[.!?][\"'\u201d\u2019)]*\s*$")
@@ -473,12 +478,26 @@ _CARD_LOGO_RE = re.compile(r"^Company logo for,?\s*(.+?)\.?$", re.IGNORECASE)
 _CARD_META_RE = re.compile(r"\s·\s.*\b(?:ago|applicants?|clicked apply)\b", re.IGNORECASE)
 
 
+_CARD_COMPANY_MAX_WORDS = 6
+
+
 def _card_header(text: str) -> tuple[str | None, str | None]:
     """Title and company of a pasted LinkedIn job card, else ``(None, None)``."""
     lines = [
         raw.strip().lstrip("#*_> \t").rstrip("*_ \t") for raw in text.splitlines() if raw.strip()
     ]
-    if not lines or not (logo := _CARD_LOGO_RE.match(lines[0])):
+    if not lines:
+        return None, None
+    if not (logo := _CARD_LOGO_RE.match(lines[0])):
+        # The same card without the logo line: "Render" / "Software Engineer" / "Canada · 1 day ago"
+        if (
+            len(lines) >= 3
+            and _CARD_META_RE.search(lines[2])
+            and "|" not in lines[0]
+            and len(lines[0].split()) <= _CARD_COMPANY_MAX_WORDS
+            and _ROLE_WORD_RE.search(lines[1])
+        ):
+            return lines[1], lines[0]
         return None, None
     company = logo.group(1).strip()  # "Inc.." keeps the "." of "Inc." and drops the sentence's
     for index, line in enumerate(lines[1:6], start=1):
@@ -662,6 +681,7 @@ def parse_jd(text: str) -> ParsedJD:
     section: str | None = None
     list_is_marked = False  # the current section's items are bullets or indented lines
     required_line_no = 0
+    required_lines_total = 0
     positional_core: set[str] = set()
     # After a heading that ends in a colon ("Required Skills:"), plain unindented lines with no
     # end punctuation are its items: a copied page often loses the bullets and the indent.
@@ -689,20 +709,30 @@ def parse_jd(text: str) -> ParsedJD:
             and len(stripped.split()) <= _QUESTION_HEADING_MAX_WORDS
             and _QUESTION_HEADING_RE.match(stripped) is not None
         )
+        # A heading is short. A long line that happens to hold a heading word ("…, Not
+        # Nice-to-haves … Day To Day, You Will" or "…the above qualifications, you should still")
+        # is a sentence and must not open or close a section.
+        # A longer line still counts when it ends in a colon, as a heading does ("Things we're
+        # looking for in terms of more specific skill-sets and experience:").
+        word_count = len(stripped.split())
+        keyword_heading = looks_like_heading and (
+            word_count <= _HEADING_MAX_WORDS
+            or (stripped.endswith(":") and word_count <= _COLON_HEADING_MAX_WORDS)
+        )
         # Nice-to-have is tested first: "Preferred Qualifications" and
         # "Nice-to-Have Qualifications" also contain the required-heading word
         # "qualifications", and must not be read as required skills.
-        if looks_like_heading and _SOFT_HEADING_RE.search(lower) and "technical" not in lower:
+        if keyword_heading and _SOFT_HEADING_RE.search(lower) and "technical" not in lower:
             section = "soft"
             list_is_marked = False
             flat_items_ok = False
             continue
-        if looks_like_heading and _NICE_HEADING_RE.search(lower):
+        if keyword_heading and _NICE_HEADING_RE.search(lower):
             section = "nice"
             list_is_marked = False
             flat_items_ok = stripped.endswith(":")
             continue
-        if looks_like_heading and (
+        if keyword_heading and (
             _REQUIRED_HEADING_RE.search(lower)
             or _EXPERIENCE_HEADING_RE.match(stripped)
             or _IMPORTANT_HEADING_RE.match(stripped)
@@ -711,7 +741,7 @@ def parse_jd(text: str) -> ParsedJD:
             list_is_marked = False
             flat_items_ok = stripped.endswith(":")
             continue
-        if looks_like_heading and _SECTION_END_HEADING_RE.search(lower):
+        if keyword_heading and _SECTION_END_HEADING_RE.search(lower):
             section = None
             list_is_marked = False
             flat_items_ok = False
@@ -753,6 +783,8 @@ def parse_jd(text: str) -> ParsedJD:
             raw_item = _LINKEDIN_NAME_SUFFIX_RE.sub("", _BULLET_MARKER_RE.sub("", stripped)).strip()
             item = _drop_term_details(_strip_years_prefix(raw_item))
             line_section = section
+            if section == "required":
+                required_lines_total += 1
             if section == "soft":
                 soft.append(soft_skill(raw_item))
                 continue
@@ -905,6 +937,7 @@ def parse_jd(text: str) -> ParsedJD:
         possible_typos=tuple(typos),
         unknown_names=tuple(unknown),
         soft_requirements=tuple(soft),
+        required_line_count=required_lines_total,
         core_skills=_core_skills(required_items or required, positional_core, title, text),
         required_items=required_items,
         nice_items=nice_items,

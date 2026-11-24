@@ -1339,3 +1339,65 @@ def test_eligibility_in_closing_boilerplate_is_listed_but_a_long_paragraph_is_no
     long = " ".join(["word"] * 45) + " the legal right to work at the company."
     parsed = parse_jd(f"# Dev\n\n## Requirements\n- C#\n\nEqual opportunity\n{short}\n{long}\n")
     assert [s.line for s in parsed.soft_requirements if s.kind == "eligibility"] == [short]
+
+
+# --- Round four: headers without a logo line, long heading-like sentences, optional marker -----
+
+
+def test_a_job_card_without_the_logo_line_gives_title_and_company() -> None:
+    parsed = parse_jd(
+        "Render\n\nSoftware Engineer, Expansion (all levels) \n\n"
+        "Canada · 1 day ago · Over 100 people clicked apply\n\nRemote\n\n"
+        "What We're Looking For\n    Python\n"
+    )
+    assert (parsed.title, parsed.company) == ("Software Engineer, Expansion (all levels)", "Render")
+
+
+def test_a_title_pipe_company_first_line_is_not_taken_for_a_card() -> None:
+    parsed = parse_jd(
+        "Senior Software Engineer | Samsara\n\nSenior Software Engineer\n\n"
+        "Canada · Reposted 1 week ago · Over 100 people clicked apply\n\nRequirements\n    Python\n"
+    )
+    assert parsed.company == "Samsara"
+
+
+def test_a_long_sentence_holding_a_heading_word_does_not_open_a_section() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nAbout You\n    Python\n\n"
+        "We treat tools like Cursor as core infrastructure, not nice-to-haves, day to day you will\n"
+        "    Build web applications with Docker\n"
+    )
+    assert "Docker" not in parsed.nice_to_have
+    assert "Docker" not in parsed.required
+
+
+def test_a_wrapped_if_you_dont_meet_every_requirement_line_ends_the_list() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nAbout You\n    Python\n\n"
+        "If you don't meet 100% of the above qualifications, you should still\n"
+        " consider applying.\n"
+    )
+    assert parsed.required == ["Python"]
+    assert not parsed.unscored_required
+
+
+def test_a_colon_ended_heading_may_be_long() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nThings we're looking for in terms of more specific skill-sets and experience:\n"
+        "    Python\n"
+    )
+    assert parsed.required == ["Python"]
+
+
+def test_an_optional_bracket_marks_the_line_as_nice_to_have() -> None:
+    parsed = parse_jd("# Dev\n\n## Requirements\n- Python\n- WordPress (Optional)\n")
+    assert parsed.required == ["Python"]
+    assert parsed.nice_to_have == ["WordPress"]
+
+
+def test_the_required_line_count_includes_soft_and_unscored_lines() -> None:
+    parsed = parse_jd(
+        "# Dev\n\n## Requirements\n- Python\n- Strong communication skills\n"
+        "- Experience with large lumber mill equipment\n"
+    )
+    assert parsed.required_line_count == 3
