@@ -1018,7 +1018,7 @@ def test_a_sentence_naming_a_plain_term_is_not_credited_with_it() -> None:
 
 def test_a_sentence_naming_only_a_skill_is_rated_by_that_skill() -> None:
     """AspiringIT: six words, rated whole, "React" was never looked for."""
-    result = _rated(["Experience building frontend applications using React"])
+    result = _rated(["Experience building frontend applications using Angular"])
     assert result.required[0].status == "match"
 
 
@@ -1105,3 +1105,17 @@ def test_dast_is_also_searched_as_penetration_testing_coursework() -> None:
     from jobomatic.fit.engine import skill_match_terms
 
     assert {"penetration testing", "pen testing"} <= set(skill_match_terms("dast"))
+
+
+def test_react_is_not_credited_by_angular_or_frontend_evidence() -> None:
+    """KTek: React showed as a production match through an alias with "frontend" and one that
+    paired Angular with React, so Angular work credited React."""
+    from jobomatic.fit.engine import skill_match_terms
+
+    for skill in ("react", "angular"):
+        terms = skill_match_terms(skill)
+        assert "frontend" not in terms
+    assert "angular" not in skill_match_terms("react")
+    assert "react" not in skill_match_terms("angular")
+    assert _rated(["Angular"]).required[0].status == "match"
+    assert _rated(["React"]).required[0].status != "match"
