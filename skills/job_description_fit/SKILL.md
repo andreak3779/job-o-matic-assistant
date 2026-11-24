@@ -64,9 +64,11 @@ because the rating does not cover them. If the table is full of 🔴 rows that a
 whole sentences, the extraction missed; treat the rating as unreliable and parse
 by hand.
 
-If the output has a **Low-confidence result** notice, more than half of the required
-skills show no evidence. Say so, and tell the user to read the posting themselves
-before relying on the rating. It does not change the rating.
+If the output has a **Low-confidence result** notice, the posting was read thinly (few
+required skills, lines no skill could be read from, or more than half the skills show no
+evidence). Say so, and tell the user to read the posting themselves before relying on the
+rating. It does not change the rating, but a Strong or Good rating that carries it is
+refused by the gate until the user says yes (ADR 0037).
 
 If the output has a **Soft requirements** list, those are education,
 years-of-experience, title-level and soft-skill lines (communication, teamwork and the
@@ -121,6 +123,8 @@ On-site/hybrid roles in the home city and remote roles in the time zones the can
 ### If fit is Strong or Good:
 
 State: **"✅ [Strong / Good] fit — would you like me to generate a tailored cover letter and resume for this role?"**
+
+**If the output has a Low-confidence result notice, do not just offer.** Say the rating rests on very little, ask the user to read the posting, and ask for an explicit yes before generating. The gate refuses the documents until then (`confirm_gaps`, set only after the user says yes).
 
 **Salary screen.** After the skills table, `fit-check` prints a **Salary screen** block when the posting states pay, comparing it with the candidate's private minimums (`private/search-constraints.json`, never written into tracked files). Relay it as written: 🔴 means the top end is below the minimum — say so and ask whether to continue; ⚠️ notes (USD pay, unclear hourly figure, no minimums configured) are for the candidate to judge. It never changes the fit rating.
 

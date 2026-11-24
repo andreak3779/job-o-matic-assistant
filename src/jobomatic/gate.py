@@ -8,9 +8,10 @@ What each gate decides:
 
 - **Location**: a posting outside the job-search location rules is refused, never overridable
   (ADR 0008).
-- **Fit rating** (resume and cover letter only): ``Strong`` and ``Good`` pass. ``Worth a try`` and
-  ``Stretch`` are refused until the user says so (``confirm_gaps``). A skills ``Pass`` is never
-  overridable (ADR 0021, decision F4).
+- **Fit rating** (resume and cover letter only): ``Strong`` and ``Good`` pass, unless the result
+  carries a low-confidence notice (the posting was read thinly, so the rating rests on very
+  little): that needs the user's yes too. ``Worth a try`` and ``Stretch`` are refused until the
+  user says so (``confirm_gaps``). A skills ``Pass`` is never overridable (ADR 0021, decision F4).
 - **Duplicate**: a posting already applied to inside the window is refused until the user says so
   (``confirm_reapply``, ADR 0010).
 - **Pay**: stated pay below the user's minimum is refused until the user says so
@@ -70,9 +71,26 @@ def check_location(jd_text: str) -> None:
 
 
 def check_fit(jd_text: str, profile: Profile, *, confirm_gaps: bool = False) -> GateResult:
-    """Refuse a rating below Good unless the user confirmed past a Stretch or Worth a try."""
+    """Refuse a rating below Good unless the user confirmed past a Stretch or Worth a try.
+
+    A Good or Strong rating that carries a low-confidence notice is refused the same way: the
+    rating may be too generous, so the user reads the posting and says yes first."""
     result = rate_parsed_jd(parse_jd(jd_text), profile)
     if result.rating in PASSING_RATINGS:
+        if result.low_confidence and not result.location_disqualified:
+            if confirm_gaps:
+                note = (
+                    f"Proceeding on a {result.rating} rating that rests on a thin read of the "
+                    f"posting, at the user's request. {result.low_confidence_message}"
+                )
+                return GateResult(fit=result, notes=[note])
+            raise GateRefusal(
+                f"Fit rating is {result.rating}, but it rests on very little — not generating "
+                f"resume/cover letter yet.\n{result.low_confidence_message}\n"
+                "Tell the user, ask them to read the posting themselves, and only if they say "
+                "yes go ahead.",
+                CONFIRM_GAPS,
+            )
         return GateResult(fit=result)
     if result.location_disqualified:
         raise GateRefusal(

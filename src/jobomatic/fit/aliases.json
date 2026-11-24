@@ -3,6 +3,7 @@
   "aliases": {
     "html5": ["html"],
     "css3": ["css"],
+    "mobile development": ["ios", "android", "mobile apps", "mobile app development", "react native", "xamarin", "maui"],
     "sast": ["static application security testing", "sonarqube", "static analysis", "static code analysis"],
     "dast": ["dynamic application security testing", "owasp zap", "burp suite"],
     "software composition analysis": ["dependabot", "dependency audit", "dependency scanning", "vulnerable dependency", "vulnerable-dependency", "dependency vulnerabilities"],

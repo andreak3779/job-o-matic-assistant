@@ -1763,4 +1763,4 @@ def test_full_stack_application_development_is_asked_for_as_full_stack() -> None
         "- Full-stack application development: you can build and ship a complete product across "
         "web, backend, and mobile, not just isolated features\n"
     )
-    assert parsed.required == ["Full-stack"]
+    assert parsed.required == ["Full-stack", "mobile development"]

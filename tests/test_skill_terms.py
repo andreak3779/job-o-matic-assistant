@@ -1287,3 +1287,41 @@ def test_sast_dast_and_sca_are_known_terms_and_the_tools_are_one_choice() -> Non
 
 def test_a_lowercase_sca_is_not_the_skill() -> None:
     assert extract_skill_terms("the sca of the problem") == []
+
+
+# --- "web, backend, and mobile": mobile is a requirement of its own ----------------------------
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "across web, backend, and mobile, not just isolated features",
+        "Experience with web and mobile applications",
+        "frontend, backend and mobile",
+        "web and mobile",
+        "Full-stack: web / mobile development",
+    ],
+)
+def test_mobile_in_a_list_with_web_or_backend_is_a_requirement(sentence: str) -> None:
+    assert "mobile development" in extract_skill_terms(sentence)
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Responsive layouts for web and mobile browsers",
+        "Mobile-first design for the web",
+        "Ensure cross-browser compatibility and mobile responsiveness",
+        "Mobile phones are provided",
+    ],
+)
+def test_mobile_as_an_adjective_is_not_a_requirement(sentence: str) -> None:
+    assert "mobile development" not in extract_skill_terms(sentence)
+
+
+def test_mobile_is_not_added_when_ios_or_android_is_already_named() -> None:
+    assert extract_skill_terms("Testing web, iOS, and Android apps") == [
+        "Testing",
+        "iOS",
+        "Android",
+    ]

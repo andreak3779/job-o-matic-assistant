@@ -86,7 +86,7 @@ confirmed past: list the gaps, ask the user, and only if they say yes call the t
 `confirm_below_minimum` are set only after the user says so. Never mark an application as applied
 unless the user says they submitted it. Ask the user before adding any self-identification
 information to a document, once per posting. If a result carries a "Low-confidence result" notice (more than half the required skills show
-no evidence), tell the user to read the posting themselves. "Soft requirements" are education,
+no evidence), tell the user to read the posting themselves; a Strong or Good rating with that notice is refused until the user says yes (`confirm_gaps=true`, never set it yourself). "Soft requirements" are education,
 years, title-level and soft-skill lines: show them as written, never score them, and do not decide whether they are met.
 If a result lists "Terms to confirm" (a word that is
 also a skill name, read as ordinary English), ask the user which meaning the posting intends.
