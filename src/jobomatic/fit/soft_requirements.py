@@ -17,8 +17,27 @@ from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from typing import Protocol
 
+_NUMBER_WORDS = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+}
+# "a four year degree" is the length of a programme, not years of experience
+_NOT_A_PROGRAMME = r"(?!\s*(?:degree|diploma|programme?|certificate|course|college|university)\b)"
 _YEARS_RE = re.compile(
-    r"(?:\b[A-Za-z]+\s*\(\s*)?(\d+)\s*(?:\+|plus)?\)?\s*(?:(?:[-–—]|to)\s*\d+\s*\+?\s*)?(?:years?|yrs?)\b",
+    r"(?:\b[A-Za-z]+\s*\(\s*)?(\d+)\s*(?:\+|plus)?\)?\s*(?:(?:[-–—]|to)\s*\d+\s*\+?\s*)?"
+    r"(?:years?|yrs?)\b" + _NOT_A_PROGRAMME,
+    re.IGNORECASE,
+)
+_WORD_YEARS_RE = re.compile(
+    r"\b(" + "|".join(_NUMBER_WORDS) + r")\s*(?:\+|plus)?\s*(?:years?|yrs?)\b" + _NOT_A_PROGRAMME,
     re.IGNORECASE,
 )
 _SENIOR_RE = re.compile(r"\bsenior[\s-]*level\b", re.IGNORECASE)
@@ -46,6 +65,7 @@ LABELS = {
     "level": "Level",
     "soft skill": "Soft skill",
     "eligibility": "Eligibility",
+    "language": "Language",
 }
 
 # Title words that mark a senior or leading role. Listed for the user to read; never scored.
@@ -68,6 +88,9 @@ def minimum_years(text: str) -> int | None:
     match = _YEARS_RE.search(text)
     if match:
         return int(match.group(1))
+    words = _WORD_YEARS_RE.search(text)
+    if words:
+        return _NUMBER_WORDS[words.group(1).lower()]
     if _SENIOR_RE.search(text):
         return SENIOR_LEVEL_YEARS
     return None
@@ -75,7 +98,7 @@ def minimum_years(text: str) -> int | None:
 
 def has_years_figure(text: str) -> bool:
     """True when the line carries an explicit years figure ("5+ years"); "senior-level" alone is not."""
-    return _YEARS_RE.search(text) is not None
+    return _YEARS_RE.search(text) is not None or _WORD_YEARS_RE.search(text) is not None
 
 
 # "Authorized to work in Canada": a condition of being hired, not a skill. Listed for the user to
@@ -87,6 +110,11 @@ _ELIGIBILITY_RE = re.compile(
     r"\b(?:must\s+be\s+an?\s+(?:\w+\s+)?(?:citizen|permanent\s+resident)|citizenship|"
     r"security\s+clearance|controlled\s+goods|export\s+control)\b|"
     r"\b(?:must|need\s+to|required\s+to)\s+(?:currently\s+)?reside\s+in\b|"
+    r"\beligibility\s+to\s+work\b|"
+    r"\b(?:able|willing|ready|prepared)\s+to\s+travel\b|\btravel\s+(?:is\s+)?required\b|"
+    r"\b\d+\s*%\s*travel\b|"
+    r"\b(?:security|background|criminal(?:\s+record)?)\s+(?:rating|check|screening|search)\b|"
+    r"\breliability\s+status\b|"
     r"\bopen\s+to\s+(?:candidates|applicants)\s+residing\b",
     re.IGNORECASE,
 )
@@ -96,8 +124,27 @@ def is_eligibility(text: str) -> bool:
     return _ELIGIBILITY_RE.search(text) is not None
 
 
+# A spoken language other than English asked for as a requirement ("proficiency in both English
+# and Mandarin"). French has its own location rule and is left to it.
+_LANGUAGE_RE = re.compile(
+    r"\b(?:proficien\w*|fluen\w*|fluent|working\s+knowledge|speak(?:ing)?|written\s+and\s+spoken)"
+    r"\s+(?:in|of|with)?\s*(?:both\s+)?(?:english\s+and\s+)?"
+    r"(?:mandarin|cantonese|chinese|spanish|german|japanese|korean|hindi|punjabi|arabic|"
+    r"portuguese|italian|russian|tagalog|urdu|vietnamese)\b",
+    re.IGNORECASE,
+)
+
+
+def is_language(text: str) -> bool:
+    return _LANGUAGE_RE.search(text) is not None
+
+
+# "Experience with University of Waterloo web services" names an employer, not a qualification.
+_UNIVERSITY_NAME_RE = re.compile(r"\b[Uu]niversity of [A-Z]\w+(?: [A-Z]\w+)?")
+
+
 def is_education(text: str) -> bool:
-    return _EDUCATION_RE.search(text) is not None
+    return _EDUCATION_RE.search(_UNIVERSITY_NAME_RE.sub(" ", text)) is not None
 
 
 def classify(line: str) -> list[SoftRequirement]:
@@ -105,7 +152,7 @@ def classify(line: str) -> list[SoftRequirement]:
     found: list[SoftRequirement] = []
     years = minimum_years(line)
     if years is not None:
-        senior_only = _YEARS_RE.search(line) is None
+        senior_only = not has_years_figure(line)
         note = (
             f"senior-level, read as {years}+ years"
             if senior_only
@@ -119,6 +166,8 @@ def classify(line: str) -> list[SoftRequirement]:
         )
     if is_eligibility(line):
         found.append(SoftRequirement("eligibility", line, CHECK_NOTE))
+    if is_language(line):
+        found.append(SoftRequirement("language", line, CHECK_NOTE))
     return found
 
 

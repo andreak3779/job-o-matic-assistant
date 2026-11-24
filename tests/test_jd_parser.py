@@ -1507,3 +1507,199 @@ def test_a_vendor_named_before_its_product_is_not_the_company() -> None:
         f"Senior Developer - Remote - Indeed.com\n\n{body}\nRequirements\n    Python\n"
     )
     assert parsed.company == "Unknown Company"
+
+
+# --- Round six --------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "heading",
+    ["We’re looking for:", "We're looking for:", "We are looking for:"[:0] or "We're looking for"],
+)
+def test_a_bare_were_looking_for_heading_opens_the_requirements(heading: str) -> None:
+    parsed = parse_jd(f"# Dev\n\nAbout us\nWe build things.\n\n{heading}\n    Python\n    SQL\n")
+    assert parsed.required == ["Python", "SQL"]
+
+
+def test_a_sentence_that_starts_with_were_looking_for_is_not_a_heading() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nAbout You\n    Python\n\nWe're looking for a person who loves Docker\n"
+    )
+    assert "Docker" not in parsed.required
+
+
+def test_what_youll_be_doing_ends_the_requirements_list() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nWhat We're Looking For:\n    Python\n\nWhat You'll Be Doing:\n"
+        "    Build the test suite in Docker.\n\nWho You Are:\n    SQL\n"
+    )
+    assert parsed.required == ["Python", "SQL"]
+
+
+def test_a_required_spoken_language_is_listed_not_scored() -> None:
+    line = "Professional working proficiency in both English and Mandarin Chinese is a must."
+    parsed = parse_jd(f"# Dev\n\nRequirements\n    Python\n    {line}\n")
+    assert parsed.required == ["Python"]
+    assert [s.line for s in parsed.soft_requirements if s.kind == "language"] == [line]
+
+
+def test_legal_eligibility_to_work_is_eligibility() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nRequirements\n    Python\n    Legal eligibility to work in Canada.\n"
+    )
+    assert [s.kind for s in parsed.soft_requirements] == ["eligibility"]
+
+
+def test_a_security_rating_or_background_check_is_eligibility() -> None:
+    parsed = parse_jd(
+        '# Dev\n\nRequirements\n    Python\n    Must obtain and maintain a "Clear" security rating.\n'
+    )
+    assert [s.kind for s in parsed.soft_requirements] == ["eligibility"]
+
+
+def test_structure_contract_and_contract_developer_make_a_contract_posting() -> None:
+    from jobomatic.fit.salary import is_contract_posting
+
+    assert is_contract_posting("Structure: Contract, 1 opening")
+    assert is_contract_posting("We have an opening for a contract Full Stack Developer.")
+    assert is_contract_posting("They are on contract until June.")
+    assert not is_contract_posting(
+        "Full-time permanent position with a signed employment contract."
+    )
+
+
+def test_a_location_preference_line_is_soft_not_a_skill() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nPreferred Qualifications\n- Springfield-based candidates are preferred.\n- Redis\n"
+    )
+    assert parsed.nice_to_have == ["Redis"]
+
+
+def test_a_title_dash_company_first_line_gives_the_company() -> None:
+    for first, company in [
+        (
+            "Technical Lead, Software Development - Acme Industries Limited",
+            "Acme Industries Limited",
+        ),
+        ("ENTERPRISE REPORT DEVELOPER - Prairie Hydro", "Prairie Hydro"),
+    ]:
+        parsed = parse_jd(f"workopolis.com\n{first}\n6 minutes\n\nRequirements\n    Python\n")
+        assert parsed.company == company
+
+
+def test_a_dash_and_a_place_is_not_a_company() -> None:
+    parsed = parse_jd("Senior Developer - Springfield\n\nRequirements\n    Python\n")
+    assert parsed.company != "Springfield"
+
+
+def test_a_company_with_a_corporate_suffix_on_the_second_line() -> None:
+    parsed = parse_jd(
+        "Senior Software Engineer\nExample Canada Inc.\nToronto ON - Work Remotely\nfull-time\n\n"
+        "Requirements\n    Python\n"
+    )
+    assert parsed.company == "Example Canada Inc."
+
+
+def test_a_university_named_often_is_the_company_and_is_not_an_education_line() -> None:
+    body = (
+        "Experience with University of Waterloo web services preferred.\n"
+        "The University of Waterloo is committed to equity.\n"
+    )
+    parsed = parse_jd(f"IT Administrator - Indeed.com\n\nRequirements\n    Python\n    {body}")
+    assert parsed.company == "University of Waterloo"
+    assert not any(s.kind == "education" for s in parsed.soft_requirements)
+
+
+def test_hard_wrapped_bullets_are_joined_and_or_lines_are_dropped() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nQualifications:\n\n    Demonstrated experience designing, developing, and maintaining\n\n"
+        "reporting solutions in Python and SQL required.\n\nOR\n\n    Experience with Docker required.\n"
+    )
+    assert "or" not in [r.lower() for r in parsed.required]
+    assert not any(line.startswith("reporting") for line in parsed.unscored_required)
+    assert {"Python", "SQL", "Docker"} <= set(parsed.required)
+
+
+def test_a_short_lowercase_list_is_not_joined() -> None:
+    from jobomatic.fit.parser import _join_wrapped
+
+    lines = ["Requirements", "", "python", "sql", "docker"]
+    assert _join_wrapped(lines) == lines
+
+
+def test_an_is_preferred_or_highly_desirable_line_is_nice_to_have() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nExperience:\n    Python experience required.\n"
+        "    Experience supporting Docker and Redis is preferred.\n"
+        "    Kubernetes experience is highly desirable.\n"
+    )
+    assert "Python" in parsed.required
+    assert {"Docker", "Redis", "Kubernetes"} <= set(parsed.nice_to_have)
+    assert not {"Docker", "Redis", "Kubernetes"} & set(parsed.required)
+
+
+def test_a_strongly_preferred_line_stays_required() -> None:
+    parsed = parse_jd("# Dev\n\nRequirements\n    Docker experience is strongly preferred.\n")
+    assert parsed.required == ["Docker experience is strongly preferred"]
+    assert parsed.nice_to_have == []
+
+
+def test_years_written_as_a_word() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nRequirements\n    Three years of directly related support experience required.\n"
+    )
+    assert [s.note for s in parsed.soft_requirements if s.kind == "years"] == ["minimum 3 years"]
+
+
+def test_a_bracket_of_examples_after_a_term_is_dropped() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nBonus Skills:\n- Experience with Agile methodologies (Scrum/Kanban).\n"
+    )
+    assert parsed.nice_to_have == ["Agile"]
+
+
+def test_a_bracket_with_other_words_keeps_its_detail() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nRequirements\n- Strong Azure fundamentals (App Service, Functions, Cosmos DB)\n"
+    )
+    assert any("app service" in item.lower() for item in parsed.required_for_rating)
+
+
+def test_the_length_of_a_degree_is_not_years_of_experience() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nQualifications:\n"
+        "    A four year degree in Computer Science plus a minimum of three years related experience.\n"
+    )
+    assert [s.note for s in parsed.soft_requirements if s.kind == "years"] == ["minimum 3 years"]
+
+
+def test_travel_and_a_criminal_record_search_are_eligibility() -> None:
+    for line in [
+        "Be able to travel to the US.",
+        "Employment is contingent upon a satisfactory response from a Criminal Record Search.",
+        "Willing to travel up to 25% of the time.",
+    ]:
+        parsed = parse_jd(f"# Dev\n\n## Requirements\n- Python\n\n{line}\n")
+        assert [s.line for s in parsed.soft_requirements if s.kind == "eligibility"] == [line]
+
+
+def test_a_bare_location_heading_ends_the_list() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nNice to have:\n    Docker\n\nLocation\n\nPacific Time zone preferred. Remote-first.\n"
+    )
+    assert parsed.nice_to_have == ["Docker"]
+
+
+def test_leading_or_mentoring_is_one_choice_row() -> None:
+    parsed = parse_jd("# Dev\n\nBonus points:\n- Experience leading or mentoring engineers\n")
+    assert len(parsed.nice_to_have) == 1
+    assert " / " in parsed.nice_to_have[0]
+
+
+def test_passion_and_self_directed_lines_are_soft_skills() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nMust have:\n- Python\n- Passion to use software to impact the physical world\n"
+        "- Self-directed work style: you take a problem from ambiguity through delivery\n"
+    )
+    assert parsed.required == ["Python"]
+    assert [s.kind for s in parsed.soft_requirements] == ["soft skill", "soft skill"]

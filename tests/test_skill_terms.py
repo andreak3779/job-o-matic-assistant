@@ -450,6 +450,7 @@ def test_the_shipped_umbrella_terms() -> None:
         "machine learning",
         "deep learning",
         "cloud-native",
+        "identity and access management",
     }
 
 
@@ -1037,7 +1038,7 @@ def test_an_umbrella_after_or_equivalent_is_not_a_further_requirement() -> None:
         (
             "Experience with AI-assisted development and security tools (GitHub Copilot, Claude "
             "similar)",
-            ["AI", "GitHub Copilot / Claude"],
+            ["GitHub Copilot / Claude"],
         ),
         (
             "Experience with any of the technologies the product runs on: Go, Typescript, React.",
@@ -1124,3 +1125,115 @@ def test_round_five_vocabulary(sentence: str, expected: list[str] | None) -> Non
         assert any("aws sqs" in t for t in terms) and not any(t == "aws" for t in terms)
     else:
         assert terms == [e.lower() for e in expected]
+
+
+# --- Round six ---------------------------------------------------------------------------------
+
+
+def test_go_is_the_language_when_the_sentence_gives_it_a_role() -> None:
+    sentence = "Hands-on experience using Go on the backend and React on the frontend."
+    assert extract_skill_terms(sentence) == ["Go", "React"]
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Experience with Go",
+        "Ready to go to market with Java",
+        "We want you to go on the backend team",
+    ],
+)
+def test_go_without_a_backend_role_is_still_not_the_language(sentence: str) -> None:
+    assert "Go" not in extract_skill_terms(sentence)
+
+
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        (
+            "Experience with security data management, logging, or monitoring solutions",
+            ["logging / monitoring"],
+        ),
+        (
+            "Knowledge of data processing frameworks such as Spark, Hadoop, or similar technologies",
+            ["Spark / Hadoop"],
+        ),
+        ("Expertise in containerization (Docker, Kubernetes)", ["Docker / Kubernetes"]),
+    ],
+)
+def test_round_six_choice_rows(sentence: str, expected: list[str]) -> None:
+    assert extract_skill_terms(sentence) == expected
+
+
+def test_two_terms_joined_by_plain_or_stay_separate() -> None:
+    assert extract_skill_terms("Python or Node.js on the backend") == ["Python", "Node.js"]
+
+
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        ("Experience reviewing code", ["reviewing code"]),
+        ("Maestro for mobile UI tests", ["Maestro"]),
+        ("Testing Android and iOS applications", ["Testing", "Android", "iOS"]),
+        ("Testing firmware and embedded systems", ["Testing", "firmware", "embedded systems"]),
+        ("Windows Server and Active Directory", ["Windows Server", "Active Directory"]),
+        (
+            "Production systems on AWS (ECS, RDS, Redshift, CloudWatch)",
+            ["AWS", "ECS", "RDS", "Redshift", "CloudWatch"],
+        ),
+    ],
+)
+def test_round_six_vocabulary(sentence: str, expected: list[str]) -> None:
+    assert extract_skill_terms(sentence) == expected
+
+
+def test_spelled_out_identity_and_access_management_is_an_umbrella_over_its_parts() -> None:
+    from jobomatic.fit.terms import umbrella_parts
+
+    assert extract_skill_terms("Experience with identity and access management") == [
+        "identity and access management"
+    ]
+    parts = umbrella_parts("identity and access management")
+    assert parts is not None
+    assert {"rbac", "oauth", "entra id", "managed identity"} <= set(parts)
+
+
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        ("Knowledge of IAM policies and roles", ["AWS IAM"]),
+        (
+            "Production systems on AWS (ECS, RDS, CloudWatch, IAM)",
+            ["AWS", "ECS", "RDS", "CloudWatch", "AWS IAM"],
+        ),
+        ("the iam word in lower case", []),
+    ],
+)
+def test_a_capitalised_iam_is_aws_iam_and_lower_case_is_ignored(
+    sentence: str, expected: list[str]
+) -> None:
+    assert extract_skill_terms(sentence) == expected
+
+
+def test_a_web_frameworks_example_stands_for_any_front_end_framework() -> None:
+    sentence = "Proficiency with Java, React and modern web frameworks such as Next.js; MySQL"
+    terms = extract_skill_terms(sentence)
+    assert "React" in terms and "Java" in terms
+    expanded = next(t for t in terms if t.startswith("Next.js"))
+    assert {"angular", "vue", "svelte"} <= {part.lower() for part in expanded.split(" / ")}
+    assert terms.count("Next.js") == 0
+
+
+def test_examples_after_a_non_framework_label_are_not_expanded() -> None:
+    assert extract_skill_terms("Experience with tools such as Next.js") == ["Next.js"]
+
+
+def test_chatgpt_is_a_known_ai_tool_and_the_umbrella_is_not_repeated() -> None:
+    terms = extract_skill_terms(
+        "Familiarity with AI tools (such as GitHub Copilot, ChatGPT, or similar) and responsible AI usage"
+    )
+    assert terms == ["GitHub Copilot / ChatGPT"]
+    assert extract_skill_terms("Experience with AI and machine learning") == [
+        "AI",
+        "machine learning",
+    ]

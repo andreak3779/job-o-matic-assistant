@@ -401,6 +401,19 @@ def _drop_kind_nouns(sentence: str, spans: list[tuple[int, int]]) -> list[tuple[
     return kept
 
 
+_GO_LANGUAGE_BEFORE_RE = re.compile(
+    r"\b(?:using|in|with|of|and|knowledge of|experience (?:in|with)|proficiency in|fluency in)\s+$",
+    re.IGNORECASE,
+)
+
+
+# "Go on the backend": a role named after the word makes it the language ("Experience with Go" alone
+# stays ambiguous).
+_GO_LANGUAGE_AFTER_RE = re.compile(
+    r"\s+(?:on|for|as)\s+the\s+(?:back-?end|server|api|services?)\b", re.IGNORECASE
+)
+
+
 def _drop_unlisted_list_only(sentence: str, spans: list[tuple[int, int]]) -> list[tuple[int, int]]:
     """Keep a list-only term ("Go") only when it is capitalised and sits in a list of terms."""
     others = [s for s in spans if sentence[s[0] : s[1]].lower() not in _LIST_ONLY]
@@ -411,6 +424,12 @@ def _drop_unlisted_list_only(sentence: str, spans: list[tuple[int, int]]) -> lis
             kept.append(span)
             continue
         if text != text.capitalize():
+            continue
+        # "using Go on the backend", "experience in Go": the language, not the verb
+        if _GO_LANGUAGE_BEFORE_RE.search(
+            sentence[max(0, span[0] - 30) : span[0]]
+        ) and _GO_LANGUAGE_AFTER_RE.match(sentence[span[1] : span[1] + 40]):
+            kept.append(span)
             continue
         before = [o for o in others if o[1] <= span[0]]
         after = [o for o in others if o[0] >= span[1]]
@@ -528,9 +547,10 @@ def _choice_chains(
     current: list[tuple[int, int]] = []
 
     def close() -> None:
-        if len(current) < 3:
-            return
         links = [sentence[a[1] : b[0]] for a, b in zip(current, current[1:], strict=False)]
+        # three terms, or two after a comma: "security data management, logging, or monitoring"
+        if len(current) < 3 and not any(re.search(r",\s*or\s", link) for link in links):
+            return
         # "A, B, or C" and "A/B or C" offer a choice whatever group the terms are in
         if any(re.search(r"\bor\b", link, re.IGNORECASE) for link in links):
             chains.append(list(current))
@@ -597,6 +617,48 @@ _CONCEPT_EXAMPLES_RE = re.compile(
 )
 
 
+# "modern web frameworks such as Next.js": the examples stand for any framework of that kind.
+_FRAMEWORK_LABEL_RE = re.compile(
+    r"(?:web |front-?end |frontend |modern |ui )*frameworks?\s*$", re.IGNORECASE
+)
+
+
+def _expand_framework_examples(
+    sentence: str, examples: re.Match[str] | None, out: list[str]
+) -> list[str]:
+    if examples is None or not _FRAMEWORK_LABEL_RE.search(sentence[: examples.start()]):
+        return out
+    after = sentence.lower()[examples.end() :]
+    for index, entry in enumerate(out):
+        parts = entry.split(" / ")
+        if all(_group_of(part) == "front-end framework" for part in parts) and any(
+            part.lower() in after for part in parts
+        ):
+            have = {part.lower() for part in parts}
+            extra = [_display(m) for m in _MEMBERS_OF["front-end framework"] if m not in have]
+            out[index] = " / ".join([*parts, *extra])
+            break
+    return out
+
+
+def _drop_covered_umbrellas(terms: list[str]) -> list[str]:
+    """ "AI" is not asked for separately when the same sentence names tools that make it up."""
+    parts_present = {
+        part.lower()
+        for term in terms
+        if " / " in term
+        for part in term.split(" / ")
+        if umbrella_parts(part.lower()) is None
+    }
+    kept = []
+    for term in terms:
+        parts = umbrella_parts(term.lower())
+        if parts is not None and parts_present & set(parts):
+            continue
+        kept.append(term)
+    return kept
+
+
 def _drop_subsumed(terms: list[str]) -> list[str]:
     present = {term.lower() for term in terms}
     hidden = {part for key, parts in _SUBSUMED.items() if key in present for part in parts}
@@ -607,7 +669,7 @@ def _drop_subsumed(terms: list[str]) -> list[str]:
 # noun lists examples of it, and any one of them meets the requirement.
 _GENERAL_NOUN_BEFORE_PAREN_RE = re.compile(
     r"(?:back-?end|front-?end|databases?|tools?|technologies|platforms?|frameworks?|languages?|"
-    r"infrastructure|services|stack)\s*$",
+    r"infrastructure|services|stack|containerization|orchestration)\s*$",
     re.IGNORECASE,
 )
 
@@ -870,7 +932,8 @@ def extract_skill_terms(sentence: str, vocabulary: tuple[str, ...] | None = None
     for term in expanded:
         if term.lower() not in {o.lower() for o in out}:
             out.append(term)
-    return _drop_subsumed(_expand_or_other(sentence, out))
+    out = _expand_framework_examples(sentence, examples, out)
+    return _drop_covered_umbrellas(_drop_subsumed(_expand_or_other(sentence, out)))
 
 
 # Words that frame a skill without adding to it: "Strong Postgresql skills", "Knowledge of Git".
@@ -878,7 +941,7 @@ _FILLER_WORDS = frozenset(
     "strong good solid excellent great working hands-on handson proven deep basic advanced "
     "practical demonstrated extensive proficient proficiency familiarity familiar knowledge "
     "framework frameworks library libraries language languages technology technologies tool tools "
-    "platform platforms some firm awareness aware "
+    "platform platforms some firm awareness aware required mandatory essential desirable "
     "knowledgeable experience experienced skills skill understanding expertise background "
     "command ability with of in using the a an and or to development methodology professional "
     "methodologies practices pipeline pipelines work programming".split()

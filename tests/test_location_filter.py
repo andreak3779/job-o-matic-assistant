@@ -379,3 +379,12 @@ def test_a_hybrid_office_outside_the_home_city_is_flagged_when_remote_is_allowed
     result = assess_location(text, load_rules())
     assert not result.disqualified
     assert any("Hybrid arrangement with an office in Ottawa" in f for f in result.flags)
+
+
+def test_a_body_that_says_it_is_located_in_the_home_city_states_the_city() -> None:
+    text = (
+        "# QA Developer\n\n**Company:** Acme\n\nAcme is a startup located in Springfield, Canada.\n\n"
+        "Hybrid work model\nWork Location: In person\n"
+    )
+    result = assess_location(text, load_rules())
+    assert not any("no stated city" in f for f in result.flags)

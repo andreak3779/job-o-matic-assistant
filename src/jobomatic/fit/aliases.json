@@ -3,6 +3,8 @@
   "aliases": {
     "html5": ["html"],
     "css3": ["css"],
+    "test automation": ["automated testing", "automation testing"],
+    "reviewing code": ["code review", "code reviews"],
     "restful api": ["rest api"],
     "aws sqs": ["sqs"],
     "web security": ["web application security", "application security"],

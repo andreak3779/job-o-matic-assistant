@@ -320,6 +320,32 @@ def _hybrid_office_flags(text: str, rules: _Rules) -> list[str]:
     return flags
 
 
+def is_place_name(text: str, rules: _Rules | None = None) -> bool:
+    """True when ``text`` is only a place the location rules know (a city, a province)."""
+    rules = rules or load_rules()
+    norm = _norm(text)
+    known = (
+        *rules.home_city,
+        *rules.home_province,
+        *rules.other_terms,
+        *rules.quebec.terms,
+        *rules.atlantic.terms,
+        *_PROVINCES,
+    )
+    return any(norm.strip() == _norm(place).strip() for place in known)
+
+
+_LOCATED_IN_RE = re.compile(r"\b(?:located|based|headquartered|situated)\s+in\b", re.IGNORECASE)
+
+
+def _located_in_home_city(text: str, rules: _Rules) -> bool:
+    """ "Taiv is a startup located in <home city>": the posting states the city in its body."""
+    return any(
+        _LOCATED_IN_RE.search(sentence) and _term_hits(rules.home_city, _norm(sentence))
+        for sentence in _SENTENCE_RE.split(text)
+    )
+
+
 def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessment:
     """Check a JD's text against the job-search location rules.
 
@@ -347,7 +373,7 @@ def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessmen
     signals = extract_location_signals(text)
     combined = _norm(" | ".join(signals))
 
-    has_city = bool(_term_hits(rules.home_city, combined))
+    has_city = bool(_term_hits(rules.home_city, combined)) or _located_in_home_city(text, rules)
     has_province = bool(
         _term_hits(rules.home_province, combined) or _abbr_hits(rules.home_province_abbr, combined)
     )

@@ -1063,3 +1063,16 @@ def test_a_sentence_naming_web_security_is_rated_by_its_skills() -> None:
     """Bluestream: "Web" and "Security" are the capitalised parts of the skill name, not another name."""
     result = _rated(["Familiarity with Web Security and SSO"])
     assert result.required[0].status != "gap" or "sso" in result.required[0].skill
+
+
+def test_test_automation_is_searched_as_automated_testing_too() -> None:
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert "automated testing" in skill_match_terms("test automation")
+
+
+def test_identity_and_access_management_is_met_by_its_parts_but_aws_iam_is_not() -> None:
+    umbrella = _rated(["identity and access management"])
+    assert umbrella.required[0].status != "gap"
+    assert "via" in umbrella.required[0].evidence
+    assert _rated(["AWS IAM"]).required[0].status == "gap"

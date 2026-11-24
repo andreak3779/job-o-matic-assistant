@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from jobomatic.fit.location import LocationAssessment, assess_location
+from jobomatic.fit.location import LocationAssessment, assess_location, is_place_name
 from jobomatic.fit.soft_requirements import (
     SoftRequirement,
     body_level,
@@ -97,7 +97,8 @@ _REQUIRED_HEADING_RE = re.compile(
     r"desired (?:skills?|qualifications?|experience)|"
     r"qualifications|you have|who you are|"
     r"what you bring|you bring|you should (?:get in touch if|have)|about you|"
-    r"your (?:skills|background|experience|profile)|ideal candidate|who we.?re looking for)",
+    r"your (?:skills|background|experience|profile)|ideal candidate|who we.?re looking for|"
+    r"^\W*we.?re\s+looking\s+for\W*$)",
     re.IGNORECASE,
 )
 # "Imp:" / "Important:" on a line of its own introduces requirements. Anchored, so a heading such
@@ -154,6 +155,7 @@ _NICE_PAREN_RE = re.compile(
     re.IGNORECASE,
 )
 _NICE_PHRASE_RE = re.compile(
+    r"\b(?:(?:is|are)\s+(?:highly\s+)?(?:preferred|desirable|desired)\b)|\bpreferred\s*\.?\s*$|"
     r"\b(?:(?:is|are|would be)\s+)?(?:preferred\s+but\s+not\s+mandatory|not\s+mandatory|"
     r"an?\s+(?:(?:strong|real|big|great|definite|huge|major|distinct)\s+)?(?:plus|asset|bonus)|"
     r"nice[\s-]to[\s-]haves?)\b",
@@ -266,6 +268,32 @@ def _split_glued(lines: list[str]) -> list[str]:
     return out
 
 
+# A pasted page that hard-wraps its bullets leaves the rest of a sentence on the next line, in lower
+# case: "...translate business" / "requirements into visualization specifications".
+_CONTINUATION_MIN_WORDS = 6
+
+
+def _join_wrapped(lines: list[str]) -> list[str]:
+    """``lines`` with each wrapped continuation joined to the long unfinished line above it."""
+    out: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped and out and stripped[0].islower() and not _is_bullet(stripped):
+            before = len(out) - 1
+            while before >= 0 and not out[before].strip():
+                before -= 1
+            if (
+                before >= 0
+                and len(out[before].split()) >= _CONTINUATION_MIN_WORDS
+                and not out[before].rstrip().endswith((".", "!", "?", ";", ":"))
+            ):
+                out[before] = out[before].rstrip() + " " + stripped
+                del out[before + 1 :]
+                continue
+        out.append(line)
+    return out
+
+
 def _unglue_bullets(lines: list[str]) -> list[str]:
     out: list[str] = []
     for line in lines:
@@ -288,7 +316,8 @@ _SECTION_END_HEADING_RE = re.compile(
     r"what you(?:\W?ll| can| will)? (?:expect|get|receive)|what we (?:provide|give)|"
     r"what.s in it for you|in return|our offer|we offer|total rewards|life at|"
     r"about (?:us|the company)|our culture|company overview|additional information|"
-    r"responsibilit(?:y|ies)|what you.?ll do|salary|pay range|how to apply|"
+    r"^\W*location\W*$|"
+    r"responsibilit(?:y|ies)|what you.?ll (?:be )?do(?:ing)?|salary|pay range|how to apply|"
     r"equal opportunity|culture by|our values|core values|how we work|"
     r"why (?:this role|you.?ll love)|what you.?ll find|additional perks|"
     r"(?:our|the) tech(?:nology)?(?: stack)?\W*$|our stack\W*$|"
@@ -323,7 +352,7 @@ _QUESTION_HEADING_RE = re.compile(
     r"^\W*(?:why\s+\w+|apply\s+now|how\s+to\s+apply)\W*$", re.IGNORECASE
 )
 _QUESTION_HEADING_MAX_WORDS = 5
-_HEADING_MAX_WORDS = 10
+_HEADING_MAX_WORDS = 14
 _COLON_HEADING_MAX_WORDS = 16
 # A longer line is a boilerplate paragraph that happens to mention the right to work.
 _ELIGIBILITY_LINE_MAX_WORDS = 40
@@ -399,6 +428,11 @@ _ROLE_WORD_RE = re.compile(
 _NOT_A_COMPANY = frozenset(
     {"remote", "hybrid", "on-site", "onsite", "full-time", "part-time", "contract", "canada"}
 )
+_OR_SEPARATOR_RE = re.compile(r"^\W*(?:or|and/or)\W*$", re.IGNORECASE)
+_COMPANY_WORD_RE = re.compile(
+    r"\b(?:Limited|Ltd|Inc|Incorporated|Corp|Corporation|LLC|LLP|Company|Group|Technologies|"
+    r"Solutions|Industries|Systems|Labs)\b\.?$"
+)
 _FIRST_LINE_AT_RE = re.compile(r"\s+at\s+(?=[A-Z])")
 _TITLE_COMPANY_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
 _LOCATION_BOLD_RE = re.compile(r"\*\*[Ll]ocation:\*\*\s*([^\n]+)")
@@ -435,6 +469,12 @@ _PLACE_WORDS = frozenset(
 )
 
 
+_INSTITUTION_RE = re.compile(
+    r"\b((?:University|College|Institute|Hospital|City|Province|Government|Ministry|School)"
+    r" of [A-Z]\w+(?: [A-Z]\w+)?)"
+)
+
+
 def _company_from_text(text: str, title: str = "") -> str:
     """The employer's name when the posting never labels it: a first sentence of the form
     "<Name> is the…", else a capitalised word (not a skill) that appears in the text at least
@@ -443,6 +483,12 @@ def _company_from_text(text: str, title: str = "") -> str:
         name = match.group(1).strip()
         if name.split()[0].lower() not in _NOT_AN_OPENING_COMPANY:
             return name
+    institutions: dict[str, int] = {}
+    for found in _INSTITUTION_RE.finditer(text):
+        institutions[found.group(1)] = institutions.get(found.group(1), 0) + 1
+    repeated = [name for name, n in institutions.items() if n >= 2]
+    if repeated:  # "the University of Waterloo is committed ... University of Waterloo web"
+        return max(repeated, key=lambda name: institutions[name])
     counts: dict[str, int] = {}
     title_words = {word.lower() for word in re.findall(r"[A-Za-z]+", title)}
     for match in re.finditer(r"(?<=[a-z,] )([A-Z][a-zA-Z]{3,}|[A-Z]{3,})\b", text):
@@ -471,6 +517,19 @@ _BARE_DOMAIN_RE = re.compile(
 )
 
 
+def _looks_like_a_company_name(name: str) -> bool:
+    """A short capitalised name that is not a place, "Remote" or a site address."""
+    words = name.split()
+    return (
+        1 <= len(words) <= 4
+        and all(word[:1].isupper() for word in words)
+        and not any(ch.isdigit() for ch in name)
+        and name.lower() not in _NOT_A_COMPANY
+        and not name.lower().endswith((".com", ".ca"))
+        and not is_place_name(name)
+    )
+
+
 def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
     """Title and company from the first line of a pasted posting, when it looks like a title.
 
@@ -487,6 +546,13 @@ def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
         parts = [part.strip() for part in line.split("|")]
         if len(parts) < 2:
             parts = [part.strip() for part in _FIRST_LINE_AT_RE.split(line, maxsplit=1)]
+        if len(parts) < 2:
+            # "Technical Lead - Acme Industries Limited": a corporate name after a dash
+            dashed = [part.strip() for part in _TITLE_COMPANY_SPLIT_RE.split(line)]
+            if len(dashed) == 2 and (
+                _COMPANY_WORD_RE.search(dashed[1]) or _looks_like_a_company_name(dashed[1])
+            ):
+                parts = dashed
         if not _ROLE_WORD_RE.search(parts[0]):
             return None, None
         company = next(
@@ -508,6 +574,10 @@ def _header_company(text: str) -> str | None:
         return None
     match = _HEADER_COMPANY_RE.match(lines[1])
     if not match:
+        # "Senior Software Engineer" / "Microsoft Canada Inc." / "Toronto ON - Work Remotely"
+        second = lines[1].strip(" *_")
+        if _CORPORATE_SUFFIX_RE.search(second) and len(second.split()) <= 6:
+            return second
         return None
     name = match.group(1).strip(" *_")
     if len(name.split()) > 6 or name.lower() in _NOT_A_COMPANY:
@@ -614,6 +684,23 @@ def split_compound(item: str) -> list[str]:
     return [p.strip(" ,./:;") for p in restored]
 
 
+_TRAILING_BRACKET_RE = re.compile(r"^(.*?)\s*\(([^()]*)\)\s*$")
+
+
+def _head_without_example_brackets(item: str) -> str:
+    """ "Experience with Agile methodologies (Scrum/Kanban)" asks for Agile: the bracket only names
+    examples of it. Dropped when every word in the bracket is a known skill and what is left
+    reduces to one term; "Azure fundamentals (App Service, Functions)" keeps its bracket."""
+    match = _TRAILING_BRACKET_RE.match(item)
+    if not match:
+        return item
+    head, inner = match.group(1), match.group(2)
+    words = [w for w in re.split(r"[\s,/&]+|\band\b|\bor\b|\betc\.?", inner) if w]
+    if not words or not all(extract_skill_terms(w) for w in words):
+        return item
+    return head if reduce_to_terms(head) is not None else item
+
+
 def _split_required_or_nice(
     item: str,
     section: str,
@@ -622,6 +709,7 @@ def _split_required_or_nice(
     required_items: list[str],
     nice_items: list[str],
 ) -> None:
+    item = _head_without_example_brackets(item)
     flat = required if section == "required" else nice
     items = required_items if section == "required" else nice_items
     pieces = [p for p in split_compound(item) if len(p) >= 2]
@@ -648,7 +736,11 @@ def _split_required_or_nice(
             if whole and " / " in whole[0]:
                 pieces = whole
                 is_choice = True
-    elif not entries and _PLAIN_CHOICE_RE.fullmatch(item) and len(pieces) == 2:
+    elif (
+        (not entries or (len(entries) == 1 and " / " not in entries[0]))
+        and _PLAIN_CHOICE_RE.fullmatch(item)
+        and len(pieces) == 2
+    ):
         # "Fullstack or backend development experience" names no known skill, but "or" still
         # offers a choice: one row, met by whichever the profile shows better.
         pieces = [" / ".join(pieces)]
@@ -730,10 +822,10 @@ def parse_jd(text: str) -> ParsedJD:
     # end punctuation are its items: a copied page often loses the bullets and the indent.
     flat_items_ok = False
 
-    for raw in _unglue_bullets(_split_glued(text.splitlines())):
+    for raw in _unglue_bullets(_split_glued(_join_wrapped(text.splitlines()))):
         stripped = raw.strip()
         lower = stripped.lower()
-        if not stripped:
+        if not stripped or _OR_SEPARATOR_RE.match(stripped):
             continue
         is_bullet = _is_bullet(stripped)
         # Postings pasted from a web page often flatten bullets to indented
