@@ -1703,3 +1703,55 @@ def test_passion_and_self_directed_lines_are_soft_skills() -> None:
     )
     assert parsed.required == ["Python"]
     assert [s.kind for s in parsed.soft_requirements] == ["soft skill", "soft skill"]
+
+
+# --- The dot of ".NET" and WebAPI ----------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "line",
+    [".NET Framework (VB/C#)", ".NET Web Services (WebAPI)", ".NET Core", ".NET"],
+)
+def test_the_leading_dot_of_dot_net_is_kept(line: str) -> None:
+    parsed = parse_jd(f"# Dev\n\n## Requirements\n- {line}\n")
+    assert parsed.required[0].startswith(".NET")
+
+
+def test_a_stray_leading_full_stop_is_still_dropped() -> None:
+    parsed = parse_jd("# Dev\n\n## Requirements\n- ... Python\n- . SQL\n")
+    assert parsed.required == ["Python", "SQL"]
+
+
+@pytest.mark.parametrize(
+    "heads,title,company",
+    [
+        (
+            "# Example Healthcare\n# Senior Software Developer",
+            "Senior Software Developer",
+            "Example Healthcare",
+        ),
+        (
+            "# Senior Software Developer\n# Example Healthcare",
+            "Senior Software Developer",
+            "Example Healthcare",
+        ),
+    ],
+)
+def test_two_top_level_headings_are_the_company_and_the_title(
+    heads: str, title: str, company: str
+) -> None:
+    parsed = parse_jd(f"\n{heads}\n\n## Requirements\n* Python\n")
+    assert (parsed.title, parsed.company) == (title, company)
+
+
+def test_two_headings_that_both_name_roles_are_left_alone() -> None:
+    parsed = parse_jd("# Senior Developer\n# Backend Engineer\n\n## Requirements\n* Python\n")
+    assert parsed.title == "Senior Developer"
+    assert parsed.company == "Unknown Company"
+
+
+def test_headings_separated_by_a_blank_line_are_not_a_pair() -> None:
+    parsed = parse_jd(
+        "# Example Healthcare\n\n# Senior Software Developer\n\n## Requirements\n* Python\n"
+    )
+    assert parsed.company != "Example Healthcare"

@@ -12,7 +12,7 @@ from jobomatic.fit.gap_coaching import GapCoachingEntry
 from jobomatic.fit.location import LocationAssessment
 from jobomatic.fit.parser import ParsedJD, is_prose_requirement
 from jobomatic.fit.soft_requirements import LABELS, SoftRequirement, with_education_on_file
-from jobomatic.fit.terms import extract_skill_terms, umbrella_parts
+from jobomatic.fit.terms import extract_skill_terms, strip_skill_punctuation, umbrella_parts
 from jobomatic.profile.model import Profile
 
 MatchStatus = Literal["match", "portfolio", "course", "legacy", "gap"]
@@ -210,7 +210,7 @@ def _normalize(skill: str) -> str:
     s = re.sub(r"^\+\s*", "", s)
     s = re.sub(r"^(?:years?|yrs?)\s*(?:of\s*)?", "", s, flags=re.IGNORECASE)
     s = re.sub(r"\s*\([^)]*\)", "", s)
-    return s.strip(" ,./:;")
+    return strip_skill_punctuation(s)
 
 
 def skill_match_terms(skill: str) -> list[str]:
@@ -300,7 +300,7 @@ def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
 def _split_compound(skill: str) -> list[str]:
     """Break compound phrases on '/', ';', 'and', 'or' to allow partial matches."""
     pieces = re.split(r"[/;]|\s+or\s+|\s+and\s+", skill)
-    return [p.strip(" ,./:;") for p in pieces if len(p.strip()) > 1]
+    return [strip_skill_punctuation(p) for p in pieces if len(p.strip()) > 1]
 
 
 def _expand_terms(skill: str) -> list[str]:

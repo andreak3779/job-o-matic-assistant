@@ -1076,3 +1076,11 @@ def test_identity_and_access_management_is_met_by_its_parts_but_aws_iam_is_not()
     assert umbrella.required[0].status != "gap"
     assert "via" in umbrella.required[0].evidence
     assert _rated(["AWS IAM"]).required[0].status == "gap"
+
+
+def test_dot_net_web_services_and_webapi_are_searched_as_web_api() -> None:
+    from jobomatic.fit.engine import skill_match_terms
+
+    assert "web api" in skill_match_terms(".net web services")
+    assert "web api" in skill_match_terms("WebAPI")
+    assert skill_match_terms(".net core")[0] == ".net core"

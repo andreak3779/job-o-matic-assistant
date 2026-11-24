@@ -3,6 +3,8 @@
   "aliases": {
     "html5": ["html"],
     "css3": ["css"],
+    "webapi": ["web api", "asp.net core web api", "rest api"],
+    ".net web services": ["web api", "asp.net core web api", "rest api", "web services"],
     "test automation": ["automated testing", "automation testing"],
     "reviewing code": ["code review", "code reviews"],
     "restful api": ["rest api"],
