@@ -176,3 +176,21 @@ def test_pay_with_a_code_and_no_dollar_sign(text, low, high, period) -> None:
 )
 def test_a_fixed_term_posting_counts_as_a_contract(text) -> None:
     assert is_contract_posting(text) is True
+
+
+def test_the_same_figure_written_twice_warns_once() -> None:
+    assessment = assess_salary("Rates: CA$40.00 per hour\nPay: $40.00 per hour", MINS)
+    assert len(assessment.flags) == 1
+    assert len(assessment.posted) == 1
+
+
+def test_an_hourly_and_an_annual_figure_for_one_salary_do_not_warn() -> None:
+    text = "Salary range: $41.26-$57.11 Hourly, $79,060.02-$109,437.90 Annually."
+    assessment = assess_salary(text, MINS)
+    assert not assessment.flags
+    assert not assessment.below
+
+
+def test_a_contract_at_a_low_hourly_rate_is_below_the_minimum() -> None:
+    text = "Structure: Contract, 1 opening\nRates: $40.00 per hour"
+    assert assess_salary(text, MINS).below

@@ -66,7 +66,9 @@ _CONTRACT_RE = re.compile(
     r"\b(?:contract (?:role|position|opportunity|basis|assignment|term|to hire)|"
     r"fixed[- ]term(?: contract)?|"
     r"contract-to-hire|contractor|freelance|c2c|corp[- ]to[- ]corp|\d+[- ]months? contract|"
-    r"(?:employment|job)?\s*type\W+contract)\b",
+    r"(?:employment|job)?\s*type\W+contract|structure\W+contract|on contract|"
+    # "a contract Full Stack Developer"
+    r"contract\s+(?:[\w.#-]+\s+){0,3}(?:developer|engineer|programmer|analyst))\b",
     re.IGNORECASE,
 )
 _PLAUSIBLE_HOURLY_MAX = 500
@@ -187,7 +189,9 @@ def assess_salary(text: str, constraints: SearchConstraints | None) -> SalaryAss
     No posted pay -> an empty assessment (the screen has nothing to say). Pay posted
     but no constraints configured -> an advisory flag only.
     """
-    pays = find_pay(text)
+    pays = list(
+        {(p.low, p.high, p.period, p.currency): p for p in find_pay(text)}.values()
+    )  # "CA$40.00 per hour" and "$40.00 per hour" are one figure written twice
     if not pays:
         return SalaryAssessment()
 
@@ -222,7 +226,8 @@ def assess_salary(text: str, constraints: SearchConstraints | None) -> SalaryAss
                         f"${constraints.min_contract_hourly_cad:,.0f}/hr contract",
                     )
                 )
-        else:
+        elif not any(other.period == "annual" for other in pays):
+            # "$41-$57 Hourly, $79,060-$109,438 Annually" is one salary written twice
             flags.append(
                 f"{pay.label} is an hourly figure on a role not described as a contract — "
                 "confirm whether it is a contract rate or an hourly wage."
