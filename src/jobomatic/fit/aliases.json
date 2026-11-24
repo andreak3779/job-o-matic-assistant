@@ -3,6 +3,9 @@
   "aliases": {
     "html5": ["html"],
     "css3": ["css"],
+    "sast": ["static application security testing", "sonarqube", "static analysis", "static code analysis"],
+    "dast": ["dynamic application security testing", "owasp zap", "burp suite"],
+    "software composition analysis": ["dependabot", "dependency audit", "dependency scanning", "vulnerable dependency", "vulnerable-dependency", "dependency vulnerabilities"],
     "webapi": ["web api", "asp.net core web api", "rest api"],
     ".net web services": ["web api", "asp.net core web api", "rest api", "web services"],
     "test automation": ["automated testing", "automation testing"],

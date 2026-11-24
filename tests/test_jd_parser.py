@@ -1755,3 +1755,12 @@ def test_headings_separated_by_a_blank_line_are_not_a_pair() -> None:
         "# Example Healthcare\n\n# Senior Software Developer\n\n## Requirements\n* Python\n"
     )
     assert parsed.company != "Example Healthcare"
+
+
+def test_full_stack_application_development_is_asked_for_as_full_stack() -> None:
+    parsed = parse_jd(
+        "# Dev\n\nMust have:\n"
+        "- Full-stack application development: you can build and ship a complete product across "
+        "web, backend, and mobile, not just isolated features\n"
+    )
+    assert parsed.required == ["Full-stack"]

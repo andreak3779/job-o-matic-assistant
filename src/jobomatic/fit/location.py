@@ -346,6 +346,26 @@ def _located_in_home_city(text: str, rules: _Rules) -> bool:
     )
 
 
+# A posting that names the Pacific time zone ("Pacific Time zone preferred", "PST or MT hours"):
+# flagged so the hours can be checked, never a reason not to apply.
+_PACIFIC_RE = re.compile(
+    r"\bpacific\s+(?:standard\s+|daylight\s+)?(?:time|tz|zone)\b|\b(?:pst|pdt)\b|"
+    r"\bwest\s+coast\s+(?:hours|time)\b",
+    re.IGNORECASE,
+)
+
+
+def _timezone_flags(text: str, rules: _Rules) -> list[str]:
+    for sentence in _SENTENCE_RE.split(text):
+        if _PACIFIC_RE.search(sentence):
+            return [
+                "Pacific time zone mentioned — check the working hours suit "
+                f"{rules.home_label}; this is not a reason to skip the posting: "
+                f"“{_snippet(' '.join(sentence.split()))}”"
+            ]
+    return []
+
+
 def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessment:
     """Check a JD's text against the job-search location rules.
 
@@ -455,4 +475,5 @@ def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessmen
     if not disqualifiers:
         flags.extend(_residency_flags(text, rules))
         flags.extend(_hybrid_office_flags(text, rules)[:1])
+        flags.extend(_timezone_flags(text, rules))
     return LocationAssessment(tuple(disqualifiers), tuple(flags))
