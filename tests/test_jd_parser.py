@@ -1794,3 +1794,12 @@ def test_a_first_line_of_title_place_and_company_is_split(line: str) -> None:
 def test_other_dashed_lines_give_no_company_from_this_rule(line: str) -> None:
     parsed = parse_jd(line + "\n\n## Requirements\n- Git\n")
     assert parsed.company != line.rsplit(" - ", 1)[1]
+
+
+def test_an_optional_front_end_line_is_a_nice_to_have() -> None:
+    parsed = parse_jd(
+        "# Developer\n\n## Requirements\n\n"
+        "- Experience with C#\n"
+        "- Experience building front end applications is a plus\n"
+    )
+    assert parsed.nice_for_rating == ["front end application"]
