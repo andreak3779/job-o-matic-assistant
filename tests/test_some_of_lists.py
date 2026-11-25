@@ -590,3 +590,100 @@ def test_a_stack_that_is_only_described_is_not_a_requirement() -> None:
 def test_other_bullet_marks_are_removed_from_a_requirement(mark: str) -> None:
     parsed = parse_jd(f"Dev\n\n## Requirements\n{mark} Git\n{mark} Docker\n")
     assert parsed.required_for_rating == ["Git", "Docker"]
+
+
+def test_what_a_company_offers_is_not_part_of_the_requirements() -> None:
+    text = (
+        "Dev\n\n## Highly Preferred Qualifications\n- Git\n\nWhat Example Co Offers\n\n"
+        "    Competitive Wages\n    Paid Parental Leave\n"
+    )
+    assert parse_jd(text).nice_for_rating == ["Git"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "AI driven approach to SDLC",
+        "An AI-assisted approach to software development",
+        "AI first mindset",
+    ],
+)
+def test_an_ai_way_of_working_asks_for_ai(line: str) -> None:
+    assert parse_jd(_posting(line)).required_for_rating == ["AI"]
+
+
+@pytest.mark.parametrize(
+    "line", ["Experience with Agentic AI workflows", "Experience with agentic workflows"]
+)
+def test_agentic_ai_work_is_one_skill_met_by_coding_agent_work(line: str) -> None:
+    [item] = parse_jd(_posting(line)).required_for_rating
+    assert item.lower().startswith("agentic")
+    profile = _project("Built with AI coding agents.")
+    assert rate_fit([item], [], profile).required[0].status == "portfolio"
+
+
+def test_claude_code_written_closed_is_the_same_tool() -> None:
+    line = "Familiarity with coding agents, such as ClaudeCode or Copilot"
+    parsed = parse_jd(_posting(line))
+    assert "ClaudeCode / Copilot" in parsed.required_for_rating
+    assert parsed.unknown_names == ()
+    result = rate_fit(["claudecode"], [], _project("Built with Claude Code."))
+    assert result.required[0].status == "portfolio"
+
+
+@pytest.mark.parametrize("skill", ["TDD", "xUnit", "design principles", "AS400"])
+def test_a_resolved_framing_gap_covers_each_skill_it_names(skill: str) -> None:
+    profile = make_profile(
+        experience=[],
+        resolved_framing_gaps=[
+            "TDD/xUnit/NUnit — leads the first bullet",
+            "OOP/design principles — in the summary",
+            "IBM i / AS400 — the database work ran on it",
+        ],
+    )
+    row = rate_fit([skill], [], profile).required[0]
+    assert (row.status, row.evidence) == ("match", "resolved framing gap")
+
+
+@pytest.mark.parametrize("skill", ["summary", "bullet", "3.5"])
+def test_the_note_on_a_resolved_gap_is_not_a_skill(skill: str) -> None:
+    profile = make_profile(
+        experience=[],
+        technical_skills=[],
+        ats_keywords={},
+        portfolio_projects=[],
+        resolved_framing_gaps=["Web Forms (.NET 3.5/4.x) — in the summary bullet"],
+    )
+    assert rate_fit([skill], [], profile).required[0].status == "gap"
+
+
+BREADTH = (
+    "Strong understanding of web frameworks, APIs, and databases, and experience working with "
+    "multiple programming languages."
+)
+
+
+def test_a_line_naming_kinds_of_skill_asks_for_each() -> None:
+    parsed = parse_jd(_posting(BREADTH))
+    assert [item.lower() for item in parsed.required_for_rating] == [
+        "web frameworks",
+        "api",
+        "multiple programming languages",
+        "various databases",
+    ]
+
+
+def test_each_kind_is_met_by_any_of_its_members() -> None:
+    profile = _profile("Built Angular screens and APIs in C# over SQL Server")
+    result = rate_parsed_jd(parse_jd(_posting(BREADTH)), profile)
+    assert {m.status for m in result.required} == {"match"}
+
+
+def test_the_word_databases_alone_is_not_a_requirement() -> None:
+    parsed = parse_jd(_posting("Git", "You will back up the databases and keep notes on them"))
+    assert parsed.required_for_rating == ["Git"]
+
+
+def test_named_web_frameworks_replace_the_kind_beside_them() -> None:
+    line = "Experience with web frameworks such as Django, Flask, or FastAPI"
+    assert parse_jd(_posting(line)).required_for_rating == ["Django / Flask / FastAPI"]

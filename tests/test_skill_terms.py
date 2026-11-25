@@ -462,6 +462,8 @@ def test_the_shipped_umbrella_terms() -> None:
         "web frontend technologies",
         "web front-end technology",
         "web front-end technologies",
+        "web frameworks",
+        "multiple programming languages",
     }
 
 

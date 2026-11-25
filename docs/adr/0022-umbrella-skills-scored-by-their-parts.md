@@ -68,8 +68,9 @@ known term, a term has one umbrella, umbrellas may not nest) and fails loudly, a
 
 ## Addendum: general kinds (2026-11-24)
 
-"Proficiency in common languages", "various databases" and "web front-end technology" are
-umbrellas too, scored by the best evidence among their listed parts, with the part named. Beside
+"Proficiency in common languages", "multiple programming languages", "various databases", "web
+frameworks" and "web front-end technology" are umbrellas too (the bare word "databases" counts
+only when listed with web frameworks or programming languages), scored by the best evidence among their listed parts, with the part named. Beside
 named examples ("modern languages (C#, Go, or similar)") the kind's name is not an option of its
 own. Also, an umbrella is not asked for separately when the same sentence names a part that says
 its name ("AI agents … the impact AI can have"). The part lists are the owner's to change.

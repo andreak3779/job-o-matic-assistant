@@ -342,7 +342,7 @@ def _unglue_bullets(lines: list[str]) -> list[str]:
 # see tests/fixtures for a real posting that silently absorbed its entire
 # benefits list as "required skills" this way.
 _SECTION_END_HEADING_RE = re.compile(
-    r"(what we offer|what we bring|benefits?|perks|compensation|why (?:join|work|apply|us)\b|apply now|"
+    r"(what we offer|what we bring|^\W*what\s+(?:\S+\s+){1,4}offers\W*$|benefits?|perks|compensation|why (?:join|work|apply|us)\b|apply now|"
     r"what you(?:\W?ll| can| will)? (?:expect|get|receive)|what we (?:provide|give)|"
     r"what.s in it for you|in return|our offer|we offer|total rewards|life at|"
     r"about (?:us|the company)|our culture|company overview|additional information|"
@@ -866,6 +866,10 @@ def _split_required_or_nice(
         # "One or more of: C#, Java": a short line that opens with the choice
         pieces = entries
         is_choice = True
+    elif _AI_WAY_OF_WORKING_RE.fullmatch(item):
+        # "AI driven approach to SDLC" asks for AI; rated whole it could only read as a gap
+        pieces = ["AI"]
+        is_choice = True
     elif phrase_expansion(item):
         # "AI-assisted automation techniques" stands for AI and workflow automation: two rows
         pieces = entries
@@ -909,6 +913,13 @@ def _split_required_or_nice(
         items.extend(pieces)
 
 
+_AI_WAY_OF_WORKING_RE = re.compile(
+    r"(?:an?\s+)?AI[- ](?:driven|assisted|first|powered|augmented|enabled)\s+"
+    r"(?:approach|mindset|development|engineering|delivery|ways?\s+of\s+working)"
+    r"(?:\s+(?:to|for|in)\s+(?:the\s+)?"
+    r"(?:SDLC|software\s+development(?:\s+life[\s-]?cycle)?))?\.?",
+    re.IGNORECASE,
+)
 _CHOICE_INTRO_RE = re.compile(
     r"^(?:any|one\s+or\s+more|at\s+least\s+one|one)\s+of\b", re.IGNORECASE
 )
