@@ -20,7 +20,7 @@ from jobomatic.fit.terms import (
     strip_skill_punctuation,
     umbrella_parts,
 )
-from jobomatic.profile.model import Profile
+from jobomatic.profile.model import EvidenceLevel, Gap, Profile
 
 MatchStatus = Literal["match", "portfolio", "course", "legacy", "gap"]
 Rating = Literal["Strong", "Good", "Worth a try", "Stretch", "Pass"]
@@ -275,11 +275,20 @@ def _built_only(text: str) -> str:
     return " ".join(s for s in _PROJECT_SENTENCE_RE.split(text) if not _NOT_BUILT_RE.search(s))
 
 
-def _resolved_names(gap: str) -> set[str]:
-    """The skills a resolved framing gap names: "TDD/xUnit/NUnit — leads the first bullet" is TDD,
-    xUnit and NUnit. The note after the dash and anything in brackets are not skills."""
+def _gap_names(gap: str) -> set[str]:
+    """The skills a gap names: "TDD/xUnit/NUnit — leads the first bullet" is TDD, xUnit and
+    NUnit. The note after the dash and anything in brackets are not skills."""
     head = re.split(r"\s+[—–-]\s+", _PAREN_QUALIFIER_RE.sub("", gap))[0].strip().lower()
     return {head, *(part.strip() for part in head.split("/") if len(part.strip()) > 1)}
+
+
+def _overview_only_names(gaps: list[Gap]) -> set[str]:
+    """The skills, with their aliases, that the user has only seen from above (ADR 0039)."""
+    names = set().union(*(_gap_names(gap.skill) for gap in gaps))
+    for key, aliases in _ALIASES.items():
+        if names & {key, *aliases}:
+            names |= {key, *aliases}
+    return names
 
 
 def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
@@ -302,7 +311,7 @@ def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
             return "match", f"{exp.company}: production"
 
     # Resolved framing gaps are always matches
-    resolved = set().union(*map(_resolved_names, profile.resolved_gap_names))
+    resolved = set().union(*map(_gap_names, profile.resolved_gap_names))
     if skill_lower in resolved or any(term in resolved for term in skill_terms):
         return "match", "resolved framing gap"
 
@@ -319,6 +328,14 @@ def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
         if gap.evidence.value == "portfolio" and _match_terms(skill_terms, gap.skill.lower()):
             return "portfolio", f"tracked gap (portfolio): {gap.skill}"
 
+    # An overview-only skill earns nothing from coursework or keywords (ADR 0039). A term goes
+    # when every name in it is overview-only, so "scala / python" is still met by python.
+    overview_gaps = [g for g in profile.genuine_gaps if g.evidence is EvidenceLevel.OVERVIEW]
+    overview = _overview_only_names(overview_gaps)
+    course_terms = [
+        term for term in skill_terms if not set(_split_compound(term) or [term]) <= overview
+    ]
+
     # Coursework evidence via ATS keywords / technical skills
     skill_pool = []
     for cat in profile.skills.groups:
@@ -326,13 +343,13 @@ def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
     for values in profile.keyword_map.values():
         skill_pool.extend(values)
     all_skills_text = " ".join(skill_pool).lower()
-    if _match_terms(skill_terms, all_skills_text):
+    if _match_terms(course_terms, all_skills_text):
         return "course", "coursework or self-study"
 
     # Known genuine gaps may already be partially addressed by coursework
-    gap_pool = [g.skill for g in profile.genuine_gaps]
+    gap_pool = [g.skill for g in profile.genuine_gaps if g not in overview_gaps]
     all_gaps_text = " ".join(gap_pool).lower()
-    if _match_terms(skill_terms, all_gaps_text):
+    if _match_terms(course_terms, all_gaps_text):
         return "course", "tracked gap — partial coursework"
 
     # Last resort: legacy employment deliberately kept off the resume. Only
@@ -349,6 +366,8 @@ def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
                 "decision (Earlier Experience addendum or cover-letter mention)"
             )
 
+    if set(_split_compound(skill_lower) or [skill_lower]) <= overview:
+        return "gap", "overview only, not counted"
     return "gap", "no evidence"
 
 

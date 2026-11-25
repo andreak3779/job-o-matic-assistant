@@ -45,6 +45,7 @@ class EvidenceLevel(str, Enum):
     PRODUCTION = "production"
     PORTFOLIO = "portfolio"
     COURSE = "course"
+    OVERVIEW = "overview"  # seen from above only: coursework and keywords do not count (ADR 0039)
     NONE = "none"
 
 
@@ -192,6 +193,12 @@ class Gap(Record):
     severity: GapSeverity = Field(json_schema_extra=PRIVATE)
     evidence: EvidenceLevel = Field(default=EvidenceLevel.NONE, json_schema_extra=PRIVATE)
     notes: str | None = Field(default=None, json_schema_extra=PRIVATE)
+
+    @model_validator(mode="after")
+    def _a_resolved_gap_is_not_overview_only(self) -> Gap:
+        if self.severity is GapSeverity.RESOLVED and self.evidence is EvidenceLevel.OVERVIEW:
+            raise ValueError(f"gap {self.skill!r}: a resolved gap cannot have overview evidence")
+        return self
 
 
 class Skills(BaseModel):

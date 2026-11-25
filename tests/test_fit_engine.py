@@ -18,6 +18,7 @@ from jobomatic.fit.engine import (
     render_fit_table,
     skill_match_terms,
 )
+from jobomatic.profile.model import Gap, Profile
 from tests.profile_fixtures import (
     Education,
     Project,
@@ -1119,3 +1120,90 @@ def test_react_is_not_credited_by_angular_or_frontend_evidence() -> None:
     assert "react" not in skill_match_terms("angular")
     assert _rated(["Angular"]).required[0].status == "match"
     assert _rated(["React"]).required[0].status != "match"
+
+
+# ── Overview-only skills are not evidence (ADR 0039) ──────────────────────────
+
+_SCALA_OVERVIEW = "Scala (introductory course-level: platform overview only)"
+
+
+def _overview_profile(**overrides) -> Profile:
+    fields = {
+        "ats_keywords": {"backend": [_SCALA_OVERVIEW, "python"]},
+        "known_genuine_gaps": [
+            Gap(skill="Scala / Groovy", severity="genuine", evidence="overview")
+        ],
+        "portfolio_projects": [],
+    }
+    fields.update(overrides)
+    return _minimal_profile(**fields)
+
+
+def _status(skill: str, profile: Profile) -> tuple[str, str]:
+    match = rate_fit([skill], [], profile).required[0]
+    return match.status, match.evidence
+
+
+@pytest.mark.parametrize("skill", ["scala", "Scala", "groovy", "scala / groovy"])
+def test_an_overview_only_skill_is_a_gap_whatever_the_keywords_say(skill: str) -> None:
+    assert _status(skill, _overview_profile()) == ("gap", "overview only, not counted")
+
+
+def test_without_the_overview_mark_the_keyword_is_course_evidence() -> None:
+    assert _status("scala", _overview_profile(known_genuine_gaps=[]))[0] == "course"
+
+
+@pytest.mark.parametrize("skill", ["scala / python", "Experience with Scala or Python"])
+def test_another_alternative_still_counts_beside_an_overview_only_one(skill: str) -> None:
+    assert _status(skill, _overview_profile())[0] == "course"
+
+
+@pytest.mark.parametrize(
+    ("where", "expected"),
+    [
+        (
+            {"experience": [WorkExperience(title="Dev", company="Acme", bullets=["Scala APIs"])]},
+            "match",
+        ),
+        (
+            {
+                "portfolio_projects": [
+                    Project(
+                        name="Demo",
+                        url="https://example.com",
+                        stack=["scala"],
+                        description="A demo",
+                    )
+                ]
+            },
+            "portfolio",
+        ),
+        (
+            {
+                "legacy_experience": [
+                    WorkExperience(title="Dev", company="Old Co", bullets=["Scala APIs"])
+                ]
+            },
+            "legacy",
+        ),
+    ],
+)
+def test_real_work_in_an_overview_only_skill_still_counts(
+    where: dict[str, object], expected: str
+) -> None:
+    assert _status("scala", _overview_profile(**where))[0] == expected
+
+
+def test_an_overview_only_core_skill_lowers_the_rating() -> None:
+    result = rate_fit(
+        ["scala / groovy", "azure"],
+        [],
+        _overview_profile(),
+        core_skills=frozenset({"scala / groovy"}),
+    )
+    assert result.rating == "Stretch"
+
+
+def test_a_resolved_gap_cannot_be_overview_only() -> None:
+    with pytest.raises(ValueError, match="overview"):
+        Gap(skill="Scala", severity="resolved", evidence="overview")
