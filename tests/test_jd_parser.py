@@ -1764,3 +1764,33 @@ def test_full_stack_application_development_is_asked_for_as_full_stack() -> None
         "web, backend, and mobile, not just isolated features\n"
     )
     assert parsed.required == ["Full-stack", "mobile development"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Developer - Springfield, MD - Example Consulting Group",
+        "Developer - Example Consulting Group - Springfield, MD",
+        "Developer – Remote – Example Consulting Group",
+        "Developer - Toronto - Example Consulting Group",
+    ],
+)
+def test_a_first_line_of_title_place_and_company_is_split(line: str) -> None:
+    parsed = parse_jd(line + "\n\n## Requirements\n- Git\n")
+    assert (parsed.title, parsed.company) == ("Developer", "Example Consulting Group")
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        # no place: "Platform Group" may be a team
+        "Developer - Payments - Platform Group",
+        # no employer
+        "Developer - Springfield, MD - Contract",
+        # not a title
+        "Join us - Springfield, MD - Example Consulting Group",
+    ],
+)
+def test_other_dashed_lines_give_no_company_from_this_rule(line: str) -> None:
+    parsed = parse_jd(line + "\n\n## Requirements\n- Git\n")
+    assert parsed.company != line.rsplit(" - ", 1)[1]

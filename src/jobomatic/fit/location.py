@@ -338,6 +338,25 @@ def is_place_name(text: str, rules: _Rules | None = None) -> bool:
 _LOCATED_IN_RE = re.compile(r"\b(?:located|based|headquartered|situated)\s+in\b", re.IGNORECASE)
 
 
+# "based onsite for our customers who are in <city>": where the on-site work is
+_ONSITE_IN_RE = re.compile(r"\b(?:on-?site|hybrid)\b[^.;]{0,60}?\bin\s+", re.IGNORECASE)
+
+
+def _onsite_in_home_city(text: str, rules: _Rules) -> bool:
+    """True when a sentence places the on-site or hybrid work in the home city and names no
+    other place."""
+    for sentence in _SENTENCE_RE.split(text):
+        found = _ONSITE_IN_RE.search(sentence)
+        if not found:
+            continue
+        after = _norm(sentence[found.end() :])
+        if any(after.startswith(_norm(city)) for city in rules.home_city) and not _place_hits(
+            rules.other_terms, rules.other_abbr, _norm(sentence)
+        ):
+            return True
+    return False
+
+
 def _located_in_home_city(text: str, rules: _Rules) -> bool:
     """ "Taiv is a startup located in <home city>": the posting states the city in its body."""
     return any(
@@ -460,7 +479,11 @@ def assess_location(text: str, rules: _Rules | None = None) -> LocationAssessmen
     signals = extract_location_signals(text)
     combined = _norm(" | ".join(signals))
 
-    has_city = bool(_term_hits(rules.home_city, combined)) or _located_in_home_city(text, rules)
+    has_city = (
+        bool(_term_hits(rules.home_city, combined))
+        or _located_in_home_city(text, rules)
+        or _onsite_in_home_city(text, rules)
+    )
     has_province = bool(
         _term_hits(rules.home_province, combined) or _abbr_hits(rules.home_province_abbr, combined)
     )

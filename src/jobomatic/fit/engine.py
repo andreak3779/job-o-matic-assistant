@@ -221,6 +221,14 @@ def _tokenize(skills: list[str]) -> list[str]:
     return [s.strip().lower() for s in skills if s.strip()]
 
 
+# "SQL Server 2008 or later", "Java 11 or higher": a version floor. Left in, the "or" splits off
+# "later", which then matches any evidence that happens to use the word.
+_VERSION_FLOOR_RE = re.compile(
+    r"(?:\s+v?\d+(?:\.\d+)*[a-z]?(?:\s+r\d)?)?\s+or\s+(?:later|higher|newer|above|greater)\b",
+    re.IGNORECASE,
+)
+
+
 def _normalize(skill: str) -> str:
     """Lowercase and strip noisy years-of-experience prefixes and parenthetical ranges."""
     s = skill.strip().lower()
@@ -230,6 +238,7 @@ def _normalize(skill: str) -> str:
     s = re.sub(r"^\+\s*", "", s)
     s = re.sub(r"^(?:years?|yrs?)\s*(?:of\s*)?", "", s, flags=re.IGNORECASE)
     s = re.sub(r"\s*\([^)]*\)", "", s)
+    s = _VERSION_FLOOR_RE.sub("", s)
     return strip_skill_punctuation(s)
 
 

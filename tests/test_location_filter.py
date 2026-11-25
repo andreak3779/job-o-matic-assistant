@@ -466,3 +466,15 @@ def test_each_zone_is_flagged_once() -> None:
         "European",
         "Pacific",
     ]
+
+
+def test_on_site_work_said_to_be_in_the_home_city_is_not_flagged() -> None:
+    text = (
+        "Developer\nOn-site\n\nThe role is based onsite for our customers who are in Springfield.\n"
+    )
+    assert not assess_location(text).flags
+
+
+def test_on_site_in_the_home_city_beside_another_city_still_asks() -> None:
+    text = "Developer\nOn-site\n\nThe work is onsite for customers in Springfield and Toronto.\n"
+    assert assess_location(text).flags

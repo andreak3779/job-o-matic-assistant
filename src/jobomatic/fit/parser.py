@@ -149,6 +149,12 @@ _NICE_HEADING_RE = re.compile(
     r"ideal\s+candidate\s+(?:would\s+)?also)",
     re.IGNORECASE,
 )
+# "Experience with .NET / C# is a strong asset" states one skill is optional. It is a list item,
+# not a heading that opens the nice-to-have section.
+_ASSET_STATEMENT_RE = re.compile(
+    r"\b(?:is|are|would be)\s+(?:also\s+)?(?:a|an)?\s*(?:\w+\s+)?(?:asset|plus|bonus)\b",
+    re.IGNORECASE,
+)
 # A single line that marks itself optional while sitting under a required heading (ADR 0021):
 # "Preferred: experience with Kubernetes", "Terraform (preferred)", "Kubernetes is a plus".
 # The marker is removed from the line before skills are read from it.
@@ -285,19 +291,31 @@ def _split_glued(lines: list[str]) -> list[str]:
 _CONTINUATION_MIN_WORDS = 6
 
 
+def _is_rest_of_a_list(line: str) -> bool:
+    """ "React, NextJS, Docker": names and commas, opening on a skill. A sentence that merely
+    follows a line ending in a comma is an item of its own."""
+    first, comma, _ = line.partition(",")
+    return bool(comma) and len(first.split()) <= 3 and bool(extract_skill_terms(first))
+
+
 def _join_wrapped(lines: list[str]) -> list[str]:
     """``lines`` with each wrapped continuation joined to the long unfinished line above it."""
     out: list[str] = []
     for line in lines:
         stripped = line.strip()
-        if stripped and out and stripped[0].islower() and not _is_bullet(stripped):
+        if stripped and out and not _is_bullet(stripped):
             before = len(out) - 1
             while before >= 0 and not out[before].strip():
                 before -= 1
+            above = out[before].rstrip() if before >= 0 else ""
+            # a sentence carried on in lower case, or a list carried on after its comma
+            carries_on = stripped[0].islower() or (
+                above.endswith(",") and before == len(out) - 1 and _is_rest_of_a_list(stripped)
+            )
             if (
-                before >= 0
-                and len(out[before].split()) >= _CONTINUATION_MIN_WORDS
-                and not out[before].rstrip().endswith((".", "!", "?", ";", ":"))
+                carries_on
+                and len(above.split()) >= _CONTINUATION_MIN_WORDS
+                and not above.endswith((".", "!", "?", ";", ":"))
             ):
                 out[before] = out[before].rstrip() + " " + stripped
                 del out[before + 1 :]
@@ -324,7 +342,7 @@ def _unglue_bullets(lines: list[str]) -> list[str]:
 # see tests/fixtures for a real posting that silently absorbed its entire
 # benefits list as "required skills" this way.
 _SECTION_END_HEADING_RE = re.compile(
-    r"(what we offer|benefits?|perks|compensation|why (?:join|work|apply|us)\b|apply now|"
+    r"(what we offer|what we bring|benefits?|perks|compensation|why (?:join|work|apply|us)\b|apply now|"
     r"what you(?:\W?ll| can| will)? (?:expect|get|receive)|what we (?:provide|give)|"
     r"what.s in it for you|in return|our offer|we offer|total rewards|life at|"
     r"about (?:us|the company)|our culture|company overview|additional information|"
@@ -374,7 +392,7 @@ _YEARS_PREFIX_RE = re.compile(
     re.IGNORECASE,
 )
 # The list marker only ("- ", "• ", "1. ", "2) "); digits that belong to the line stay.
-_BULLET_MARKER_RE = re.compile(r"^(?:[-•*]+\s*|\d+[.)]\s+)")
+_BULLET_MARKER_RE = re.compile(r"^(?:[-•*●○◦▪▫‣]+\s*|\d+[.)]\s+)")
 _LEADING_PLUS_RE = re.compile(r"^\+\s*")
 _BARE_YEARS_RE = re.compile(r"^(?:years?|yrs?)\s*(?:of\s*)?", re.IGNORECASE)
 _PAREN_YEARS_RE = re.compile(r"\(\d+\+?\s*years?.*\)", re.IGNORECASE)
@@ -400,7 +418,7 @@ _PROSE_MIN_WORDS = 6
 # extraction), this one ``>=`` on the full count including them (whole-item rating).
 _PROSE_REQUIREMENT_MIN_WORDS = _PROSE_MIN_WORDS
 # A lone "*" followed by a space is a bullet (Indeed pastes use it); "**bold**" and "*italic*" are not.
-_BULLET_RE = re.compile(r"^[-•]|^\*\s|^\d+[.)]")
+_BULLET_RE = re.compile(r"^[-•●○◦▪▫‣]|^\*\s|^\d+[.)]")
 
 # Postings saved as label/value pairs under their own headings, e.g.
 # "# Company\nExample Corp\n\n# Position\nSoftware Developer". "Postion" is
@@ -516,7 +534,23 @@ def _company_from_text(text: str, title: str = "") -> str:
         ):
             counts[word] = counts.get(word, 0) + 1
     best = [w for w, n in counts.items() if n >= _REPEATED_NAME_MIN]
-    return max(best, key=lambda w: counts[w]) if best else ""
+    return _with_first_word(max(best, key=lambda w: counts[w]), text) if best else ""
+
+
+def _with_first_word(name: str, text: str) -> str:
+    """``name`` with the capitalised word that precedes it every time it is written mid-sentence
+    ("Example Commerce … follows Example Commerce standards")."""
+    before = re.findall(rf"(?:\b([A-Z][a-zA-Z]+) |(?<=[a-z,] )){re.escape(name)}\b", text)
+    first = set(before)
+    if len(before) >= _REPEATED_NAME_MIN and len(first) == 1 and "" not in first:
+        word = before[0]
+        # "Power Platform" and "Full Stack" are skills, not a company's two words
+        if (
+            not extract_skill_terms(f"{word} {name}")
+            and word.lower() not in _NOT_AN_OPENING_COMPANY
+        ):
+            return f"{word} {name}"
+    return name
 
 
 # "Software Developer | IDENTOS Inc." ends in a period that belongs to the company name.
@@ -561,6 +595,28 @@ def _is_company_after_a_slash(name: str) -> bool:
     )
 
 
+# "Springfield, MD" or "Toronto, Ontario": a city and its province or state
+_CITY_REGION_RE = re.compile(r"^[A-Z][A-Za-z .'-]+,\s*(?:[A-Z]{2}|[A-Z][a-z]+(?: [A-Z][a-z]+)?)$")
+
+
+def _title_place_company(line: str) -> list[str] | None:
+    """``[title, company]`` of a dashed line of three or more parts, one of them a place or a way
+    of working and exactly one an employer by its corporate word ("… Group", "… Inc.")."""
+    title, *rest = [part.strip() for part in _TITLE_COMPANY_SPLIT_RE.split(line)]
+    if len(rest) < 2 or not _ROLE_WORD_RE.search(title):
+        return None
+    placed = any(
+        _CITY_REGION_RE.match(part) or is_place_name(part) or part.lower() in _NOT_A_COMPANY
+        for part in rest
+    )
+    employers = [
+        part for part in rest if _COMPANY_WORD_RE.search(part) and not _ROLE_WORD_RE.search(part)
+    ]
+    if not placed or len(employers) != 1:
+        return None
+    return [title, employers[0]]
+
+
 def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
     """Title and company from the first line of a pasted posting, when it looks like a title.
 
@@ -584,6 +640,9 @@ def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
                 _COMPANY_WORD_RE.search(dashed[1]) or _looks_like_a_company_name(dashed[1])
             ):
                 parts = dashed
+        if len(parts) < 2:
+            # "Developer - Springfield, MD - Example Group": title, place and employer
+            parts = _title_place_company(line) or parts
         if len(parts) < 2:
             # "Back End Developer / Example Co": position / company
             head, slash, tail = line.rpartition(" / ")
@@ -624,6 +683,18 @@ def _header_company(text: str) -> str | None:
 # LinkedIn's job card: "Company logo for, ClickUp." / "ClickUp" / "Staff Frontend Engineer" / then
 # "Canada · Reposted 2 weeks ago · Over 100 applicants". The title is the line above that one.
 _CARD_LOGO_RE = re.compile(r"^Company logo for,?\s*(.+?)\.?$", re.IGNORECASE)
+_NAME_LOGO_RE = re.compile(r"^([A-Z][\w&.' -]{1,60}?)\s+logo$")
+
+
+def _full_company_name(name: str, text: str) -> str:
+    """``name`` with the corporate word the posting itself writes after it ("… Group")."""
+    full = re.search(
+        re.escape(name) + r"\s+(?:Group|Inc\.?|Ltd\.?|Limited|Corporation|Corp\.?)(?![A-Za-z])",
+        text,
+    )
+    return full.group(0) if full else name
+
+
 _CARD_META_RE = re.compile(r"\s·\s.*\b(?:ago|applicants?|clicked apply)\b", re.IGNORECASE)
 
 
@@ -637,6 +708,13 @@ def _card_header(text: str) -> tuple[str | None, str | None]:
     ]
     if not lines:
         return None, None
+    if (
+        len(lines) >= 2
+        and (named := _NAME_LOGO_RE.match(lines[0]))
+        and _ROLE_WORD_RE.search(lines[1])
+        and not _CARD_LOGO_RE.match(lines[0])
+    ):
+        return lines[1], _full_company_name(named.group(1).strip(), text)
     if not (logo := _CARD_LOGO_RE.match(lines[0])):
         # The same card without the logo line: "Render" / "Software Engineer" / "Canada · 1 day ago"
         if (
@@ -839,6 +917,9 @@ _PLAIN_CHOICE_RE = re.compile(r"[^/,;()]+?\s+or\s+(?!and\b)[^/,;()]+?", re.IGNOR
 FIRST_REQUIRED_LINES_ARE_CORE = 5
 # A flat line longer than this is a paragraph, not a list item.
 _FLAT_ITEM_MAX_WORDS = 25
+# The same bounds for a line of a copy that has no bullets or indents at all
+_UNMARKED_ITEM_MIN_WORDS = 4
+_UNMARKED_ITEM_MAX_WORDS = 40
 
 
 def _item_terms(item: str) -> list[str]:
@@ -860,7 +941,8 @@ def _core_skills(items: list[str], positional: set[str], title: str, text: str) 
     core: set[str] = set()
     for item in items:
         key = item.lower()
-        if is_soft_skill(item):
+        # "Windows Communication Foundation" holds a soft-skill word but is a skill name
+        if is_soft_skill(item) and key not in (t.lower() for t in extract_skill_terms(item)):
             continue
         if key in positional:
             core.add(key)
@@ -905,6 +987,55 @@ def _indent(line: str) -> int:
     return len(line.expandtabs(4)) - len(line.expandtabs(4).lstrip())
 
 
+# A second line between the introduction and its list: "Expertise in the following tools:"
+_LIST_LEAD_IN_RE = re.compile(r"\bthe following\b[^:]{0,80}:$", re.IGNORECASE)
+
+
+def _is_bare_name(line: str) -> bool:
+    """A line that can only be a name in a list: one capitalised word, or exactly a known skill."""
+    if len(line.split()) == 1:
+        return line[0].isupper() or line[0] == "."
+    return [term.lower() for term in extract_skill_terms(line)] == [line.lower()]
+
+
+# "Our stack spans A, B, C. You don't need all of it. You should be deep in several of these":
+# the stack sentence, followed by words that make it a pool rather than a checklist
+_STACK_POOL_RE = re.compile(
+    r"^(?:our|the)\s+(?:tech(?:nology)?\s+)?stack\s+(?:spans|includes|covers|consists\s+of|is)\s+"
+    r"(?P<names>.+?)\.\s+"
+    r"(?=.*\b(?:(?:don['’]?t|do\s+not|needn['’]?t)\s+need\s+(?:all|every)|"
+    r"deep\s+in\s+(?:several|some|a\s+few)|(?:some|several|a\s+few)\s+of\s+(?:these|them|it))\b)",
+    re.IGNORECASE,
+)
+
+
+def _split_paired_names(names: str) -> str:
+    """ "TypeScript/Node.js" names two skills; "CI/CD" is one."""
+
+    def split(match: re.Match[str]) -> str:
+        pair = match.group(0)
+        halves = pair.split("/")
+        if len(extract_skill_terms(pair)) == 1 or not all(map(extract_skill_terms, halves)):
+            return pair
+        return ", ".join(halves)
+
+    return re.sub(r"[^,/]+(?:/[^,/]+)+", lambda m: split(m), names)
+
+
+def _rewrite_stack_pools(lines: list[str]) -> list[str]:
+    """``lines`` with a "pick several of our stack" paragraph written as the requirement it is."""
+    out: list[str] = []
+    for line in lines:
+        found = _STACK_POOL_RE.match(line.strip())
+        names = _split_paired_names(found["names"]) if found else ""
+        folded = f"Experience with several of: {names}"
+        if found and some_of_list(folded) is not None:
+            out.extend(["Requirements:", f"- {folded}"])
+        else:
+            out.append(line)
+    return out
+
+
 def _fold_some_of_lists(lines: list[str]) -> list[str]:
     """``lines`` with "some of the following:" and the bullets or indented lines under it made
     into one line, so it is read like the same list written after the colon (ADR 0038).
@@ -924,15 +1055,20 @@ def _fold_some_of_lists(lines: list[str]) -> list[str]:
         names: list[str] = []
         unread: list[str] = []
         end = index
+        lead_in_allowed = True
         for position in range(index, len(lines)):
             stripped = lines[position].strip()
             if not stripped:
+                continue
+            if lead_in_allowed and not names and _LIST_LEAD_IN_RE.search(stripped):
+                lead_in_allowed = False
                 continue
             deeper = _indent(lines[position]) > _indent(line)
             if _is_bullet(intro):
                 belongs = deeper
             else:
-                belongs = deeper or _is_bullet(stripped)
+                level = _indent(lines[position]) == _indent(line)
+                belongs = deeper or _is_bullet(stripped) or (level and _is_bare_name(stripped))
             if not belongs or introduces_some_of(stripped):
                 break
             found = names_in_list_item(_BULLET_MARKER_RE.sub("", stripped).strip())
@@ -983,7 +1119,11 @@ def parse_jd(text: str) -> ParsedJD:
     flat_items_ok = False
 
     prepared = _unglue_bullets(_split_glued(_join_wrapped(text.splitlines())))
-    for raw in _fold_some_of_lists(prepared):
+    # a copy that lost every bullet and indent: nothing marks a list item
+    unmarked = not any(
+        _is_bullet(line.strip()) or line.startswith(("\t", "  ")) for line in prepared
+    )
+    for raw in _fold_some_of_lists(_rewrite_stack_pools(prepared)):
         stripped = raw.strip()
         lower = stripped.lower()
         if not stripped or _OR_SEPARATOR_RE.match(stripped):
@@ -1015,6 +1155,15 @@ def parse_jd(text: str) -> ParsedJD:
             word_count <= _HEADING_MAX_WORDS
             or (stripped.endswith(":") and word_count <= _COLON_HEADING_MAX_WORDS)
         )
+        if (
+            keyword_heading
+            and _ASSET_STATEMENT_RE.search(stripped)
+            and extract_skill_terms(stripped)
+        ):
+            keyword_heading = False
+            states_a_skill = True
+        else:
+            states_a_skill = False
         # Nice-to-have is tested first: "Preferred Qualifications" and
         # "Nice-to-Have Qualifications" also contain the required-heading word
         # "qualifications", and must not be read as required skills.
@@ -1068,14 +1217,30 @@ def parse_jd(text: str) -> ParsedJD:
             continue
         if looks_like_heading and stripped.endswith(":"):
             flat_items_ok = False  # a heading the parser does not know: its lines are not items
+        # in an unmarked copy a longer line that names a skill is an item; a short one may be a
+        # sub-heading
+        unmarked_item = (
+            unmarked
+            and _UNMARKED_ITEM_MIN_WORDS <= len(stripped.split()) <= _UNMARKED_ITEM_MAX_WORDS
+            and bool(extract_skill_terms(stripped))
+        )
         flat_item = (
-            flat_items_ok
-            and section in ("required", "nice")
+            section in ("required", "nice")
             and looks_like_heading
-            and len(stripped.split()) <= _FLAT_ITEM_MAX_WORDS
+            and (
+                unmarked_item
+                or (
+                    (flat_items_ok or states_a_skill)
+                    and len(stripped.split()) <= _FLAT_ITEM_MAX_WORDS
+                )
+            )
         )
         if section and (is_bullet or not looks_like_heading or flat_item):
-            list_is_marked = list_is_marked or is_bullet or is_indented or flat_item
+            # a list under "…:" ends at the first closing sentence; items picked out of an
+            # unmarked copy do not mark a list
+            list_is_marked = (
+                list_is_marked or is_bullet or is_indented or (flat_item and flat_items_ok)
+            )
             raw_item = _LINKEDIN_NAME_SUFFIX_RE.sub("", _BULLET_MARKER_RE.sub("", stripped)).strip()
             item = _drop_term_details(_strip_years_prefix(raw_item))
             line_section = section

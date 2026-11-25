@@ -368,3 +368,225 @@ def test_the_rest_of_a_project_with_planned_work_still_counts() -> None:
 def test_docker_experience_meets_a_containerization_requirement() -> None:
     profile = _profile("Deployed applications with Docker")
     assert rate_fit(["containerization"], [], profile).required[0].status == "match"
+
+
+MAY_INCLUDE = (
+    "Developer\n\n"
+    "Each requirement we receive varies, but the skillset may include:\n"
+    "Expertise in the following development environments and tools:\n\n"
+    "    Microsoft SQL Server 2008 or later\n"
+    "    Microsoft .NET Platform (4.0 or higher)\n"
+    "    SSRS, SSIS, Crystal Reports\n"
+    "    Resharper\n\n"
+    "Experience Required:\n\n"
+    "    Git\n"
+)
+
+
+def test_a_skill_set_that_may_include_a_list_is_one_requirement() -> None:
+    parsed = parse_jd(MAY_INCLUDE)
+    assert parsed.required_for_rating == [
+        "some of: Microsoft SQL Server / Microsoft .NET Platform / SSRS / SSIS / Crystal Reports"
+        " / Resharper",
+        "Git",
+    ]
+
+
+def test_skills_may_include_on_one_line() -> None:
+    assert some_of_list("Skills may include: C#, SQL, Azure") == ["C#", "SQL", "Azure"]
+
+
+def test_duties_that_may_include_things_are_not_a_pool() -> None:
+    assert some_of_list("Your duties may include: C#, SQL, Azure") is None
+
+
+@pytest.mark.parametrize(
+    "requirement", ["Oracle 12c or later", "Java 11 or higher", "Windows Server 2019 or newer"]
+)
+def test_a_version_floor_is_not_matched_by_the_word_itself(requirement: str) -> None:
+    profile = _profile("The work was later carried to a higher tier on newer hardware")
+    assert rate_fit([requirement], [], profile).required[0].status == "gap"
+
+
+def test_a_version_floor_still_finds_the_skill() -> None:
+    profile = _profile("Administered SQL Server databases")
+    result = rate_fit(["Microsoft SQL Server 2008 or later"], [], profile)
+    assert result.required[0].status == "match"
+
+
+@pytest.mark.parametrize(
+    "line,item",
+    [
+        ("Windows Communication Foundation", "Windows Communication Foundation"),
+        ("Windows Communication Foundation (WCF)", "WCF"),
+        ("Windows Presentation Foundation (WPF)", "WPF"),
+    ],
+)
+def test_a_windows_foundation_is_one_skill_and_not_windows(line: str, item: str) -> None:
+    parsed = parse_jd(_posting(f"Experience building services with {line}"))
+    assert parsed.required_for_rating == [item]
+    assert item.lower() in parsed.core_skills
+
+
+def test_the_long_name_finds_the_acronym() -> None:
+    result = rate_fit(["Windows Presentation Foundation"], [], _profile("Built a WPF client"))
+    assert result.required[0].status == "match"
+
+
+def test_jira_agile_is_the_tool_and_agile_the_practice() -> None:
+    line = "Experience with Agile development techniques and supporting tools such as Jira Agile"
+    parsed = parse_jd(_posting(line))
+    assert parsed.required_for_rating == ["Agile", "Jira Agile"]
+
+
+def test_a_logo_line_names_the_company_by_its_full_name() -> None:
+    text = (
+        "Example Consulting logo\nDeveloper\nSpringfield\n\n## Requirements\n- Git\n\n"
+        "Example Consulting Group is committed to a fair process.\n"
+    )
+    parsed = parse_jd(text)
+    assert (parsed.title, parsed.company) == ("Developer", "Example Consulting Group")
+
+
+GENERAL = (
+    "You have 5+ years of experience in software with proficiency in one or more common "
+    "languages, and are also familiar with various databases and web frontend technology."
+)
+
+
+def test_general_kinds_of_skill_on_a_years_line_are_scored() -> None:
+    parsed = parse_jd(_posting(GENERAL))
+    assert parsed.required_for_rating == [
+        "common languages",
+        "various databases",
+        "web frontend technology",
+    ]
+    assert [s.kind for s in parsed.soft_requirements] == ["years"]
+
+
+def test_a_general_kind_is_met_by_any_of_its_members() -> None:
+    profile = _profile("Built Angular screens in C# over SQL Server")
+    result = rate_parsed_jd(parse_jd(_posting(GENERAL)), profile)
+    assert [m.status for m in result.required] == ["match", "match", "match"]
+    assert "[via " in result.required[0].evidence
+
+
+def test_a_general_kind_with_no_member_is_a_gap() -> None:
+    result = rate_fit(["various databases"], [], _profile("Taught pottery"))
+    assert result.required[0].status == "gap"
+
+
+def test_named_examples_replace_the_general_kind() -> None:
+    line = "Proficiency in modern programming languages such as TypeScript, C#, or Python"
+    assert parse_jd(_posting(line)).required_for_rating == ["TypeScript / C# / Python"]
+
+
+def test_coding_agent_work_meets_an_ai_agents_requirement_and_not_the_reverse() -> None:
+    profile = _project("Built with AI coding agents.")
+    assert rate_fit(["ai agents"], [], profile).required[0].status == "portfolio"
+    agents = _project("Studied AI agents.")
+    assert rate_fit(["ai coding agents"], [], agents).required[0].status == "gap"
+
+
+UNMARKED = (
+    "Dev\n\nWhat You Bring\n"
+    "Experience with .NET / C# is a strong asset\n"
+    "Experience with some of what we use: PHP, Drupal, Docker\n"
+    "Comfort in a Linux shell for day-to-day tasks, plus some understanding of hosting\n"
+    "What We Bring\n"
+    "A team that enjoys Python on Fridays\n"
+)
+
+
+def test_a_copy_with_no_bullets_or_indents_keeps_its_requirements() -> None:
+    parsed = parse_jd(UNMARKED)
+    assert parsed.required_for_rating == ["some of: PHP / Drupal / Docker", "Linux"]
+    assert parsed.nice_for_rating == [".NET", "C#"]
+
+
+def test_a_statement_that_a_skill_is_an_asset_is_not_a_heading() -> None:
+    text = "Dev\n\n## Requirements\n- Git\nDocker is a strong asset\n- Python\n"
+    parsed = parse_jd(text)
+    assert parsed.required_for_rating == ["Git", "Python"]
+    assert parsed.nice_for_rating == ["Docker"]
+
+
+@pytest.mark.parametrize("indent", ["    ", ""])
+def test_a_list_wrapped_after_a_comma_is_one_list(indent: str) -> None:
+    text = _posting(f"Experience with some of: PHP, Drupal, JavaScript,\n{indent}AWS, Docker")
+    assert parse_jd(text).required_for_rating == [
+        "some of: PHP / Drupal / JavaScript / AWS / Docker"
+    ]
+
+
+def test_a_separate_line_after_a_comma_is_not_joined() -> None:
+    text = (
+        "Dev\n\n## Requirements\n"
+        "    Senior experience using C# and ASP.NET Core,\n"
+        "    Experience with Docker in production\n"
+    )
+    required = parse_jd(text).required
+    assert required[:2] == ["C#", "ASP.NET Core"]
+    assert "Docker" in required[-1]
+
+
+def test_names_one_per_line_at_the_same_indent_join_their_list() -> None:
+    text = (
+        "Dev\n\n## Requirements\n"
+        "    Experience with some of the following:\n    PHP\n    Drupal\n    Docker\n"
+        "    Comfort working in a shell every single day\n"
+    )
+    assert parse_jd(text).required_for_rating == ["some of: PHP / Drupal / Docker"]
+
+
+def test_a_company_named_by_two_words_is_not_cut_to_the_second() -> None:
+    text = (
+        "Developer\n\nWe have news: Example Commerce is looking for you. We follow Example "
+        "Commerce standards, and offers from Example Commerce need a check.\n\n"
+        "## Requirements\n- Git\n"
+    )
+    assert parse_jd(text).company == "Example Commerce"
+
+
+def test_a_part_that_says_the_umbrella_name_replaces_the_umbrella() -> None:
+    line = "You build systems with AI agents and care about the impact AI can have"
+    assert parse_jd(_posting(line)).required_for_rating == ["AI agents"]
+
+
+def test_named_languages_replace_the_general_kind_beside_them() -> None:
+    line = "Skills in one or more modern languages (C#, TypeScript, Java, or similar)"
+    assert parse_jd(_posting(line)).required_for_rating == ["C# / TypeScript / Java"]
+
+
+def test_a_two_word_skill_is_not_read_as_a_two_word_company() -> None:
+    text = (
+        "Developer\n\nWe build on Power Platform daily, extend Power Platform often and "
+        "teach Power Platform.\n\n## Requirements\n- Git\n"
+    )
+    assert parse_jd(text).company != "Power Platform"
+
+
+STACK = (
+    "Dev\n\n## What you bring\n- Git\n\n"
+    "Our stack spans TypeScript/Node.js, React, .NET, SQL Server/Azure SQL, CI/CD, and Azure. "
+    "You don't need all of it. You should be deep in several of these.\n"
+)
+
+
+def test_a_stack_to_know_part_of_is_one_requirement() -> None:
+    parsed = parse_jd(STACK)
+    assert parsed.required_for_rating == [
+        "Git",
+        "some of: TypeScript / Node.js / React / .NET / SQL Server / Azure SQL / CI/CD / Azure",
+    ]
+
+
+def test_a_stack_that_is_only_described_is_not_a_requirement() -> None:
+    text = "Dev\n\n## Requirements\n- Git\n\nOur stack spans React, .NET and Azure. We love it.\n"
+    assert parse_jd(text).required_for_rating == ["Git"]
+
+
+@pytest.mark.parametrize("mark", ["●", "○", "◦", "▪", "‣"])
+def test_other_bullet_marks_are_removed_from_a_requirement(mark: str) -> None:
+    parsed = parse_jd(f"Dev\n\n## Requirements\n{mark} Git\n{mark} Docker\n")
+    assert parsed.required_for_rating == ["Git", "Docker"]
