@@ -123,6 +123,49 @@ def test_examples_stop_at_a_semicolon() -> None:
     assert sorted(result) == ["Azure DevOps", "Docker / Kubernetes"]
 
 
+@pytest.mark.parametrize(
+    "clause",
+    [
+        ", with a deep understanding of testing",
+        ", with strong working knowledge of testing",
+        " with experience in testing",
+    ],
+)
+def test_examples_stop_at_a_with_clause_that_adds_a_requirement(clause: str) -> None:
+    result = extract_skill_terms(f"A language like Java or Kotlin{clause}")
+    assert result == ["Java / Kotlin", "testing"]
+
+
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "front end applications",
+        "front-end applications",
+        "frontend application",
+        "front end development",
+        "front-end development",
+        "frontend development",
+    ],
+)
+def test_front_end_work_is_a_skill_scored_by_the_web_front_end_parts(phrase: str) -> None:
+    assert extract_skill_terms(f"Experience with {phrase}") == [phrase.removesuffix("s")]
+    assert umbrella_parts(phrase.removesuffix("s")) == umbrella_parts("web frontend technology")
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("Front-end development with React", ["React"]),
+        ("Building frontend applications using Angular and TypeScript", ["Angular", "TypeScript"]),
+        ("Front end development in React or Vue", ["React / Vue"]),
+    ],
+)
+def test_front_end_work_is_not_a_second_requirement_beside_a_named_tool(
+    sentence: str, expected: list[str]
+) -> None:
+    assert extract_skill_terms(sentence) == expected
+
+
 def test_terms_before_the_marker_are_not_swept_into_the_examples() -> None:
     result = extract_skill_terms("Strong Python and cloud tools such as Docker or Kubernetes")
     assert sorted(result) == ["Docker / Kubernetes", "Python"]
@@ -462,6 +505,12 @@ def test_the_shipped_umbrella_terms() -> None:
         "web frontend technologies",
         "web front-end technology",
         "web front-end technologies",
+        "front end application",
+        "front-end application",
+        "frontend application",
+        "front end development",
+        "front-end development",
+        "frontend development",
         "web frameworks",
         "multiple programming languages",
     }

@@ -29,7 +29,8 @@ _CLAUSE_BREAK_RE = re.compile(r"\s+and\s+|[;:]")
 # "tools such as A, B, or C" names examples of one category: any one of them meets the
 # requirement, so the examples are scored as a single alternatives entry (ADR 0021). Unlike
 # "or comparable", the list may end in "and" or "or", so the list stops at a sentence break
-# or at an "and" that starts a new requirement ("... Cursor, and experience with Docker").
+# at an "and" that starts a new requirement ("... Cursor, and experience with Docker") or at a
+# "with" clause that adds one ("like Java or Kotlin, with a deep understanding of testing").
 _EXAMPLES_RE = re.compile(
     r"\b(?:such as|for example|including|like)\b|\be\.g\.?(?![a-z0-9])|"
     # "any of the technologies the product runs on: Go, Typescript, React": any one will do, as
@@ -41,7 +42,9 @@ _EXAMPLES_RE = re.compile(
 _PAREN_OPEN_RE = re.compile(r"\(")
 _EXAMPLES_END_RE = re.compile(
     r"[;:)]|\.\s|\s+and\s+(?:experience|proficiency|knowledge|familiarity|ability|"
-    r"understanding|expertise|strong|solid|a\s+good)\b",
+    r"understanding|expertise|strong|solid|a\s+good)\b|"
+    r",?\s+with\s+(?:an?\s+)?(?:[\w-]+\s+){0,2}(?:experience|proficiency|knowledge|"
+    r"familiarity|ability|understanding|expertise)\b",
     re.IGNORECASE,
 )
 
@@ -835,6 +838,15 @@ def _drop_general_kind_beside_members(entry: str) -> str:
     return " / ".join(kept)
 
 
+# "front-end development with React" asks for React: the generic words are a requirement only
+# when the sentence names none of the tools that make them up.
+_GENERIC_WORK_TERMS = frozenset(
+    f"{front} {work}"
+    for front in ("front end", "front-end", "frontend")
+    for work in ("application", "development")
+)
+
+
 def _drop_covered_umbrellas(terms: list[str]) -> list[str]:
     """ "AI" is not asked for separately when the same sentence names tools that make it up, or
     one of its parts that says its name ("AI agents … the impact AI can have")."""
@@ -851,6 +863,9 @@ def _drop_covered_umbrellas(terms: list[str]) -> list[str]:
     for term in terms:
         parts = umbrella_parts(term.lower())
         if parts is not None and parts_present & set(parts):
+            continue
+        generic = term.lower().removesuffix("s") in _GENERIC_WORK_TERMS
+        if generic and named_parts & set(parts or ()):
             continue
         word = re.compile(rf"(?<![a-z0-9]){re.escape(term.lower())}(?![a-z0-9])")
         if parts is not None and any(
