@@ -1,6 +1,7 @@
 {
   "description": "Alias registry for the fit engine. Keys are normalized JD skill phrases; values are normalized terms that should also be searched in the profile.",
   "aliases": {
+    "claudecode": ["claude code"],
     "windows communication foundation": ["wcf"],
     "windows presentation foundation": ["wpf"],
     "jira agile": ["jira"],

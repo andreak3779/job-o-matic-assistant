@@ -275,6 +275,13 @@ def _built_only(text: str) -> str:
     return " ".join(s for s in _PROJECT_SENTENCE_RE.split(text) if not _NOT_BUILT_RE.search(s))
 
 
+def _resolved_names(gap: str) -> set[str]:
+    """The skills a resolved framing gap names: "TDD/xUnit/NUnit — leads the first bullet" is TDD,
+    xUnit and NUnit. The note after the dash and anything in brackets are not skills."""
+    head = re.split(r"\s+[—–-]\s+", _PAREN_QUALIFIER_RE.sub("", gap))[0].strip().lower()
+    return {head, *(part.strip() for part in head.split("/") if len(part.strip()) > 1)}
+
+
 def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
     """Return (status, evidence) for a single skill against the profile."""
     skill_lower = _normalize(raw_skill)
@@ -295,7 +302,8 @@ def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
             return "match", f"{exp.company}: production"
 
     # Resolved framing gaps are always matches
-    if any(skill_lower == g.lower() for g in profile.resolved_gap_names):
+    resolved = set().union(*map(_resolved_names, profile.resolved_gap_names))
+    if skill_lower in resolved or any(term in resolved for term in skill_terms):
         return "match", "resolved framing gap"
 
     # Portfolio evidence

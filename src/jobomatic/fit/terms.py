@@ -811,7 +811,12 @@ def _expand_framework_examples(
 
 
 # Umbrellas that only stand for "any one of this kind"; naming members makes them redundant
-_GENERAL_KIND_ROOTS = ("common languages", "various databases", "web frontend technology")
+_GENERAL_KIND_ROOTS = (
+    "common languages",
+    "various databases",
+    "web frontend technology",
+    "web frameworks",
+)
 
 
 def _drop_general_kind_beside_members(entry: str) -> str:
@@ -854,6 +859,22 @@ def _drop_covered_umbrellas(terms: list[str]) -> list[str]:
             continue
         kept.append(term)
     return kept
+
+
+# "databases" alone is too common a word to be a skill, but listed with these it is asked for:
+# "web frameworks, APIs, and databases"
+_KINDS_THAT_LIST_DATABASES = frozenset({"web frameworks", "multiple programming languages"})
+_BARE_DATABASES_RE = re.compile(r"(?:,\s*(?:and\s+)?|\band\s+)databases\b", re.IGNORECASE)
+_DATABASE_MEMBERS = "various databases"
+
+
+def _add_listed_databases(sentence: str, terms: list[str]) -> list[str]:
+    lowered = {term.lower() for term in terms}
+    if not (lowered & _KINDS_THAT_LIST_DATABASES and _BARE_DATABASES_RE.search(sentence)):
+        return terms
+    members = set(umbrella_parts(_DATABASE_MEMBERS) or ())
+    named = {part for term in lowered for part in term.split(" / ")}
+    return terms if named & (members | {_DATABASE_MEMBERS}) else [*terms, _DATABASE_MEMBERS]
 
 
 def _drop_subsumed(terms: list[str]) -> list[str]:
@@ -1146,7 +1167,8 @@ def _extract_terms(sentence: str, vocabulary: tuple[str, ...] | None = None) -> 
         if term.lower() not in {o.lower() for o in out}:
             out.append(term)
     out = _expand_framework_examples(sentence, examples, out)
-    return _drop_covered_umbrellas(_drop_subsumed(_expand_or_other(sentence, out)))
+    out = _add_listed_databases(sentence, _expand_or_other(sentence, out))
+    return _drop_covered_umbrellas(_drop_subsumed(out))
 
 
 # Words that frame a skill without adding to it: "Strong Postgresql skills", "Knowledge of Git".

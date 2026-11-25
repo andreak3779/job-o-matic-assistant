@@ -108,3 +108,10 @@ only to the two hard stops.
 - **Remove the gate and show the table.** Rejected: the gate catches the hard cases (location, two
   or more missing headline skills) that waste a day of work, and the fix for the rest is an
   override, not the absence of a check.
+
+## Addendum: a resolved framing gap names its skills (2026-11-24)
+
+A resolved framing gap is written as the skills, then a note: "TDD/xUnit/NUnit — leads the first
+bullet". The engine matched only the whole line, so none of those skills counted. Each name before
+the dash (split on "/", without anything in brackets) is now a ✅, as the profile intends. This
+can raise a rating: on saved postings, those asking for TDD moved up.
