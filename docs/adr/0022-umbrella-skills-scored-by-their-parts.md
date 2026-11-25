@@ -65,3 +65,11 @@ known term, a term has one umbrella, umbrellas may not nest) and fails loudly, a
   explained from the output by naming the part that earned it.
 - A new list for the owner to keep, the same accepted burden as `aliases.json` and the groups.
 - Some postings' ratings would move. Golden files for both vaults are reviewed in the same change.
+
+## Addendum: general kinds (2026-11-24)
+
+"Proficiency in common languages", "various databases" and "web front-end technology" are
+umbrellas too, scored by the best evidence among their listed parts, with the part named. Beside
+named examples ("modern languages (C#, Go, or similar)") the kind's name is not an option of its
+own. Also, an umbrella is not asked for separately when the same sentence names a part that says
+its name ("AI agents … the impact AI can have"). The part lists are the owner's to change.

@@ -14,11 +14,12 @@ growing amount of .NET work and that people with .NET experience were especially
 
 ## Decision
 
-1. A list introduced by "some of", "some or all of", "a few of" or "several of", then a colon,
-   dash or bracket, with at least three short names of which two are known skills, is **one
-   requirement**. After a colon the names may also stand on the bullets or indented lines
+1. A list introduced by "some of", "some or all of", "a few of", "several of" or "the skill set
+   (or skills) may include", then a colon, dash or bracket, with at least three short names of
+   which two are known skills, is **one requirement**. After a colon the names may also stand on the bullets or indented lines
    underneath; a sentence there gives the skills it names, and one naming none stays a line of its
-   own. The owner's scoring:
+   own. One lead-in line ("Expertise in the following tools:") may sit between them. The owner's
+   scoring:
    - ✅ two or more of the names have production evidence;
    - 🟡 any other current evidence (including exactly one name in production);
    - 🕰️ legacy evidence only;
@@ -50,3 +51,14 @@ growing amount of .NET work and that people with .NET experience were especially
   without a colon, dash or bracket.
 - Rule 5 matches one narrow way of stressing a skill. Other kinds of emphasis are left to the
   reader.
+
+## Addendum: a stack to know part of, and copies that lost their layout (2026-11-24)
+
+- A paragraph that says what the stack spans and then that not all of it is needed (or to be deep
+  in several of these) is a "some of" list. Names written as a pair ("TypeScript/Node.js") count
+  as two.
+- In a copy with no bullets or indents anywhere, a line of four words or more that names a skill
+  is a list item. A line stating that a skill is an asset is an item, never a heading.
+- A list that wraps after a comma, or names written one per line under the introduction at its own
+  indent, stay one list.
+- "●", "○" and similar marks are bullets.

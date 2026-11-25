@@ -353,7 +353,10 @@ def satisfied_by(term: str) -> tuple[str, ...]:
 # checklist (ADR 0038). A colon, dash or bracket is required: "exposure to the following for some
 # or all of that time" introduces no list.
 _SOME_OF_RE = re.compile(
-    r"\b(?:some(?:\s+or\s+all)?|a\s+few|several)\s+of\b[^:;()\n.]{0,80}?(?::|\s[-–—]\s|(?P<bracket>\())",
+    r"(?:\b(?:some(?:\s+or\s+all)?|a\s+few|several)\s+of\b|"
+    # "requirements vary, but the skillset may include:" names a pool in the same way
+    r"\b(?:skill\s*sets?|skills)\s+(?:may|might|could)\s+include\b)"
+    r"[^:;()\n.]{0,80}?(?::|\s[-–—]\s|(?P<bracket>\())",
     re.IGNORECASE,
 )
 # The list stops at a sentence break, or at a dash that adds a remark ("… AWS - we teach the rest")
@@ -366,6 +369,13 @@ _SOME_OF_MIN_NAMES = 3
 _SOME_OF_MIN_KNOWN = 2
 _SOME_OF_NAME_MAX_WORDS = 4
 SOME_OF_PREFIX = "some of: "
+
+
+_BRACKETED_RE = re.compile(r"\s*\([^()]*\)")
+_ITEM_VERSION_FLOOR_RE = re.compile(
+    r"(?:\s+v?\d+(?:\.\d+)*[a-z]?(?:\s+r\d)?)?\s+or\s+(?:later|higher|newer|above|greater)\b",
+    re.IGNORECASE,
+)
 
 
 def some_of_list(sentence: str) -> list[str] | None:
@@ -416,7 +426,11 @@ def introduces_some_of(line: str) -> bool:
 def names_in_list_item(item: str) -> list[str]:
     """What one line under a "some of …:" introduction adds to the list: a short line is a name
     ("Drupal", "Strong SQL skills" gives "SQL"); a sentence gives the skills it names."""
-    item = strip_skill_punctuation(_SOME_OF_ETC_RE.sub("", item))
+    item = _SOME_OF_ETC_RE.sub("", item)
+    # "(4.0 or higher)" and "2008 or later" say how new, not which skill
+    item = _BRACKETED_RE.sub("", item)
+    item = _ITEM_VERSION_FLOOR_RE.sub("", item)
+    item = strip_skill_punctuation(item)
     if not item or item.lower() in _SOME_OF_FILLER:
         return []
     if len(item.split()) <= _SOME_OF_NAME_MAX_WORDS:
@@ -796,8 +810,31 @@ def _expand_framework_examples(
     return out
 
 
+# Umbrellas that only stand for "any one of this kind"; naming members makes them redundant
+_GENERAL_KIND_ROOTS = ("common languages", "various databases", "web frontend technology")
+
+
+def _drop_general_kind_beside_members(entry: str) -> str:
+    """ "modern languages (C#, Go, or similar)": the examples are the choice, so the kind's own
+    name is not one of the options."""
+    parts = entry.split(" / ")
+    others = {part.lower() for part in parts}
+    kept = []
+    for part in parts:
+        members = umbrella_parts(part.lower())
+        general = members is not None and any(
+            members == umbrella_parts(root) for root in _GENERAL_KIND_ROOTS
+        )
+        if not (general and others & set(members or ())):
+            kept.append(part)
+    return " / ".join(kept)
+
+
 def _drop_covered_umbrellas(terms: list[str]) -> list[str]:
-    """ "AI" is not asked for separately when the same sentence names tools that make it up."""
+    """ "AI" is not asked for separately when the same sentence names tools that make it up, or
+    one of its parts that says its name ("AI agents … the impact AI can have")."""
+    terms = [_drop_general_kind_beside_members(term) for term in terms]
+    named_parts = {term.lower() for term in terms if umbrella_parts(term.lower()) is None}
     parts_present = {
         part.lower()
         for term in terms
@@ -809,6 +846,11 @@ def _drop_covered_umbrellas(terms: list[str]) -> list[str]:
     for term in terms:
         parts = umbrella_parts(term.lower())
         if parts is not None and parts_present & set(parts):
+            continue
+        word = re.compile(rf"(?<![a-z0-9]){re.escape(term.lower())}(?![a-z0-9])")
+        if parts is not None and any(
+            word.search(part) for part in named_parts & set(parts) if part != term.lower()
+        ):
             continue
         kept.append(term)
     return kept

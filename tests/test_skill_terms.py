@@ -451,6 +451,17 @@ def test_the_shipped_umbrella_terms() -> None:
         "deep learning",
         "cloud-native",
         "identity and access management",
+        # general kinds: "one or more common languages", "various databases"
+        "common languages",
+        "common programming languages",
+        "modern languages",
+        "modern programming languages",
+        "various databases",
+        "multiple databases",
+        "web frontend technology",
+        "web frontend technologies",
+        "web front-end technology",
+        "web front-end technologies",
     }
 
 
