@@ -32,9 +32,14 @@
   <div class="tablewrap"><table>
     <thead><tr><th scope="col">Skill</th><th scope="col">Evidence</th><th scope="col">Where</th></tr></thead>
     <tbody>{% for m in rows %}
-      <tr><th scope="row">{{ m.skill }}{% if m.core %} <span class="sub">(core)</span>{% endif %}</th>
-        <td><span aria-hidden="true">{{ status_words[m.status][0] }}</span> {{ status_words[m.status][1] }}</td>
-        <td>{{ m.evidence }}</td></tr>
+      <tr><th scope="row">{% if m.members %}Some of {{ m.members|length }} listed{% else %}{{ m.skill }}{% endif %}{% if m.core %} <span class="sub">(core)</span>{% endif %}</th>
+        <td><span aria-hidden="true">{{ status_words[m.rating_status][0] }}</span> {{ status_words[m.rating_status][1] }}</td>
+        <td>{% if m.members %}One requirement: met by two or more in production.{% else %}{{ m.evidence }}{% endif %}</td></tr>
+      {% for part in m.members %}
+      <tr><th scope="row"><span class="sub">listed:</span> {{ part.skill }}</th>
+        <td><span aria-hidden="true">{{ status_words[part.status][0] }}</span> {{ status_words[part.status][1] }}</td>
+        <td>{{ part.evidence }}</td></tr>
+      {% endfor %}
     {% endfor %}</tbody>
   </table></div>
   {% endif %}
@@ -43,7 +48,7 @@
   {% if d.fit.unscored_required %}<h3>Required lines not scored</h3><ul>{% for x in d.fit.unscored_required %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
   {% if d.fit.terms_to_confirm %}<h3>Words to confirm</h3><ul>{% for word, line in d.fit.terms_to_confirm %}<li><strong>{{ word }}</strong>: {{ line }}</li>{% endfor %}</ul>{% endif %}
   {% if d.fit.possible_typos %}<h3>Possible typos in the posting</h3><ul>{% for word, term, line in d.fit.possible_typos %}<li><strong>{{ word }}</strong> may be {{ term }}: {{ line }}</li>{% endfor %}</ul>{% endif %}
-  {% if d.fit.unknown_names %}<h3>Names to check</h3><ul>{% for word, term, line in d.fit.unknown_names %}<li><strong>{{ word }}</strong> is close to {{ term }}: {{ line }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.fit.unknown_names %}<h3>Names to check</h3><p class="sub">Named as examples but not in the skill list, so not scored.</p><ul>{% for name, line in d.fit.unknown_names %}<li><strong>{{ name }}</strong>: {{ line }}</li>{% endfor %}</ul>{% endif %}
   {% if d.fit.soft_requirements %}<h3>Also asked for (not scored)</h3><ul>{% for s in d.fit.soft_requirements %}<li><strong>{{ s.kind }}</strong>: {{ s.line }} <span class="sub">{{ s.note }}</span></li>{% endfor %}</ul>{% endif %}
 
   <h3>Pay</h3>

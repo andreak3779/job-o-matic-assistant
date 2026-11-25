@@ -24,10 +24,14 @@ from jobomatic.fit.terms import (
     find_possible_typos,
     find_terms_to_confirm,
     find_unknown_names,
+    introduces_some_of,
     is_kind_term,
+    names_in_list_item,
     names_mobile_in_a_list,
     phrase_expansion,
     reduce_to_terms,
+    some_of_item,
+    some_of_list,
     strip_skill_punctuation,
 )
 
@@ -538,6 +542,25 @@ def _looks_like_a_company_name(name: str) -> bool:
     )
 
 
+# Words that make the text after "Developer / …" part of the title: "/ Team Lead", "/ Back End"
+_TITLE_WORD_RE = re.compile(
+    r"\b(?:senior|junior|intermediate|sr|jr|back|front|full|stack|web|mobile|software|data|cloud|"
+    r"team|technical|intern|co-?op|bilingual|permanent|temporary)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_company_after_a_slash(name: str) -> bool:
+    """True when what follows "Title /" names an employer, not a second title, a skill or a way
+    of working ("Developer / Analyst", "Developer / C#", "Developer / Remote")."""
+    return (
+        _looks_like_a_company_name(name)
+        and not _ROLE_WORD_RE.search(name)
+        and not _TITLE_WORD_RE.search(name)
+        and not extract_skill_terms(name)
+    )
+
+
 def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
     """Title and company from the first line of a pasted posting, when it looks like a title.
 
@@ -561,6 +584,11 @@ def _first_line_title_company(text: str) -> tuple[str | None, str | None]:
                 _COMPANY_WORD_RE.search(dashed[1]) or _looks_like_a_company_name(dashed[1])
             ):
                 parts = dashed
+        if len(parts) < 2:
+            # "Back End Developer / Example Co": position / company
+            head, slash, tail = line.rpartition(" / ")
+            if slash and _is_company_after_a_slash(tail.strip()):
+                parts = [head.strip(), tail.strip()]
         if not _ROLE_WORD_RE.search(parts[0]):
             return None, None
         company = next(
@@ -756,7 +784,11 @@ def _split_required_or_nice(
     # "Entity Framework/Dapper") is one requirement met by either (ADR 0021).
     entries = extract_skill_terms(item)
     is_choice = False
-    if phrase_expansion(item):
+    if _CHOICE_INTRO_RE.match(item) and len(entries) == 1 and " / " in entries[0]:
+        # "One or more of: C#, Java": a short line that opens with the choice
+        pieces = entries
+        is_choice = True
+    elif phrase_expansion(item):
         # "AI-assisted automation techniques" stands for AI and workflow automation: two rows
         pieces = entries
         is_choice = True
@@ -799,6 +831,9 @@ def _split_required_or_nice(
         items.extend(pieces)
 
 
+_CHOICE_INTRO_RE = re.compile(
+    r"^(?:any|one\s+or\s+more|at\s+least\s+one|one)\s+of\b", re.IGNORECASE
+)
 # Two plain phrases joined by "or" and nothing else: no "and", slash, comma or bracket.
 _PLAIN_CHOICE_RE = re.compile(r"[^/,;()]+?\s+or\s+(?!and\b)[^/,;()]+?", re.IGNORECASE)
 FIRST_REQUIRED_LINES_ARE_CORE = 5
@@ -837,6 +872,90 @@ def _core_skills(items: list[str], positional: set[str], title: str, text: str) 
     return frozenset(core)
 
 
+# "we're seeing a growing amount of .NET work, so if you've got .NET experience, we especially
+# want to hear from you": what a posting says it especially wants is a requirement, even when the
+# list below calls it an asset.
+_ESPECIALLY_WANTED_RE = re.compile(
+    r"\b(?:especially|particularly)\s+(?:want|like|love|keen|eager|interested)\b[^.!?]{0,20}"
+    r"\b(?:hear|hearing)\s+from\s+you\b",
+    re.IGNORECASE,
+)
+
+
+def _especially_wanted(text: str) -> set[str]:
+    """The lowercased skill names in the sentences where the posting says what it especially
+    wants to hear about."""
+    return {
+        name.lower()
+        for line in text.splitlines()
+        for sentence in _SENTENCE_SPLIT_RE.split(line)
+        if _ESPECIALLY_WANTED_RE.search(sentence)
+        for entry in extract_skill_terms(sentence)
+        for name in entry.split(" / ")
+    }
+
+
+def _move(entries: list[str], source: list[str], target: list[str]) -> None:
+    for entry in entries:
+        source.remove(entry)
+    _add_unique(target, entries)
+
+
+def _indent(line: str) -> int:
+    return len(line.expandtabs(4)) - len(line.expandtabs(4).lstrip())
+
+
+def _fold_some_of_lists(lines: list[str]) -> list[str]:
+    """``lines`` with "some of the following:" and the bullets or indented lines under it made
+    into one line, so it is read like the same list written after the colon (ADR 0038).
+
+    Under a bullet only deeper-indented lines belong to it; under any other line, bullets and
+    indented lines do. The list is left as written unless it holds enough names to be one. A line
+    under it that names nothing ("A sentence about our team") stays a line of its own."""
+    out: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        intro = line.strip()
+        index += 1
+        if not introduces_some_of(intro):
+            out.append(line)
+            continue
+        names: list[str] = []
+        unread: list[str] = []
+        end = index
+        for position in range(index, len(lines)):
+            stripped = lines[position].strip()
+            if not stripped:
+                continue
+            deeper = _indent(lines[position]) > _indent(line)
+            if _is_bullet(intro):
+                belongs = deeper
+            else:
+                belongs = deeper or _is_bullet(stripped)
+            if not belongs or introduces_some_of(stripped):
+                break
+            found = names_in_list_item(_BULLET_MARKER_RE.sub("", stripped).strip())
+            names.extend(found)
+            if not found:
+                unread.append(lines[position])
+            end = position + 1
+        head = _BULLET_MARKER_RE.sub("", intro).strip()
+        folded = f"{head} {', '.join(names)}"
+        if some_of_list(folded) is None:
+            out.append(line)
+            continue
+        # "You have some of the following:" also opens the section, so it stays as a heading
+        if not _is_bullet(intro) and (
+            _REQUIRED_HEADING_RE.search(intro) or _NICE_HEADING_RE.search(intro)
+        ):
+            out.append(line)
+        out.append(f"- {folded}")
+        out.extend(unread)
+        index = end
+    return out
+
+
 def parse_jd(text: str) -> ParsedJD:
     """Naively extract required, nice skills, title and company from JD text.
 
@@ -857,11 +976,14 @@ def parse_jd(text: str) -> ParsedJD:
     required_line_no = 0
     required_lines_total = 0
     positional_core: set[str] = set()
+    # what each optional line added to (nice, nice_items), so a whole line can become required
+    optional_lines: list[tuple[list[str], list[str]]] = []
     # After a heading that ends in a colon ("Required Skills:"), plain unindented lines with no
     # end punctuation are its items: a copied page often loses the bullets and the indent.
     flat_items_ok = False
 
-    for raw in _unglue_bullets(_split_glued(_join_wrapped(text.splitlines()))):
+    prepared = _unglue_bullets(_split_glued(_join_wrapped(text.splitlines())))
+    for raw in _fold_some_of_lists(prepared):
         stripped = raw.strip()
         lower = stripped.lower()
         if not stripped or _OR_SEPARATOR_RE.match(stripped):
@@ -996,6 +1118,7 @@ def parse_jd(text: str) -> ParsedJD:
                 soft.append(soft_skill(raw_item))
                 continue
             items_before = len(required_items)
+            nice_before, nice_items_before = len(nice), len(nice_items)
             line_has_years = False
             if line_section == "required":
                 required_line_no += 1
@@ -1009,6 +1132,18 @@ def parse_jd(text: str) -> ParsedJD:
                 # a certificate or training line: listed, never scored (what it names is what the
                 # certificate covers, not skills the user is asked to have used)
                 soft.extend(classify_optional(raw_item))
+                continue
+            if line_section in ("required", "nice") and (pool := some_of_list(item)):
+                # "some of: A, B, C" is one requirement over a pool of names (ADR 0038)
+                _add_unique(required if line_section == "required" else nice, pool)
+                grouped = required_items if line_section == "required" else nice_items
+                _add_unique(grouped, [some_of_item(pool)])
+                if line_section == "required" and (
+                    required_line_no <= FIRST_REQUIRED_LINES_ARE_CORE or line_has_years
+                ):
+                    positional_core.add(some_of_item(pool).lower())
+                elif line_section == "nice":
+                    optional_lines.append((nice[nice_before:], nice_items[nice_items_before:]))
                 continue
             for name in find_unknown_names(item):
                 if name.lower() not in {seen.lower() for seen, _ in unknown}:
@@ -1045,6 +1180,15 @@ def parse_jd(text: str) -> ParsedJD:
                 required_line_no <= FIRST_REQUIRED_LINES_ARE_CORE or line_has_years
             ):
                 positional_core.update(i.lower() for i in required_items[items_before:])
+            elif line_section == "nice":
+                optional_lines.append((nice[nice_before:], nice_items[nice_items_before:]))
+
+    wanted = _especially_wanted(text)
+    for flat, items in optional_lines:
+        if any(name.lower() in wanted for item in items for name in _item_terms(item)):
+            _move(flat, nice, required)
+            _move(items, nice_items, required_items)
+            positional_core.update(item.lower() for item in items)
 
     # "Applicants must be authorized to work in Canada" sits in closing boilerplate as often as in
     # a requirements list: list it for the user wherever it stands.

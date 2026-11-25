@@ -1,6 +1,8 @@
 {
   "description": "Alias registry for the fit engine. Keys are normalized JD skill phrases; values are normalized terms that should also be searched in the profile.",
   "aliases": {
+    "nodejs": ["node.js"],
+    "nextjs": ["next.js"],
     "html5": ["html"],
     "css3": ["css"],
     "mobile development": ["ios", "android", "mobile apps", "mobile app development", "react native", "xamarin", "maui"],
@@ -41,7 +43,7 @@
     "integration testing": ["integration tests", "testing"],
     "legacy system modernization": ["legacy", "modernization", "migrate"],
     "docker": ["container", "containers", "dockerfile"],
-    "kubernetes": ["k8s", "container orchestration", "orchestration"],
+    "kubernetes": ["k8s"],
     "secure development": ["secure coding", "secure coding practices", "owasp"],
     "web application security": ["application security", "owasp", "secure coding", "api security"],
     "pen test": ["penetration testing", "pen testing"],

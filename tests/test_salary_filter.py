@@ -22,6 +22,10 @@ MINS = SearchConstraints(min_permanent_base_cad=85000, min_contract_hourly_cad=6
         ("base pay is below.: $126,225 CAD - $184,800 CAD", 126225, 184800, "annual"),
         ("100K CAD/yr - 115K CAD/yr", 100000, 115000, "annual"),
         ("Rate: $40/hr - $60/hr", 40, 60, "hourly"),
+        # a range written "between … and …" (eluta.ca posting)
+        ("hourly rates starting between $40 and $60 CAD.", 40, 60, "hourly"),
+        ("Salary between $76,000 and $94,000 per year", 76000, 94000, "annual"),
+        ("Rate between $40/hr and $60/hr", 40, 60, "hourly"),
     ],
 )
 def test_finds_pay(text, low, high, period) -> None:
@@ -194,3 +198,8 @@ def test_an_hourly_and_an_annual_figure_for_one_salary_do_not_warn() -> None:
 def test_a_contract_at_a_low_hourly_rate_is_below_the_minimum() -> None:
     text = "Structure: Contract, 1 opening\nRates: $40.00 per hour"
     assert assess_salary(text, MINS).below
+
+
+def test_between_a_figure_and_a_plain_number_is_not_a_range() -> None:
+    [pay] = find_pay("Salary between $76,000 and 10 days of vacation")
+    assert (pay.low, pay.high) == (76000, 76000)
