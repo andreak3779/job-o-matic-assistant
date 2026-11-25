@@ -32,5 +32,5 @@ description: >
 
 ## Principles
 - Concrete edits, not generic advice.
-- Pluralsight courses = proof of skill — cite them.
+- Pluralsight courses show training, not work experience: cite them as coursework.
 - Flag US-only postings.

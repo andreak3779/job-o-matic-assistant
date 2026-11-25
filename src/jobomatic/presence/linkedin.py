@@ -67,7 +67,7 @@ TRIM_EXTRA_TERMS = [
     "root cause",
     "Agile",
     "sprint",
-    "7×",
+    "8 hours to 1 hour",
 ]
 
 

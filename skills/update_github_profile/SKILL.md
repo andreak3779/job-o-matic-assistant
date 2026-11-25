@@ -51,11 +51,11 @@ description: >
 *(Profile → Edit profile → Bio · 160 char max)*
 
 ```
-Full-stack dev | C# · ASP.NET Core · Blazor · Angular · Azure · SQL | CI/CD · GitHub Actions · Copilot | {cert_status_short}
+Full-stack dev | C# · ASP.NET Core · Blazor (portfolio) · Angular · Azure · SQL | CI/CD · GitHub Actions · Copilot | {cert_status_short}
 ```
 *(recount before saving — must stay under 160 chars; trim "Copilot" first if over. Taglines omit "10+ yrs" on purpose; the README below keeps it)*
 
-> ⚠️ After passing AI-200: replace `AZ-900 Certified · AI-200 in progress` with `AZ-900 · AI-200 Certified`
+> ⚠️ After passing AI-200: replace the certification text with `AZ-900 · AI-200 Certified`
 > — recount to confirm under 160 chars before saving.
 
 ---
@@ -64,9 +64,9 @@ Full-stack dev | C# · ASP.NET Core · Blazor · Angular · Azure · SQL | CI/CD
 *(Click profile picture → Set status · 80 char max)*
 
 ```
-🚀 Open to work | .NET · Blazor · Angular · Azure | Building portfolio
+🚀 Open to work | .NET · Blazor (portfolio) · Angular · Azure
 ```
-*(69 chars)*
+*(60 chars)*
 
 **Settings:**
 - Emoji: 🚀
@@ -88,7 +88,7 @@ If the repo already exists, edit the existing `README.md`.
 
 Full-stack developer with 10+ years building enterprise applications.
 
-**Core stack:** C# · ASP.NET Core · Blazor · Angular · Azure · SQL Server
+**Core stack:** C# · ASP.NET Core · Blazor (portfolio) · Angular · Azure · SQL Server
 
 **Currently:** {cert_status_short} · Building portfolio projects · Open to work
 

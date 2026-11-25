@@ -26,7 +26,7 @@ Wrote <TMP>/out/li.md.meta.json
 |---|---|---|
 | Headline | 220 chars | Compute the actual length of the rendered headline at generation time — do not rely on a stored count, it drifts. |
 | About | 2,600 chars | Compute the actual length of the rendered About text (Step 1, after fragments are substituted) at generation time. |
-... (192 lines in all)
+... (185 lines in all)
 --- resource name=li.md.meta.json mime=application/json kind=text
 {
   "generated_at": "<NOW>",

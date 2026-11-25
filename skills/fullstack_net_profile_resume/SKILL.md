@@ -17,7 +17,7 @@ description: >
 
 Generates a canonical, ATS-safe resume and a customizable cover letter template
 rooted in the candidate's core identity: **C#, ASP.NET Core Web API, Entity Framework
-Core, Angular (v12–21), TypeScript, MS SQL Server.**
+Core, Angular (v12–14 production), TypeScript, MS SQL Server.**
 
 > **Content format:** `python -m jobomatic render schema resume` and `render schema cover-letter`.
 > **Profile** (run before Step 1): `python -m jobomatic
@@ -55,10 +55,10 @@ Core stack to foreground in every section:
 |---|---|
 | Language / Runtime | C#, .NET / .NET Core |
 | API / Backend | ASP.NET Core Web API, REST, Entity Framework Core |
-| Frontend | Angular (v12–21), TypeScript, RxJS |
+| Frontend | Angular (v12–14 production), TypeScript, RxJS |
 | Data | MS SQL Server, T-SQL, SSIS |
 | Cloud | Microsoft Azure ({cert_status_short}) |
-| DevOps / Tooling | GitHub Copilot Enterprise, Azure DevOps, Docker, GitHub Actions |
+| DevOps / Tooling | GitHub Copilot, Azure DevOps, Docker, GitHub Actions |
 
 ---
 
@@ -71,8 +71,8 @@ Pattern: `[Years] of experience building [identity] · [top differentiator] · [
 Draft:
 > "Full-Stack .NET Developer with 10+ years delivering enterprise-grade
 > applications using C#, ASP.NET Core Web API, Entity Framework Core, and Angular.
-> Azure-certified (AZ-900) with a track record of legacy modernization, 7× SSIS
-> performance improvement, and deep GitHub Copilot enterprise experience."
+> Azure-certified (AZ-900) with a track record of legacy modernization, an SSIS
+> process cut from 8 hours to 1 hour, and GitHub Copilot experience."
 
 Never assume a specific cert's status. Read the profile output's Cert Registry
 fresh each generation and phrase the cert line to match exactly what's certified vs.
@@ -89,11 +89,11 @@ Suggested groupings (use labels exactly as written — these match ATS scanners)
 
 ```
 Languages & Frameworks   C#, .NET / .NET Core, ASP.NET Core Web API, Entity Framework Core
-Frontend                 Angular (v12–21), TypeScript, RxJS, HTML5, CSS3
+Frontend                 Angular (v12–14 production), TypeScript, RxJS, HTML5, CSS3
 Databases                MS SQL Server, T-SQL, SSIS, Entity Framework Core Migrations
 Cloud & DevOps           Microsoft Azure (AZ-900), Azure DevOps, Docker, GitHub Actions, GitLab CI/CD
 Testing                  xUnit, NUnit, Moq, integration testing
-Tools & Practices        GitHub Copilot Enterprise, Visual Studio, VS Code, Git, Agile/Scrum
+Tools & Practices        GitHub Copilot, Visual Studio, VS Code, Git, Agile/Scrum
 ```
 
 Prune any grouping with fewer than 2 entries. Do NOT add skills not present in
@@ -104,7 +104,7 @@ the profile output.
 Selection criteria for a platform resume (no JD to match):
 
 - **Lead with impact** — metrics, scale, modernization outcomes preferred over task descriptions
-- **Always include** the 7× SSIS performance story (Example Pharmacy)
+- **Always include** the SSIS performance story, 8 hours to 1 hour (Example Pharmacy)
 - **Always include** at least one Angular modernization bullet per employer where it applies
 - **Always include** at least one ASP.NET Core Web API bullet per employer where it applies
 - **Cap at 4–5 bullets per role** — platform resume must stay ≤ 2 pages
@@ -156,19 +156,19 @@ Draft:
 
 ### WHAT I BRING (4–5 bullets — pick from this list, ordered by impact)
 
-1. **Full-stack .NET delivery** — C#, ASP.NET Core Web API, EF Core, Angular (v12–21), TypeScript in production
-2. **Legacy modernization** — Led VB.NET → C#/.NET Core migrations at three consecutive employers
-3. **Performance engineering** — Redesigned SSIS ETL pipeline, delivering 7× throughput improvement
-4. **Azure cloud** — {cert_status_short}; hands-on Azure DevOps, Docker, GitHub Actions
-5. **GitHub Copilot Enterprise** — {github_copilot_course_count} enterprise Copilot courses; led AI-assisted development adoption
+1. **Full-stack .NET delivery** — C#, ASP.NET Core Web API, EF Core, Angular (v12–14), TypeScript in production
+2. **Legacy modernization** — Migration projects at three employers: MS Access to ASP.NET Web Forms, Clipper to SQL Server, and ASP.NET Web Forms to Angular
+3. **Performance engineering** — Cut an SSIS data transformation from 8 hours to 1 hour
+4. **Azure and delivery** — {cert_status_short}; Azure DevOps and Docker at work, GitHub Actions in portfolio projects
+5. **GitHub Copilot** — {github_copilot_course_count} Copilot courses; AI-assisted development in portfolio projects
 
 Select 4 bullets for the template. Keep item 1 always. Rotate items 2–5 based on
 role type if the user later tailors this letter.
 
 ### TWO HIGHLIGHTS (use most recent / most impactful employers)
 
-- **Acme Software** — Delivered full-stack .NET features and led SSIS performance work
-- **Globex Industrial** — Angular and ASP.NET Core modernization across enterprise product lines
+- **Acme Software** — Angular and ASP.NET Core modernization
+- **Example Pharmacy** — Led SSIS performance work
 
 Pull exact employer names and date ranges from the profile output.
 

@@ -10,8 +10,8 @@ Load this file when preparing for a specific interview stage. Tailor to the role
 | Question | Talking point |
 |---|---|
 | "Tell me about your .NET experience." | ASP.NET Core path (Big Picture → Fundamentals → MVC → EF Core → Debugging), anchor with labs. |
-| "What Azure services have you worked with?" | AZ-900→AI-200 progression; call out hands-on labs specifically. |
-| "Pursuing certifications?" | AZ-900 complete, AI-200 in progress (AI integration and prompt engineering focus). |
+| "What Azure services have you worked with?" | AZ-900 certification; call out hands-on labs specifically. |
+| "Pursuing certifications?" | AZ-900 complete. |
 | "Why this company/role?" | 2 specific reasons — prep per company, don't generalize. |
 
 ---
@@ -62,4 +62,4 @@ Pre-build answers for:
 - Disagreeing with a technical decision — and what happened
 - Mentoring or helping a colleague
 
-> Leverage the 18 leadership/communication Pluralsight courses as evidence of intentional professional development — not just technical skills.
+> Leverage the {leadership_course_count} leadership/communication Pluralsight courses as evidence of intentional professional development — not just technical skills.

@@ -88,11 +88,11 @@ Full-Stack .NET Developer | C# · ASP.NET Core · Angular · Azure | {cert_statu
 *(Indeed: Profile → Summary. ZipRecruiter: Profile → About.)*
 
 ```
-Full-stack developer with 10+ years of enterprise experience in C#, ASP.NET Core Web API, Entity Framework Core and Microsoft SQL Server, with Angular and TypeScript on the front end. Built ASP.NET Core APIs and Angular 12 to 14 features at Acme Software, and integrated HubSpot, Microsoft Dynamics 365 and SharePoint through a real-time C# API at Globex Industrial. CI/CD on GitLab, Azure DevOps and GitHub Actions, deployed with Docker.
+Full-stack developer with 10+ years of enterprise experience in C#, ASP.NET Core Web API, Entity Framework Core and Microsoft SQL Server, with Angular and TypeScript on the front end. Built ASP.NET Core APIs and Angular 12 to 14 features at Acme Software, and integrated HubSpot, Microsoft Dynamics 365 and SharePoint through a real-time C# API at Globex Industrial. CI/CD on GitLab and Azure DevOps, deployed with Docker; GitHub Actions in portfolio projects.
 
 {cert_status_short}. Completed training in Azure Functions, App Services, Azure Monitor, Entra ID and serverless architecture. Uses GitHub Copilot and Claude Code, and has completed {github_copilot_course_count} GitHub Copilot courses covering secure coding, CI/CD integration and AI-assisted testing.
 
-Led legacy modernization at three employers (ASP.NET Web Forms to Angular, MS Access to ASP.NET Web Forms on SQL Server, Clipper to SQL Server), and practices TDD with xUnit and Moq.
+Worked on legacy modernization at three employers: ASP.NET Web Forms to Angular as part of a team, and, working solo, MS Access to ASP.NET Web Forms on SQL Server and Clipper to SQL Server. Practices TDD with xUnit and Moq.
 
 Open to software developer and full-stack .NET roles. Remote in Canada preferred, based in <home city, province>.
 ```
@@ -110,8 +110,8 @@ materially, using the same rules as the LinkedIn skill's Step 4:
 
 ```
 C#, ASP.NET Core, Angular, Microsoft Azure, CI/CD, Entity Framework Core, TypeScript,
-Microsoft SQL Server, T-SQL, Azure Functions, Azure DevOps, Docker, GitHub Actions,
-Git, xUnit, JWT, Microservices, GitHub Copilot, Microsoft Dynamics 365, SharePoint Online
+Microsoft SQL Server, T-SQL, Azure DevOps, Docker,
+Git, xUnit, JWT, GitHub Copilot, Microsoft Dynamics 365, SharePoint Online
 ```
 
 ---
@@ -158,5 +158,5 @@ Run this checklist after AI-200 results:
 | Field | AI-200 Passed |
 |---|---|
 | Headline | Add "· AI-200 Certified" |
-| Summary | Replace "actively working toward AI-200" paragraph with certified language |
+| Summary | Add the certification |
 | Job Alerts / preferences | No change needed |

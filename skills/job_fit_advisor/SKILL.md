@@ -57,8 +57,8 @@ Roles where:
 
 From `profile show`, pull the top 3–4 differentiators that strengthen the
 application across all tiers. These should be specific and evidence-backed —
-not generic ("10 years experience") but anchored ("7× SSIS performance
-improvement", "3-employer legacy modernization track record").
+not generic ("10 years experience") but anchored ("SSIS process cut from
+8 hours to 1 hour", "3-employer legacy modernization track record").
 
 ---
 

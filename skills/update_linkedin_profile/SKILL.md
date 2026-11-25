@@ -79,16 +79,16 @@ Character Limits table above.)*
 ```
 I'm a full-stack developer with 10+ years of enterprise experience in C#, ASP.NET Core Web API, Entity Framework Core and Microsoft SQL Server, with Angular and TypeScript on the front end. At Acme Software I built ASP.NET Core APIs and Angular 12 to 14 features for a benefits administration platform, wrote xUnit and Moq tests, and covered on-call production support.
 
-A lot of my work has been modernizing legacy systems, and I've done it at three employers: ASP.NET Web Forms to Angular, MS Access to ASP.NET Web Forms on SQL Server, and a Clipper application to SQL Server. At Globex Industrial I built a real-time C#/ASP.NET Core API that fixed data mismatches between HubSpot and Dynamics 365 Sales. At Example Pharmacy I cut a drug data SSIS process from 8 hours to 1.
+A lot of my work has been modernizing legacy systems, at three employers: ASP.NET Web Forms to Angular as part of a team, and, working solo, MS Access to ASP.NET Web Forms on SQL Server and a Clipper application to SQL Server. At Globex Industrial I built a real-time C#/ASP.NET Core API that fixed data mismatches between HubSpot and Dynamics 365 Sales. At Example Pharmacy I cut a drug data SSIS process from 8 hours to 1.
 
 {cert_status_short}. I use GitHub Copilot, Claude Code and Ollama in my development work, and I've completed {github_copilot_course_count} GitHub Copilot courses and {leadership_course_count} leadership and communication courses. Two portfolio projects on GitHub show how I work: CookingTime, a legacy WinForms app rebuilt in .NET 10 Blazor with layered unit, component and integration tests, a blocking CI coverage gate and a review against the OWASP Top 10, and job-o-matic-assistant, a Python MCP server and command-line toolkit with import-linter layer contracts and a CI test matrix across Python 3.11 to 3.14.
 
 Core stack:
-Backend: C#, ASP.NET Core (Web API, MVC), Blazor, .NET Framework, Entity Framework Core, REST API design
-Frontend: Angular, TypeScript, RxJS, NgRx, Angular Material
+Backend: C#, ASP.NET Core (Web API, MVC), Blazor (portfolio), .NET Framework, Entity Framework Core, REST API design
+Frontend: Angular, TypeScript, RxJS, NgRx (coursework), Angular Material
 Database: Microsoft SQL Server, T-SQL, stored procedures, query optimization, SSIS, SSRS
-Cloud: Azure (Functions, App Services, Monitor, Entra ID), AZ-900 certified
-DevOps and testing: GitLab CI/CD, Azure DevOps, GitHub Actions, Docker, xUnit, Moq, Jest
+Cloud: Azure (Entra ID; App Services and Azure Monitor coursework), AZ-900 certified
+DevOps and testing: GitLab CI/CD, Azure DevOps, GitHub Actions (portfolio), Docker, xUnit, Moq, Jest
 
 Open to software developer and full-stack .NET roles. Remote in Canada preferred. I'm based in the home city.
 ```
@@ -120,7 +120,7 @@ Upskilling and expanding portfolio while actively seeking a full-stack .NET deve
 
 - {course_count_sentence} across Azure, ASP.NET Core, Angular, GitHub Copilot, DevOps, Python, and leadership.
 - {cert_status_short}.
-- Building portfolio projects on GitHub — derive the repo list and one-clause hook for each at generation time from the profile output's `## Portfolio Projects` table (name + shortest differentiator from its description), not from a fixed list, so a new or updated repo shows up automatically. Current example: "CookingTime (.NET 10 Blazor legacy migration, 118 automated tests), Resume_Site (GitHub Actions CI/CD), and awk_linux_scripts (hardware inspection + automated update/cleanup scripts)."
+- Building portfolio projects on GitHub — derive the repo list and one-clause hook for each at generation time from the profile output's `## Portfolio Projects` table (name + shortest differentiator from its description), not from a fixed list, so a new or updated repo shows up automatically. Current example: "CookingTime (.NET 10 Blazor legacy migration, 256 automated tests), Resume_Site (GitHub Actions CI/CD), and awk_linux_scripts (hardware inspection + automated update/cleanup scripts)."
 - Deepened GitHub Copilot expertise: enterprise deployment, AI agents, secure development, CI/CD integration, and automated test generation.
 - Designed AI-assisted workflows using prompt engineering and structured instruction systems to produce gap analyses, learning plans, and tailored application documents.
 ```
@@ -182,7 +182,7 @@ Re-evaluate this top 5 only if the primary tech stack changes (e.g. a new portfo
 project anchors a different language/framework) — don't reshuffle it for every profile
 refresh.
 
-**Full list to add — curated, 45 terms (50 is LinkedIn's cap, and 5 are pinned above):**
+**Full list to add — curated, 38 terms (50 is LinkedIn's cap, and 5 are pinned above):**
 ```
 .NET
 Entity Framework Core
@@ -193,7 +193,6 @@ ASP.NET Web API
 TypeScript
 JavaScript
 RxJS
-NgRx
 SQL Server Integration Services (SSIS)
 SQL Server Reporting Services (SSRS)
 Stored Procedures
@@ -205,19 +204,14 @@ xUnit
 Jest
 Docker
 GitLab
-GitHub Actions
 Azure DevOps
-Azure Functions
 Microsoft Entra ID
 Git
 GitHub Copilot
 Prompt Engineering
 Generative AI
-Clean Architecture
 SOLID Principles
 Object-Oriented Programming (OOP)
-Domain-Driven Design
-Microservices
 Service-Oriented Architecture (SOA)
 OAuth
 JSON Web Token (JWT)
@@ -228,7 +222,6 @@ Agile Methodologies
 Scrum
 Code Review
 Legacy System Modernization
-Blazor
 ```
 
 How this list is chosen, and when to change it:
@@ -238,7 +231,8 @@ How this list is chosen, and when to change it:
 2. Keep clean, single-concept nouns that map to a real LinkedIn skill tag.
 3. Leave out skills the profile marks `(course-level)`, `(portfolio-level)` or `(lab-level)`
    only (for example GraphQL, gRPC, PostgreSQL, MongoDB, Redis, Kubernetes, Terraform,
-   CQRS, Azure Service Bus, Azure Cosmos DB, Python). LinkedIn tags carry no such
+   CQRS, Azure Service Bus, Azure Cosmos DB, Python, Azure Functions, Microservices,
+   Domain-Driven Design, Clean Architecture, Blazor, NgRx, GitHub Actions). LinkedIn tags carry no such
    qualifier, so they would read as production experience. The user can add any the candidate is
    comfortable defending in an interview.
 4. Revisit this list whenever the Technical Skills section changes materially (a new

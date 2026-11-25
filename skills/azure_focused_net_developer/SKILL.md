@@ -28,15 +28,18 @@ description: >
 
 ## Core Stack (quick reference)
 
-| Layer | Technologies |
-|-------|-------------|
-| Cloud | Azure (see the facts output above for cert status) · Functions · Serverless · Security |
-| Backend | ASP.NET Core · C# · .NET 10 · EF Core · REST APIs · Microservices · DDD |
-| Frontend | Angular · React · Bootstrap 5 |
-| DevOps | Docker · Kubernetes · GitHub Actions · CI/CD |
-| AI | GitHub Copilot ({github_copilot_course_count} courses) · Prompt Engineering · AI Agents |
-| Scripting | Python 3 · Linux / Unix / Bash · Shell scripting · PowerShell · AWK |
-| Portfolio | The projects in the profile output's Portfolio Projects table (use only what is listed there) |
+The level beside each item matters: never present coursework or portfolio work as work
+experience. The profile is the authority; if it differs from this table, follow the profile.
+
+| Layer | At work | Portfolio or coursework only |
+|-------|---------|------------------------------|
+| Cloud | Azure (virtual machines, Azure AD, Application Insights); cert status from the facts output | Azure Functions, serverless (coursework) |
+| Backend | ASP.NET Core · C# · EF Core · REST APIs | .NET 10 (portfolio) · Microservices, DDD (coursework) |
+| Frontend | Angular · Bootstrap | React (coursework) |
+| DevOps | Docker · GitLab CI/CD · Azure DevOps | GitHub Actions (portfolio) · Kubernetes (coursework) |
+| AI | none | GitHub Copilot ({github_copilot_course_count} courses) · prompt engineering · AI agents (portfolio and coursework) |
+| Scripting | Linux · shell scripting · PowerShell · Python (limited) | Python 3 (portfolio and coursework) · AWK (portfolio) |
+| Portfolio | none | The projects in the profile output's Portfolio Projects table (use only what is listed there) |
 
 ---
 
@@ -52,7 +55,7 @@ Extract ATS keywords → map to experience + Pluralsight credentials + portfolio
 - **Summary**: lead with Azure + .NET; include cert status from the facts output.
 - **Skills**: list Azure services explicitly, not just "cloud."
 - **Experience**: measurable impact; inject missing keywords naturally.
-- **Certs**: Pluralsight path completions as evidence.
+- **Certs**: only certifications from the profile's cert table. Course and path completions are training, not certifications.
 - **Portfolio**: where relevant, reference GitHub projects as applied evidence (from the profile output's Portfolio Projects table; use only what is listed there).
 
 For DOCX output → use the **create-a-cover-letter-and-tailored-resume-for-job-description** skill.
