@@ -86,7 +86,7 @@
 
 ### Behavioral Stories Ready (STAR Format)
 - [ ] **Legacy modernization** — [Brief: WinForms → Angular]
-- [ ] **Performance optimization** — [Brief: 7× SSIS improvement]
+- [ ] **Performance optimization** — [Brief: SSIS process cut from 8 hours to 1 hour]
 - [ ] **Cross-functional collaboration** — [Brief: DBAs + Frontend team coordination]
 - [ ] **Handling ambiguity** — [Brief: Leading technical decisions with incomplete info]
 - [ ] **Conflict resolution** — [Brief: Disagreement on architecture choice]

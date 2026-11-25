@@ -16,7 +16,7 @@ description: >
 # Full-Stack .NET Developer — Profile Resume PDF
 
 Generates a canonical, ATS-safe PDF resume rooted in the candidate's core identity:
-**C#, ASP.NET Core Web API, Entity Framework Core, Angular (v12–21), TypeScript,
+**C#, ASP.NET Core Web API, Entity Framework Core, Angular (v12–14 production), TypeScript,
 MS SQL Server.**
 
 > **Source** (run before Step 1): `python -m jobomatic
@@ -50,10 +50,10 @@ Core stack to foreground:
 |---|---|
 | Language / Runtime | C#, .NET / .NET Core |
 | API / Backend | ASP.NET Core Web API, REST, Entity Framework Core |
-| Frontend | Angular (v12–21), TypeScript, RxJS |
+| Frontend | Angular (v12–14 production), TypeScript, RxJS |
 | Data | MS SQL Server, T-SQL, SSIS |
 | Cloud | Microsoft Azure (AZ-900 certified) |
-| DevOps / Tooling | GitHub Copilot Enterprise, Azure DevOps, Docker, GitHub Actions |
+| DevOps / Tooling | GitHub Copilot, Azure DevOps, Docker, GitHub Actions |
 
 ---
 
@@ -68,7 +68,7 @@ Order: Core .NET stack → Frontend → Data → Cloud/DevOps → Testing → AI
 
 ### Experience Bullets
 - Lead with impact — metrics, scale, modernization outcomes
-- Always include 7× SSIS performance story (Example Pharmacy)
+- Always include the SSIS performance story, 8 hours to 1 hour (Example Pharmacy)
 - Always include at least one Angular modernization bullet per relevant employer
 - Always include at least one ASP.NET Core Web API bullet per relevant employer
 - Cap at 4–5 bullets per role — PDF must stay ≤ 2 pages
@@ -145,7 +145,7 @@ Tell the user the PDF's path under `outputs/templates/`.
 
 **Inline summary after presenting:**
 - Cert status applied (AZ-900 certified; AI-200 omitted — on hold)
-- 7× SSIS differentiator included
+- SSIS speed-up differentiator included
 - Legacy modernization track record surfaced
 - Page count confirmed
 - ATS upload recommendation: DOCX preferred on most platforms; use this PDF for printing, email, or platforms that explicitly require PDF

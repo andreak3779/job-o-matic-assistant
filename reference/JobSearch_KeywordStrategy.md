@@ -123,7 +123,7 @@ signals it is a good fit:
 |---|---|
 | "C#" + "Angular" together | Direct full-stack match |
 | "Legacy modernization" or "migration" | Differentiator — 3 employers |
-| "Azure Functions" or "Azure Developer" | AZ-900 certified + AI-200 in progress |
+| "Azure Functions" or "Azure Developer" | AZ-900 certified |
 | "Entity Framework" or "EF Core" | Production depth |
 | "CI/CD" + "Azure DevOps" or "GitLab" | Direct match |
 | "TDD" or "xUnit" | Acme Software evidence |
