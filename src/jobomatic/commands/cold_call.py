@@ -20,6 +20,7 @@ from jobomatic.commands.support import (
     require_path,
     say,
 )
+from jobomatic.documents import skim
 from jobomatic.documents.adapters.docx_layout import (
     BODY_SIZE,
     add_paragraph,
@@ -63,6 +64,24 @@ def _describe(text: str | None, source: Path | None) -> tuple[str, str]:
     return "Your Company", text
 
 
+def _portfolio_highlight(project: Any) -> str:
+    """Name one project and its stack, then the first whole sentence of its description."""
+    stack = clean_stack(project.stack, limit=3)
+    built_with = f", built with {stack}" if stack else ""
+    lead = f"A recent example is {project.name}{built_with}."
+    parts = skim.sentences(" ".join(project.description.split()))
+    if not parts:
+        return lead
+    first = parts[0] if parts[0].endswith((".", "!", "?")) else f"{parts[0]}."
+    return f"{lead} {first}"
+
+
+def _spoken_role(headline: str) -> str:
+    """The headline's role alone, so its "| ..." parts don't land mid-sentence. Keeps bold."""
+    role = headline.replace("**", "").split("|")[0].strip()
+    return f"**{role}**" if "**" in headline else role
+
+
 def _select_evidence(profile: Any, company: str, role_type: str | None = None) -> dict[str, Any]:
     """Pick a short hook, 2–3 bring-items, and a closing for a cold outreach.
 
@@ -76,20 +95,17 @@ def _select_evidence(profile: Any, company: str, role_type: str | None = None) -
     has_portfolio = bool(profile.projects)
     has_differentiators = bool(top_differentiators)
 
-    differentiator_text = (
-        "; ".join(top_differentiators) if top_differentiators else profile.identity.headline
-    )
     role_clause = f" for {role_type}" if role_type else ""
 
+    role = _spoken_role(profile.identity.headline)
     if has_differentiators or has_portfolio:
         hook = (
-            f"I'm a {profile.identity.headline}, and {company} looks like a place where my work "
-            f"could fit. I wanted to introduce myself in case you're hiring{role_clause}. "
-            f"A few things about me: {differentiator_text}."
+            f"I'm a {role}, and {company} looks like a place where my work "
+            f"could fit. I wanted to introduce myself in case you're hiring{role_clause}."
         )
     else:
         hook = (
-            f"I'm a {profile.identity.headline}, and I'm interested in what {company} is building. "
+            f"I'm a {role}, and I'm interested in what {company} is building. "
             f"I'd like a quick chat about opportunities{role_clause} where my background could help."
         )
 
@@ -110,15 +126,7 @@ def _select_evidence(profile: Any, company: str, role_type: str | None = None) -
         bring.append({"label": cat.category, "body": f"Background includes {skills}."})
 
     # Portfolio highlight (one only, cold letters stay short).
-    portfolio_highlight = ""
-    if has_portfolio:
-        project = profile.projects[0]
-        stack = clean_stack(project.stack, limit=3)
-        portfolio_highlight = (
-            f"A recent example is {project.name}, built with {stack}, where {project.description[:140].rstrip('.')}..."
-            if stack
-            else f"A recent example is {project.name}, where {project.description[:160].rstrip('.')}..."
-        )
+    portfolio_highlight = _portfolio_highlight(profile.projects[0]) if has_portfolio else ""
 
     closing = (
         f"I'd like to hear what {company} is working on and where I might help. "

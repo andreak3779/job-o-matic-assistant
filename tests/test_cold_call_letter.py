@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
 from docx import Document
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -58,13 +59,58 @@ def test_select_evidence_uses_differentiators_and_portfolio() -> None:
     evidence = _select_evidence(profile, "Acme")
 
     assert "Acme" in evidence["hook"]
-    assert "Full-stack depth" in evidence["hook"]
+    assert "Full-stack depth" not in evidence["hook"]  # said once, in the bullets
     assert len(evidence["bring"]) == 2
     assert evidence["bring"][0]["label"] == "Full-stack depth"
     assert "MoviesApp" in evidence["portfolio_highlight"]
     assert "evidence_sources" in evidence
     assert "MoviesApp" in evidence["evidence_sources"]
     assert not evidence["low_confidence"]
+
+
+@pytest.mark.parametrize(
+    ("description", "stack", "expected"),
+    [
+        (
+            "A movie catalog, " + "with a long first sentence " * 8 + "to finish. More detail.",
+            ["React"],
+            "A recent example is MoviesApp, built with React. A movie catalog, "
+            + "with a long first sentence " * 8
+            + "to finish.",
+        ),
+        (
+            "A catalog on ASP.NET Core and .NET 10",
+            [],
+            "A recent example is MoviesApp. A catalog on ASP.NET Core and .NET 10.",
+        ),
+        ("", ["React"], "A recent example is MoviesApp, built with React."),
+    ],
+)
+def test_portfolio_highlight_ends_on_a_whole_sentence(
+    description: str, stack: list[str], expected: str
+) -> None:
+    profile = _make_profile(
+        portfolio_projects=[{"name": "MoviesApp", "description": description, "stack": stack}]
+    )
+    assert _select_evidence(profile, "Acme")["portfolio_highlight"] == expected
+
+
+@pytest.mark.parametrize("differentiators", [["Full-stack depth"], []])
+@pytest.mark.parametrize(
+    ("headline", "said"),
+    [
+        ("**Full-Stack Engineer | Enterprise Applications**", "**Full-Stack Engineer**"),
+        ("Full-Stack Engineer | Enterprise Applications | 8+ Years", "Full-Stack Engineer"),
+        ("Full-Stack Engineer", "Full-Stack Engineer"),
+    ],
+)
+def test_hook_says_only_the_role_from_the_headline(
+    differentiators: list[str], headline: str, said: str
+) -> None:
+    profile = make_profile(
+        headline=headline, differentiators=differentiators, portfolio_projects=[]
+    )
+    assert _select_evidence(profile, "Acme")["hook"].startswith(f"I'm a {said}, and ")
 
 
 def test_select_evidence_falls_back_when_sparse() -> None:
