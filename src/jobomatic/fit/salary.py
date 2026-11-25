@@ -60,7 +60,18 @@ _BEFORE_SKIP_RE = re.compile(
     re.IGNORECASE,
 )
 _PAY_WORD_RE = re.compile(
-    r"(?:salary|pay|compensation|rate|base|wage|range|remuneration)\W", re.IGNORECASE
+    r"(?:salary|pay|compensation|rates?|base|wage|range|remuneration)\W", re.IGNORECASE
+)
+# "between $40 and $60": a range written with "and". The second figure must carry a "$" or a
+# currency code, so "between $5,000 and 10 days" is left alone.
+_BETWEEN_RE = re.compile(
+    r"(\bbetween\s+(?:(?:" + _CODE + r"|US|CA|C|A)\s?)?\$\s?(?:" + _NUM + r")\s?[kK]?"
+    r"(?:\s?(?:"
+    + _CODE
+    + r")\b)?(?:\s?/\s?(?:yr|year|hr|hour|annum)\b)?)\s+and\s+(?=(?:(?:"
+    + _CODE
+    + r"|US|CA|C|A)\s?)?\$)",
+    re.IGNORECASE,
 )
 _CONTRACT_RE = re.compile(
     r"\b(?:contract (?:role|position|opportunity|basis|assignment|term|to hire)|"
@@ -119,6 +130,7 @@ def _scaled(num: str, k: str | None) -> float:
 def find_pay(text: str) -> list[Pay]:
     """Every plausible pay figure in ``text`` (empty when the posting states none)."""
     found: list[tuple[Pay, bool]] = []
+    text = _BETWEEN_RE.sub(r"\1 to ", text)
     for match in _PAY_RE.finditer(text):
         before = text[max(0, match.start() - 30) : match.start()]
         after = text[match.end() : match.end() + 25]

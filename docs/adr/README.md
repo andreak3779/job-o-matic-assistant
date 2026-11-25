@@ -51,3 +51,4 @@ status below says so.
 | [0035](0035-render-tools-for-claude-desktop.md) | Claude Desktop writes tailored documents through render tools (schema, draft, render), gated like the generators, instead of only the rule-based generators | Accepted |
 | [0036](0036-resume-selected-projects-section.md) | The resume has a Selected Projects section: pinned projects first, the best match next, trimmed after the roles | Accepted |
 | [0037](0037-a-thin-read-needs-the-users-yes.md) | A Strong or Good rating that rests on a thin read of the posting needs the user's explicit yes before documents are generated | Accepted |
+| [0038](0038-some-of-lists-and-especially-wanted-skills.md) | A "some of" list is one requirement shown name by name; a skill the posting says it especially wants is required | Accepted |

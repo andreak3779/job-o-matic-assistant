@@ -3,7 +3,7 @@
   "terms": [
     "c#", "f#", "vb.net", ".net", ".net core", ".net framework", "asp.net", "asp.net core", "asp.net mvc", "asp.net core mvc", "asp.net core blazor", "asp.net web forms", "web forms", "mvc", "asp.net web api", "web api", "webapi", "blazor", "razor pages", "entity framework", "entity framework core", "ef core", "dapper", "linq", "signalr", "wpf", "winforms", "maui", "nuget", "nhibernate", "hibernate", "mongoose", "sequelize", "prisma", "junit",
     "java", "kotlin", "scala", "javascript", "typescript", "python", "golang", "go", "rust", "ruby", "php", "swift", "c++", "sql", "t-sql", "pl/sql", "powershell", "bash", "shell scripting",
-    "angular", "react", "react.js", "react native", "vue", "vue.js", "svelte", "next.js", "node.js", "nodejs", "express", "nestjs", "rxjs", "ngrx", "html", "html5", "css", "css3", "sass", "bootstrap", "jquery", "webpack", "nx",
+    "angular", "react", "react.js", "react native", "vue", "vue.js", "svelte", "next.js", "nextjs", "node.js", "nodejs", "drupal", "wordpress", "shopify", "lando", "acumatica", "ubuntu", "express", "nestjs", "rxjs", "ngrx", "html", "html5", "css", "css3", "sass", "bootstrap", "jquery", "webpack", "nx",
     "django", "flask", "fastapi", "spring", "spring boot", "laravel", "rails", "ruby on rails",
     "azure", "aws", "gcp", "google cloud", "azure functions", "azure devops", "azure openai", "azure ai", "azure ai search", "azure app service", "app service", "container apps", "azure container apps", "azure kubernetes service", "aks", "cosmos db", "service bus", "event grid", "event hubs", "key vault", "app configuration", "application insights", "azure monitor", "azure sql", "azure storage", "blob storage", "api management", "microsoft entra", "entra id", "azure ad", "managed identity", "lambda", "ec2", "ecs", "rds", "redshift", "cloudwatch", "s3", "cloudformation", "cloud-native", "serverless",
     "terraform", "bicep", "arm templates", "pulumi", "ansible", "infrastructure as code", "iac",
@@ -61,7 +61,7 @@
   "alternative_groups": {
     "orm": ["entity framework", "entity framework core", "ef core", "dapper", "nhibernate", "hibernate", "mongoose", "sequelize", "prisma"],
     "cloud platform": ["azure", "aws", "gcp", "google cloud"],
-    "front-end framework": ["angular", "react", "react.js", "vue", "vue.js", "svelte", "next.js"],
+    "front-end framework": ["angular", "react", "react.js", "vue", "vue.js", "svelte", "next.js", "nextjs"],
     "server-side language": ["c#", "java", "kotlin", "scala", "python", "golang", "go", "rust", "ruby", "php"],
     "relational database": ["sql server", "postgresql", "postgres", "mysql", "oracle", "sqlite", "db2"],
     "nosql database": ["mongodb", "dynamodb", "cassandra", "cosmos db"],
@@ -81,5 +81,7 @@
     "database kind": ["sql", "nosql"]
   },
   "subsumed_description": "A term that already names the terms inside it: 'Ruby on Rails' is one skill, so a sentence naming it does not also ask for 'Ruby' and 'Rails' as separate rows. Keys and values must be in 'terms'.",
-  "subsumed": {"ruby on rails": ["ruby", "rails"]}
+  "subsumed": {"ruby on rails": ["ruby", "rails"]},
+  "satisfied_by_description": "One-way evidence: a requirement for the key is also met by any of the values (a Linux requirement is met by Ubuntu experience), never the other way round (a Linux line does not show Ubuntu). A key is any requirement wording; values must be in 'terms'.",
+  "satisfied_by": {"linux": ["ubuntu"], "container orchestration": ["kubernetes", "k8s"], "containerization": ["docker", "containers"]}
 }

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
@@ -12,7 +13,13 @@ from jobomatic.fit.gap_coaching import GapCoachingEntry
 from jobomatic.fit.location import LocationAssessment
 from jobomatic.fit.parser import ParsedJD, is_prose_requirement
 from jobomatic.fit.soft_requirements import LABELS, SoftRequirement, with_education_on_file
-from jobomatic.fit.terms import extract_skill_terms, strip_skill_punctuation, umbrella_parts
+from jobomatic.fit.terms import (
+    extract_skill_terms,
+    satisfied_by,
+    some_of_members,
+    strip_skill_punctuation,
+    umbrella_parts,
+)
 from jobomatic.profile.model import Profile
 
 MatchStatus = Literal["match", "portfolio", "course", "legacy", "gap"]
@@ -30,6 +37,17 @@ class SkillMatch:
     core: bool = False
     """A core requirement (ADR 0021): named in the title, early in the list, carrying a years
     figure, or mentioned twice. Only core gaps can make a posting Stretch or Pass by themselves."""
+    members: tuple[SkillMatch, ...] = ()
+    """The listed names of a "some of" requirement, each rated on its own (ADR 0038). ``skill``
+    then names only those that share the evidence shown, so a document claims nothing more."""
+    rated_as: MatchStatus | None = None
+    """The status the rating counts when it differs from the evidence: one production tool out of a
+    "some of" list is truthfully ``match`` but counts as 🟡."""
+
+    @property
+    def rating_status(self) -> MatchStatus:
+        """What the rating and the fit table count: ``rated_as`` when set, else ``status``."""
+        return self.rated_as or self.status
 
     @property
     def is_grounded(self) -> bool:
@@ -98,8 +116,10 @@ class FitResult:
         Two reasons: no required skill could be read, or fewer than ``LOW_CONFIDENCE_MIN_SKILLS``
         could be while some required line named none; or more than half of those read are 🔴."""
         count = len(self.required)
+        # A "some of" row was read from several names, so it is not a thin read.
+        read = sum(len(m.members) or 1 for m in self.required)
         unscored = len(self.unscored_required)
-        if count == 0 or (count < LOW_CONFIDENCE_MIN_SKILLS and unscored):
+        if count == 0 or (read < LOW_CONFIDENCE_MIN_SKILLS and unscored):
             lines = f"{unscored} required line{'s' if unscored != 1 else ''}"
             tail = f", and {lines} named no skill the tool knows" if unscored else ""
             if count == 0:
@@ -114,7 +134,7 @@ class FitResult:
             )
         if (
             self.required_line_count >= LOW_CONFIDENCE_MIN_LINES
-            and count * LOW_CONFIDENCE_LINES_PER_SKILL <= self.required_line_count
+            and read * LOW_CONFIDENCE_LINES_PER_SKILL <= self.required_line_count
         ):
             return (
                 f"Only {count} required skill{'s' if count != 1 else ''} could be read from "
@@ -230,6 +250,22 @@ def skill_match_terms(skill: str) -> list[str]:
     return list(dict.fromkeys(terms))
 
 
+# "Containerization and Kubernetes deployment are planned, not done": work a project has not done
+# is not evidence of it.
+_NOT_BUILT_RE = re.compile(
+    r"\bplanned,?\s+(?:but\s+)?not\s+(?:yet\s+)?(?:done|built|started|implemented)\b|"
+    r"\b(?:is|are)\s+(?:still\s+)?planned\b|"
+    r"\bnot\s+yet\s+(?:done|built|started|implemented)\b",
+    re.IGNORECASE,
+)
+_PROJECT_SENTENCE_RE = re.compile(r"(?<=[.;!?])\s+")
+
+
+def _built_only(text: str) -> str:
+    """``text`` without the sentences about work that is still to be done."""
+    return " ".join(s for s in _PROJECT_SENTENCE_RE.split(text) if not _NOT_BUILT_RE.search(s))
+
+
 def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
     """Return (status, evidence) for a single skill against the profile."""
     skill_lower = _normalize(raw_skill)
@@ -255,7 +291,9 @@ def _has_skill(profile: Profile, raw_skill: str) -> tuple[MatchStatus, str]:
 
     # Portfolio evidence
     for project in profile.projects:
-        text = f"{project.name} {' '.join(project.stack)} {project.description} {' '.join(project.skills_evidence)}".lower()
+        parts = [project.name, " ".join(project.stack), _built_only(project.description)]
+        parts += [_built_only(line) for line in project.skills_evidence]
+        text = " ".join(parts).lower()
         if _match_terms(skill_terms, text):
             return "portfolio", f"{project.name}: portfolio"
 
@@ -309,6 +347,7 @@ def _expand_terms(skill: str) -> list[str]:
     for key, aliases in _ALIASES.items():
         if skill == key or skill in aliases:
             terms.extend([key] + aliases)
+    terms.extend(satisfied_by(skill))
     return list(dict.fromkeys(terms))
 
 
@@ -384,6 +423,8 @@ def rate_fit(
     # A skill the posting asks for as required and also lists as a bonus is one skill: counting it
     # again as a nice-to-have present would help a Good rating reach Strong on the same evidence.
     required_names = {s.strip().lower() for s in required}
+    for name in list(required_names):
+        required_names.update(some_of_members(name) or ())
     nice_to_have = [s for s in nice_to_have if s.strip().lower() not in required_names]
     required_matches = [
         replace(_classify(skill, profile, case_of.get(skill)), core=skill in core_skills)
@@ -460,7 +501,48 @@ def _has_umbrella(profile: Profile, parts: tuple[str, ...]) -> tuple[MatchStatus
     return best[0], f"{best[1]} [via {best[2]}]"
 
 
+# A "some of" list is met when this many of its names have production evidence (ADR 0038).
+SOME_OF_PRODUCTION_NEEDED = 2
+
+
+def _classify_some_of(skill: str, names: list[str], profile: Profile) -> SkillMatch:
+    """One row for a "some of" list: ✅ with two or more names in production, 🟡 with any other
+    current evidence, 🕰️ with legacy evidence only, 🔴 with none. A name with no evidence is never
+    a gap of its own."""
+    rows = tuple(_classify(name, profile) for name in names)
+    production = [m for m in rows if m.status == "match"]
+    current = [m for m in rows if m.status in ("match", "portfolio", "course")]
+    legacy = [m for m in rows if m.status == "legacy"]
+    rated_as: MatchStatus | None = None
+    if len(production) >= SOME_OF_PRODUCTION_NEEDED:
+        # show the source that covers the most of them
+        sources = [m.evidence for m in production]
+        shown = max(production, key=lambda m: sources.count(m.evidence))
+    elif current:
+        shown = max(current, key=lambda m: _STATUS_RANK[m.status])
+        if shown.status == "match":
+            rated_as = "course"
+    elif legacy:
+        shown = legacy[0]
+    else:
+        return SkillMatch(
+            skill=" / ".join(names), status="gap", evidence="no evidence", members=rows
+        )
+    named = " / ".join(
+        m.skill for m in rows if (m.status, m.evidence) == (shown.status, shown.evidence)
+    )
+    return SkillMatch(
+        skill=named,
+        status=shown.status,
+        evidence=shown.evidence,
+        members=rows,
+        rated_as=rated_as,
+    )
+
+
 def _classify(skill: str, profile: Profile, original: str | None = None) -> SkillMatch:
+    if (names := some_of_members(skill)) is not None:
+        return _classify_some_of(skill, names, profile)
     parts = umbrella_parts(skill)
     if parts is not None:
         status, evidence = _has_umbrella(profile, parts)
@@ -670,7 +752,7 @@ def _derive_rating(required: list[SkillMatch], nice: list[SkillMatch]) -> tuple[
 def _count_statuses(matches: list[SkillMatch]) -> dict[str, int]:
     counts: dict[str, int] = {"match": 0, "portfolio": 0, "course": 0, "legacy": 0, "gap": 0}
     for m in matches:
-        counts[m.status] += 1
+        counts[m.rating_status] += 1
     return counts
 
 
@@ -694,6 +776,51 @@ def _display_evidence(evidence: str) -> str:
     return evidence.replace(": ", ", ", 1)
 
 
+def row_label(match: SkillMatch) -> str:
+    """The requirement's name in a table: a "some of" row says how many names it stands for."""
+    if match.members:
+        return f"some of {len(match.members)} listed"
+    return match.skill
+
+
+def row_evidence(match: SkillMatch, evidence: str) -> str:
+    """``evidence`` for a table row: a "some of" row counts its names instead."""
+    if not match.members:
+        return evidence
+    production = sum(1 for m in match.members if m.status == "match")
+    none = sum(1 for m in match.members if m.status == "gap")
+    other = len(match.members) - production - none
+    return f"{production} in production, {other} other, {none} without evidence (listed below)"
+
+
+def _fit_row(m: SkillMatch) -> str:
+    emoji = _STATUS_EMOJI[m.rating_status]
+    return f"| {row_label(m)} | {emoji} | {row_evidence(m, _display_evidence(m.evidence))} |"
+
+
+def render_some_of_lists(
+    result: FitResult, clean: Callable[[str], str] = lambda evidence: evidence
+) -> list[str]:
+    """Markdown lines showing every name of each "some of" requirement; empty when there is none.
+    ``clean`` rewrites an evidence string before it is shown (the gap report hides some of it)."""
+    lines: list[str] = []
+    for title, matches in (("required", result.required), ("nice to have", result.nice_to_have)):
+        for match in matches:
+            if not match.members:
+                continue
+            lines.append("")
+            lines.append(
+                f'**"Some of" list ({title})** — one requirement: ✅ with two or more in '
+                "production, 🟡 with any other evidence, 🔴 with none"
+            )
+            lines.append("| Listed | Status | Evidence |")
+            lines.append("|---|---|---|")
+            for m in match.members:
+                shown = _display_evidence(clean(m.evidence))
+                lines.append(f"| {m.skill} | {_STATUS_EMOJI[m.status]} | {shown} |")
+    return lines
+
+
 def render_fit_table(result: FitResult) -> str:
     """Render a FitResult as markdown suitable for CLI or skill output."""
     lines: list[str] = []
@@ -703,16 +830,15 @@ def render_fit_table(result: FitResult) -> str:
     lines.append("| Skill | Status | Evidence |")
     lines.append("|---|---|---|")
     for m in result.required:
-        lines.append(f"| {m.skill} | {_STATUS_EMOJI[m.status]} | {_display_evidence(m.evidence)} |")
+        lines.append(_fit_row(m))
     if result.nice_to_have:
         lines.append("")
         lines.append("**Nice-to-Haves**")
         lines.append("| Skill | Status | Evidence |")
         lines.append("|---|---|---|")
         for m in result.nice_to_have:
-            lines.append(
-                f"| {m.skill} | {_STATUS_EMOJI[m.status]} | {_display_evidence(m.evidence)} |"
-            )
+            lines.append(_fit_row(m))
+    lines.extend(render_some_of_lists(result))
     if result.unscored_required:
         lines.append("")
         lines.append("**Required lines not scored** (no recognizable skill — read these yourself)")

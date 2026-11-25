@@ -32,8 +32,10 @@ _CLAUSE_BREAK_RE = re.compile(r"\s+and\s+|[;:]")
 # or at an "and" that starts a new requirement ("... Cursor, and experience with Docker").
 _EXAMPLES_RE = re.compile(
     r"\b(?:such as|for example|including|like)\b|\be\.g\.?(?![a-z0-9])|"
-    # "any of the technologies the product runs on: Go, Typescript, React": any one will do
-    r"\bany of\b[^:;()\n]{0,80}:|\bany of\b",
+    # "any of the technologies the product runs on: Go, Typescript, React": any one will do, as
+    # with "one or more of" and "at least one of"
+    r"\b(?:any|one or more|at least one) of\b[^:;()\n]{0,80}:|"
+    r"\b(?:any|one or more|at least one) of\b|\bone of the following\b[^:;()\n]{0,80}:?",
     re.IGNORECASE,
 )
 _PAREN_OPEN_RE = re.compile(r"\(")
@@ -136,6 +138,31 @@ def load_phrase_expansions(
             if term not in known:
                 raise ValueError(f"phrase expansion {phrase!r}: {term!r} is not in 'terms'")
         out[str(phrase).strip().lower()] = cleaned
+    return out
+
+
+def load_satisfied_by(
+    path: Path | None = None, vocabulary: tuple[str, ...] | None = None
+) -> dict[str, tuple[str, ...]]:
+    """``{required term: terms whose evidence also meets it}``, one way only; fail loudly on a
+    bad entry."""
+    if path is None:
+        path = Path(__file__).with_name("skill_vocabulary.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    known = set(vocabulary if vocabulary is not None else load_vocabulary(path))
+    raw = data.get("satisfied_by", {})
+    if not isinstance(raw, dict):
+        raise ValueError("skill_vocabulary.json 'satisfied_by' must be an object")
+    out: dict[str, tuple[str, ...]] = {}
+    for name, parts in raw.items():
+        key = str(name).strip().lower()
+        if not isinstance(parts, list) or not parts or not all(isinstance(p, str) for p in parts):
+            raise ValueError(f"satisfied_by {key!r} needs a non-empty list of terms")
+        cleaned = tuple(p.strip().lower() for p in parts)
+        for term in cleaned:
+            if term not in known:
+                raise ValueError(f"satisfied_by {key!r}: {term!r} is not in 'terms'")
+        out[key] = cleaned
     return out
 
 
@@ -317,6 +344,100 @@ def strip_skill_punctuation(text: str) -> str:
     return re.sub(r"^\.+(?![A-Za-z0-9])\s*", "", text)
 
 
+def satisfied_by(term: str) -> tuple[str, ...]:
+    """The terms whose evidence also meets a requirement for ``term`` ("linux": "ubuntu")."""
+    return _SATISFIED_BY.get(term, ())
+
+
+# "Experience with some of what we work with: PHP, Drupal, AWS": a pool to know part of, not a
+# checklist (ADR 0038). A colon, dash or bracket is required: "exposure to the following for some
+# or all of that time" introduces no list.
+_SOME_OF_RE = re.compile(
+    r"\b(?:some(?:\s+or\s+all)?|a\s+few|several)\s+of\b[^:;()\n.]{0,80}?(?::|\s[-–—]\s|(?P<bracket>\())",
+    re.IGNORECASE,
+)
+# The list stops at a sentence break, or at a dash that adds a remark ("… AWS - we teach the rest")
+_SOME_OF_END_RE = re.compile(r";|\s[-–—]\s|(?<=[A-Za-z0-9+#)])\.\s+(?=[A-Z])")
+_SOME_OF_ETC_RE = re.compile(r"\(\s*etc\.?\s*\)", re.IGNORECASE)
+# Commas outside brackets, and "and" / "or" between the last two names
+_SOME_OF_SPLIT_RE = re.compile(r",(?![^()]*\))|\s+(?:and/or|and|or)\s+(?![^()]*\))")
+_SOME_OF_FILLER = frozenset({"etc", "more", "other", "others", "similar", "so on", "the like"})
+_SOME_OF_MIN_NAMES = 3
+_SOME_OF_MIN_KNOWN = 2
+_SOME_OF_NAME_MAX_WORDS = 4
+SOME_OF_PREFIX = "some of: "
+
+
+def some_of_list(sentence: str) -> list[str] | None:
+    """The names listed after "some of …" and a colon, dash or bracket, as the posting writes
+    them, else ``None``.
+
+    Every name is returned, known to the vocabulary or not, so none disappears. A list counts only
+    with at least three short names, two of them known skills: "some of our benefits: …" is not one.
+    """
+    sentence = _SOME_OF_ETC_RE.sub("", sentence)
+    found = _SOME_OF_RE.search(sentence)
+    if not found:
+        return None
+    tail = sentence[found.end() :]
+    if found["bracket"]:  # "some of our stack (A, B (C), D)": up to the bracket that closes it
+        depth = 1
+        for index, char in enumerate(tail):
+            depth += {"(": 1, ")": -1}.get(char, 0)
+            if depth == 0:
+                tail = tail[:index]
+                break
+    end = _SOME_OF_END_RE.search(tail)
+    tail = tail[: end.start() if end else len(tail)]
+    names: list[str] = []
+    for piece in _SOME_OF_SPLIT_RE.split(tail):
+        name = re.sub(r"^(?:and/or|and|or)\s+", "", piece.strip(), flags=re.IGNORECASE)
+        name = strip_skill_punctuation(name)
+        if not name or name.lower() in _SOME_OF_FILLER:
+            continue
+        if len(name.split()) > _SOME_OF_NAME_MAX_WORDS:
+            return None
+        if name.lower() not in (n.lower() for n in names):
+            names.append(name)
+    known = sum(1 for name in names if _TERM_RE.search(name.lower()))
+    if len(names) < _SOME_OF_MIN_NAMES or known < _SOME_OF_MIN_KNOWN:
+        return None
+    return names
+
+
+def introduces_some_of(line: str) -> bool:
+    """True for a line that ends where its "some of" list should start: "some of these:"."""
+    found = _SOME_OF_RE.search(line)
+    if found is None or not line.rstrip().endswith(":"):
+        return False
+    return not line[found.end() :].strip()
+
+
+def names_in_list_item(item: str) -> list[str]:
+    """What one line under a "some of …:" introduction adds to the list: a short line is a name
+    ("Drupal", "Strong SQL skills" gives "SQL"); a sentence gives the skills it names."""
+    item = strip_skill_punctuation(_SOME_OF_ETC_RE.sub("", item))
+    if not item or item.lower() in _SOME_OF_FILLER:
+        return []
+    if len(item.split()) <= _SOME_OF_NAME_MAX_WORDS:
+        entries = reduce_to_terms(item) or [item.replace(" / ", "/")]
+    else:
+        entries = extract_skill_terms(item)
+    return [name for entry in entries for name in entry.split(" / ")]
+
+
+def some_of_item(names: list[str]) -> str:
+    """The one rated item that stands for a "some of" list."""
+    return SOME_OF_PREFIX + " / ".join(names)
+
+
+def some_of_members(item: str) -> list[str] | None:
+    """The names inside a ``some_of_item``, or ``None`` for any other requirement."""
+    if not item.lower().startswith(SOME_OF_PREFIX):
+        return None
+    return item[len(SOME_OF_PREFIX) :].split(" / ")
+
+
 def _compile(terms: tuple[str, ...]) -> re.Pattern[str]:
     # Longest first so "azure devops" wins over "azure" at the same position.
     alternation = "|".join(re.escape(t) for t in sorted(terms, key=len, reverse=True))
@@ -336,6 +457,7 @@ _LIST_ONLY = load_list_only(vocabulary=_VOCABULARY)
 _KIND_NOUNS = load_kind_nouns(vocabulary=_VOCABULARY)
 _OR_OTHER = load_or_other(vocabulary=_VOCABULARY)
 _SUBSUMED = load_subsumed(vocabulary=_VOCABULARY)
+_SATISFIED_BY = load_satisfied_by(vocabulary=_VOCABULARY)
 _MEMBERS_OF: dict[str, list[str]] = {}
 for _term, _group in _GROUP_OF.items():
     _MEMBERS_OF.setdefault(_group, []).append(_term)
@@ -733,7 +855,7 @@ def _bracket_example_runs(
 # "Solid understanding of…" says the understanding is good; it is not SOLID, the design principles.
 _SOLID_ADJECTIVE_RE = re.compile(
     r"\bsolid(?=\s+(?:understanding|experience|knowledge|grasp|foundations?|background|proficiency|"
-    r"command|expertise|familiarity)\b)",
+    r"command|expertise|familiarity|hands[\s-]on)\b)",
     re.IGNORECASE,
 )
 
@@ -816,7 +938,10 @@ def find_unknown_names(sentence: str) -> list[str]:
             name = piece.strip(" :()").rstrip(". ")
             if not name or not name[0].isupper() or len(name.split()) > 3:
                 continue
-            if extract_skill_terms(name) or name.lower() in (n.lower() for n in found):
+            # "Go" alone reads as the verb, but it is in the skill list, not an unknown name
+            if name.lower() in _VOCABULARY or extract_skill_terms(name):
+                continue
+            if name.lower() in (n.lower() for n in found):
                 continue
             found.append(name)
     return found

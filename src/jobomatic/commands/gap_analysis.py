@@ -13,7 +13,15 @@ from pathlib import Path
 from jobomatic import bootstrap
 from jobomatic.applications import outputs
 from jobomatic.commands.support import logged_messages, require_path
-from jobomatic.fit.engine import LOW_CONFIDENCE_MESSAGE, FitResult, SkillMatch, rate_parsed_jd
+from jobomatic.fit.engine import (
+    LOW_CONFIDENCE_MESSAGE,
+    FitResult,
+    SkillMatch,
+    rate_parsed_jd,
+    render_some_of_lists,
+    row_evidence,
+    row_label,
+)
 from jobomatic.fit.parser import parse_jd
 from jobomatic.fit.soft_requirements import LABELS
 from jobomatic.results import CommandResult, emit, failure, guarded, ok
@@ -194,18 +202,19 @@ def _render_report(
     lines.append("| Requirement | Status | Evidence |")
     lines.append("|---|---|---|")
     for m in result.required:
-        status = _STATUS_LABELS[m.status]
-        evidence = _sanitize_evidence(m.evidence)
-        lines.append(f"| {m.skill} | {status} | {evidence} |")
+        status = _STATUS_LABELS[m.rating_status]
+        evidence = row_evidence(m, _sanitize_evidence(m.evidence))
+        lines.append(f"| {row_label(m)} | {status} | {evidence} |")
     if result.nice_to_have:
         lines.append("")
         lines.append("### Nice-to-Have Skills")
         lines.append("| Skill | Status | Evidence |")
         lines.append("|---|---|---|")
         for m in result.nice_to_have:
-            status = _STATUS_LABELS[m.status]
-            evidence = _sanitize_evidence(m.evidence)
-            lines.append(f"| {m.skill} | {status} | {evidence} |")
+            status = _STATUS_LABELS[m.rating_status]
+            evidence = row_evidence(m, _sanitize_evidence(m.evidence))
+            lines.append(f"| {row_label(m)} | {status} | {evidence} |")
+    lines.extend(render_some_of_lists(result, _sanitize_evidence))
     if result.unscored_required:
         lines.append("")
         lines.append("### Required lines not scored")

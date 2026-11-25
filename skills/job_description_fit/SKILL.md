@@ -64,6 +64,10 @@ because the rating does not cover them. If the table is full of 🔴 rows that a
 whole sentences, the extraction missed; treat the rating as unreliable and parse
 by hand.
 
+If the output has a **"Some of" list** table, the posting asked for some of those names, not all
+of them, so the list is one required row (✅ two or more in production, 🟡 any other evidence, 🔴
+none; ADR 0038). Show the table. A name in it without evidence is not a gap to close.
+
 If the output has a **Low-confidence result** notice, the posting was read thinly (few
 required skills, lines no skill could be read from, or more than half the skills show no
 evidence). Say so, and tell the user to read the posting themselves before relying on the

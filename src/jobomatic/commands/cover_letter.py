@@ -42,10 +42,13 @@ from jobomatic.results import CommandResult, Message, emit
 
 def _display_skill(skill: str, parsed: Any) -> str:
     """Return the skill as the JD wrote it (``.NET``, ``SQL Server``), not the lower-cased match key."""
-    for original in parsed.required + parsed.nice_to_have:
-        if original.lower() == skill.lower():
-            skill = original
-            break
+    originals = {o.lower(): o for o in parsed.required + parsed.nice_to_have}
+    parts = skill.lower().split(" / ")
+    if skill.lower() in originals:
+        skill = originals[skill.lower()]
+    elif len(parts) > 1 and all(part in originals for part in parts):
+        # the evidenced names of a "some of" list, each as the posting wrote it
+        skill = " / ".join(originals[part] for part in parts)
     else:
         skill = skill.upper() if len(skill) <= 3 else skill.title()
     return f".{skill}" if skill.upper().startswith("NET ") else skill

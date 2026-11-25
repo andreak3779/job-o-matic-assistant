@@ -66,6 +66,22 @@ def test_the_page_is_a_rendering_of_the_result_and_drops_nothing(browser: Browse
         assert html.escape(soft.line) in page
 
 
+def test_a_some_of_list_shows_every_name(browser: Browser) -> None:
+    posting = "Dev\n\n## Requirements\n- Some of our stack: C#, SQL, Lando\n"
+    page = _page(browser.post("/fit", {"posting": posting}))
+    assert "Some of 3 listed" in page
+    for part in fit_check.run(posting).data.fit.required[0].members:
+        assert html.escape(part.skill) in page
+
+
+def test_a_name_the_skill_list_does_not_know_is_shown(browser: Browser) -> None:
+    posting = "Dev\n\n## Requirements\n- Experience with tools such as Frobnicator\n- C#\n"
+    assert fit_check.run(posting).data.fit.unknown_names
+    reply = browser.post("/fit", {"posting": posting})
+    assert reply.status_code == 200
+    assert "<strong>Frobnicator</strong>" in _page(reply)
+
+
 def test_a_location_pass_says_pass_and_why(browser: Browser) -> None:
     posting = _posting(QUEBEC)
     data = fit_check.run(posting).data
