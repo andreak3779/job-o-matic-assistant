@@ -62,3 +62,12 @@ growing amount of .NET work and that people with .NET experience were especially
 - A list that wraps after a comma, or names written one per line under the introduction at its own
   indent, stay one list.
 - "●", "○" and similar marks are bullets.
+
+## Addendum: "some combination of" (2026-11-26)
+
+- "Some combination of", "some mix of" and "some subset of" introduce a list too, with or without
+  a colon.
+- A line under the introduction that calls a skill an asset stays optional, and a remark about
+  what is not required ("knowing every one isn't required") is read on its own line.
+  Neither joins the list.
+- A sentence under the introduction gives the skills it names in brackets as well.

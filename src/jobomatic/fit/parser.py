@@ -360,6 +360,15 @@ _LABEL_LINE_END_RE = re.compile(
     r"work\s+arrangement|salary|pay)\s*:",
     re.IGNORECASE,
 )
+# A pay or benefits line that lost its "What we offer" heading ("Competitive pay …",
+# "Flexible time off …"): it closes the skills list the same way the heading would.
+_BENEFIT_LINE_RE = re.compile(
+    r"^(?:competitive\s+(?:base\s+)?(?:salary|compensation|pay|wage)|"
+    r"comprehensive\s+(?:health|medical|dental|benefits)|"
+    r"(?:health|medical)(?:\s*,|\s+and|\s*&)\s+(?:dental|vision)|"
+    r"(?:flexible|unlimited)\s+(?:paid\s+)?(?:time[\s-]off|pto|vacation))\b",
+    re.IGNORECASE,
+)
 # Closing boilerplate of a posting: never a requirement, wherever the section state stands.
 _CLOSING_BOILERPLATE_RE = re.compile(
     r"committed\s+to\s+(?:inclusion|diversity|equity|equal)|encourages?\s+applications|"
@@ -998,6 +1007,21 @@ def _indent(line: str) -> int:
     return len(line.expandtabs(4)) - len(line.expandtabs(4).lstrip())
 
 
+# "Knowing every one of these isn't required": a remark about the list, not a name in it
+_NOT_REQUIRED_REMARK_RE = re.compile(
+    r"\b(?:isn['’]?t|is\s+not|aren['’]?t|are\s+not)\s+(?:strictly\s+)?"
+    r"(?:required|necessary|expected)\b",
+    re.IGNORECASE,
+)
+
+
+def _stands_outside_the_list(line: str) -> bool:
+    """A line under a "some of" introduction that is read on its own: it marks a skill as an asset
+    (so it is optional, not part of the pool) or remarks on what the list does not require."""
+    marked_optional = _NICE_PHRASE_RE.search(line) and not _STRONGLY_PREFERRED_RE.search(line)
+    return bool(marked_optional or _NOT_REQUIRED_REMARK_RE.search(line))
+
+
 # A second line between the introduction and its list: "Expertise in the following tools:"
 _LIST_LEAD_IN_RE = re.compile(r"\bthe following\b[^:]{0,80}:$", re.IGNORECASE)
 
@@ -1082,12 +1106,13 @@ def _fold_some_of_lists(lines: list[str]) -> list[str]:
                 belongs = deeper or _is_bullet(stripped) or (level and _is_bare_name(stripped))
             if not belongs or introduces_some_of(stripped):
                 break
-            found = names_in_list_item(_BULLET_MARKER_RE.sub("", stripped).strip())
+            item = _BULLET_MARKER_RE.sub("", stripped).strip()
+            found = [] if _stands_outside_the_list(item) else names_in_list_item(item)
             names.extend(found)
             if not found:
                 unread.append(lines[position])
             end = position + 1
-        head = _BULLET_MARKER_RE.sub("", intro).strip()
+        head = _BULLET_MARKER_RE.sub("", intro).strip().rstrip(":") + ":"
         folded = f"{head} {', '.join(names)}"
         if some_of_list(folded) is None:
             out.append(line)
@@ -1202,8 +1227,10 @@ def parse_jd(text: str) -> ParsedJD:
             list_is_marked = False
             flat_items_ok = False
             continue
-        if (not is_bullet and _LABEL_LINE_END_RE.match(stripped)) or _CLOSING_BOILERPLATE_RE.search(
-            stripped
+        if (
+            (not is_bullet and _LABEL_LINE_END_RE.match(stripped))
+            or _BENEFIT_LINE_RE.match(_BULLET_MARKER_RE.sub("", stripped))
+            or _CLOSING_BOILERPLATE_RE.search(stripped)
         ):
             section = None
             list_is_marked = False

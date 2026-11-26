@@ -406,8 +406,10 @@ def test_generate_learning_plan_writes_pdf(tmp_path: Path) -> None:
         # phrase doesn't tokenize down to "azure monitor" since "with" isn't
         # a recognized splitter, so it doesn't hit the coursework match
         # despite "Azure Monitor" appearing in technical_skills) -> Stretch.
-        # ADR 0021: the same skills now read "Worth a try" (no core gap, two thirds covered).
-        ("cloud-devops-jd.md", "Worth a try"),
+        # ADR 0021: the same skills then read "Worth a try" (no core gap, two thirds covered).
+        # That counted Docker as production because CI/CD evidence stood in for it; Docker is
+        # coursework in the demo profile, so coverage is 55% and the rating is Stretch.
+        ("cloud-devops-jd.md", "Stretch"),
         ("frontend-angular-jd.md", "Pass"),
         # Same strong skills, different location: the location rules (Quebec,
         # hybrid outside Springfield) force Pass; remote / Springfield stay Strong.

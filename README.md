@@ -142,7 +142,7 @@ The engine handles:
 - **Years-prefix normalization** — "5+ years of C#" becomes "c#" before matching.
 - **Genuine-gap fallback** — skills explicitly listed as known genuine gaps can still earn `portfolio` or `course` status if the gap record says so.
 
-Alias data lives in [`src/jobomatic/fit/aliases.json`](src/jobomatic/fit/aliases.json) and the skill vocabulary in [`skill_vocabulary.json`](src/jobomatic/fit/skill_vocabulary.json) (ADR 0009). They are loaded at import time and checked by the test suite. To add a synonym pair or a skill term, edit the JSON file and run `pytest tests/test_fit_engine.py tests/test_jd_parser.py`; no Python code changes are required. Soft-skill phrases are in `soft_skill_phrases.json` (ADR 0023).
+Alias data lives in [`src/jobomatic/fit/aliases.json`](src/jobomatic/fit/aliases.json) and the skill vocabulary in [`skill_vocabulary.json`](src/jobomatic/fit/skill_vocabulary.json) (ADR 0009). They are loaded at import time and checked by the test suite. In `aliases.json`, `aliases` works both ways and `one_way` lets narrower terms meet a broader requirement. To add a synonym pair or a skill term, edit the JSON file and run `pytest tests/test_fit_engine.py tests/test_jd_parser.py`; no Python code changes are required. Soft-skill phrases are in `soft_skill_phrases.json` (ADR 0023).
 
 ### Applications log and salary screen
 
