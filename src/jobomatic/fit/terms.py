@@ -130,12 +130,8 @@ def load_phrase_expansions(
         raise ValueError("skill_vocabulary.json 'phrase_expansions' must be an object")
     out: dict[str, tuple[str, ...]] = {}
     for phrase, terms in raw.items():
-        if (
-            not isinstance(terms, list)
-            or len(terms) < 2
-            or not all(isinstance(t, str) for t in terms)
-        ):
-            raise ValueError(f"phrase expansion {phrase!r} needs a list of at least two terms")
+        if not isinstance(terms, list) or not terms or not all(isinstance(t, str) for t in terms):
+            raise ValueError(f"phrase expansion {phrase!r} needs a non-empty list of terms")
         cleaned = tuple(t.strip().lower() for t in terms)
         for term in cleaned:
             if term not in known:
@@ -356,7 +352,7 @@ def satisfied_by(term: str) -> tuple[str, ...]:
 # checklist (ADR 0038). A colon, dash or bracket is required: "exposure to the following for some
 # or all of that time" introduces no list.
 _SOME_OF_RE = re.compile(
-    r"(?:\b(?:some(?:\s+or\s+all)?|a\s+few|several)\s+of\b|"
+    r"(?:\b(?:some(?:\s+(?:or\s+all|combination|mix|subset))?|a\s+few|several)\s+of\b|"
     # "requirements vary, but the skillset may include:" names a pool in the same way
     r"\b(?:skill\s*sets?|skills)\s+(?:may|might|could)\s+include\b)"
     r"[^:;()\n.]{0,80}?(?::|\s[-–—]\s|(?P<bracket>\())",
@@ -418,8 +414,18 @@ def some_of_list(sentence: str) -> list[str] | None:
     return names
 
 
+# "You'll use some combination of", with its colon lost or never written
+_SOME_OF_OPEN_END_RE = re.compile(
+    r"\bsome\s+(?:combination|mix|subset)\s+of(?:\s+(?:the\s+following|these))?\s*$",
+    re.IGNORECASE,
+)
+
+
 def introduces_some_of(line: str) -> bool:
-    """True for a line that ends where its "some of" list should start: "some of these:"."""
+    """True for a line that ends where its "some of" list should start: "some of these:", or "some
+    combination of" with no colon."""
+    if _SOME_OF_OPEN_END_RE.search(line):
+        return True
     found = _SOME_OF_RE.search(line)
     if found is None or not line.rstrip().endswith(":"):
         return False
@@ -428,16 +434,17 @@ def introduces_some_of(line: str) -> bool:
 
 def names_in_list_item(item: str) -> list[str]:
     """What one line under a "some of …:" introduction adds to the list: a short line is a name
-    ("Drupal", "Strong SQL skills" gives "SQL"); a sentence gives the skills it names."""
+    ("Drupal", "Strong SQL skills" gives "SQL"); a sentence gives the skills it names, those in
+    brackets included ("Cloud AWS (ECS, SQS), Docker and CI/CD pipelines"). On a short line a
+    bracket is detail on the name ("JavaScript (utilizing JSON)")."""
     item = _SOME_OF_ETC_RE.sub("", item)
-    # "(4.0 or higher)" and "2008 or later" say how new, not which skill
-    item = _BRACKETED_RE.sub("", item)
+    # "2008 or later" says how new, not which skill
     item = _ITEM_VERSION_FLOOR_RE.sub("", item)
-    item = strip_skill_punctuation(item)
-    if not item or item.lower() in _SOME_OF_FILLER:
+    bare = strip_skill_punctuation(_BRACKETED_RE.sub("", item))
+    if not bare or bare.lower() in _SOME_OF_FILLER:
         return []
-    if len(item.split()) <= _SOME_OF_NAME_MAX_WORDS:
-        entries = reduce_to_terms(item) or [item.replace(" / ", "/")]
+    if len(bare.split()) <= _SOME_OF_NAME_MAX_WORDS:
+        entries = reduce_to_terms(bare) or [bare.replace(" / ", "/")]
     else:
         entries = extract_skill_terms(item)
     return [name for entry in entries for name in entry.split(" / ")]
@@ -490,7 +497,11 @@ _LIST_LINK_RE = re.compile(r"\s*(?:,\s*(?:(?:or|and)\s+)?|/)\s*|\s+(?:or|and)\s+
 # What may sit between two terms of one run: "A/B", "A / B", "A or B", "A, B", "A, B, or C".
 # "and" is not allowed, so "A and B" is two requirements. A run only counts as alternatives
 # when at least one link is a "/" or an "or" (a bare comma list names nothing about choice).
-_RUN_LINK_RE = re.compile(r"\s*/\s*|\s*,\s*(?:or\s+)?|\s+(?:and/)?or\s+", re.IGNORECASE)
+# A vendor's name before the next term does not break the run: "AWS or Microsoft Azure".
+_RUN_LINK_RE = re.compile(
+    r"(?:\s*/\s*|\s*,\s*(?:or\s+)?|\s+(?:and/)?or\s+)(?:(?:amazon|microsoft|google)\s+)?",
+    re.IGNORECASE,
+)
 _CHOICE_LINK_RE = re.compile(r"/|\bor\b", re.IGNORECASE)
 
 
@@ -1065,8 +1076,8 @@ def _extract_terms(sentence: str, vocabulary: tuple[str, ...] | None = None) -> 
     """
     pattern = _TERM_RE if vocabulary is None else _compile(vocabulary)
     matches = list(pattern.finditer(sentence.lower()))
-    if not matches:
-        return []
+    if not matches:  # a phrase can name a skill with no vocabulary word in it
+        return phrase_expansion(sentence) if vocabulary is None else []
 
     spans = [(m.start(), m.end()) for m in matches]
     if vocabulary is None:  # ordinary English words count only in capitals ("SOLID", not "Solid")
@@ -1192,7 +1203,7 @@ _FILLER_WORDS = frozenset(
     "practical demonstrated extensive proficient proficiency familiarity familiar knowledge "
     "framework frameworks library libraries language languages technology technologies tool tools "
     "platform platforms some firm awareness aware required mandatory essential desirable "
-    "application applications "
+    "application applications database databases "
     "knowledgeable experience experienced skills skill understanding expertise background "
     "command ability with of in using the a an and or to development methodology professional "
     "methodologies practices pipeline pipelines work programming".split()

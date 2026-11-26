@@ -190,8 +190,9 @@ class FitResult:
         return sorted(labels)
 
 
-def _load_aliases(path: Path | None = None) -> dict[str, list[str]]:
-    """Load the alias registry from src/jobomatic/fit/aliases.json.
+def _load_aliases(path: Path | None = None, section: str = "aliases") -> dict[str, list[str]]:
+    """Load one section of the alias registry, src/jobomatic/fit/aliases.json: ``aliases`` (works
+    both ways) or ``one_way`` (the values meet the key, never the reverse).
 
     Fails loudly (``ValueError``) on a malformed entry rather than silently
     misinterpreting it — e.g. ``{"C#": "csharp"}`` (a string where a list was
@@ -207,7 +208,7 @@ def _load_aliases(path: Path | None = None) -> dict[str, list[str]]:
     if not path.exists():
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))
-    aliases = data.get("aliases", {})
+    aliases = data.get(section, {})
     for key, vals in aliases.items():
         if not isinstance(vals, list) or not all(isinstance(v, str) for v in vals):
             raise ValueError(f"aliases.json entry {key!r} must be a list of strings, got {vals!r}")
@@ -215,6 +216,7 @@ def _load_aliases(path: Path | None = None) -> dict[str, list[str]]:
 
 
 _ALIASES: dict[str, list[str]] = _load_aliases()
+_ONE_WAY: dict[str, list[str]] = _load_aliases(section="one_way")
 
 
 def _tokenize(skills: list[str]) -> list[str]:
@@ -378,11 +380,12 @@ def _split_compound(skill: str) -> list[str]:
 
 
 def _expand_terms(skill: str) -> list[str]:
-    """Return the skill plus any registered aliases for it."""
+    """Return the skill, its registered aliases, and the narrower terms that also meet it."""
     terms = [skill]
     for key, aliases in _ALIASES.items():
         if skill == key or skill in aliases:
             terms.extend([key] + aliases)
+    terms.extend(_ONE_WAY.get(skill, []))
     terms.extend(satisfied_by(skill))
     return list(dict.fromkeys(terms))
 

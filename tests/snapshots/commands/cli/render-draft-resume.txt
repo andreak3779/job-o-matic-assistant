@@ -75,8 +75,8 @@ exit: 0
       "dates": "September 2019 – October 2022",
       "bullets": [
         "Built a real-time integration service in C#/ASP.NET Core reconciling sales lead data between the CRM and an ERP system, eliminating a recurring manual data-entry reconciliation process",
-        "Coordinated release management across environments using Azure DevOps Pipelines and a ticket-driven change process",
         "Developed a desktop-application plugin (C#, WPF) to import and validate vendor takeoff files against a custom XML schema",
+        "Coordinated release management across environments using Azure DevOps Pipelines and a ticket-driven change process",
         "Automated quality-control issue tracking with Power Apps and Power Automate, replacing a spreadsheet-based process"
       ]
     },

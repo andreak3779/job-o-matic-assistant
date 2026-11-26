@@ -182,6 +182,30 @@ def test_ubuntu_experience_meets_a_linux_requirement_and_not_the_reverse() -> No
 
 
 @pytest.mark.parametrize(
+    "style",
+    ["service-oriented architecture", "SOA", "Clean Architecture", "hexagonal architecture"],
+)
+def test_an_architecture_style_meets_software_architecture_and_not_the_reverse(style: str) -> None:
+    built = rate_fit(["software architecture"], [], _profile(f"Implemented {style} in C#"))
+    assert built.required[0].status == "match"
+    studied = rate_fit(["software architecture"], [], _profile("Wrote C#", courses=[style]))
+    assert studied.required[0].status == "course"
+    reverse = rate_fit([style], [], _profile("Led software architecture discussions"))
+    assert reverse.required[0].status == "gap"
+
+
+def test_one_architecture_style_does_not_stand_in_for_another() -> None:
+    result = rate_fit(["clean architecture"], [], _profile("Implemented SOA in C#"))
+    assert result.required[0].status == "gap"
+
+
+@pytest.mark.parametrize("bullet", ["Drew system architecture diagrams", "Configured SOAP clients"])
+def test_other_wording_does_not_meet_software_architecture(bullet: str) -> None:
+    result = rate_fit(["software architecture"], [], _profile(bullet))
+    assert result.required[0].status == "gap"
+
+
+@pytest.mark.parametrize(
     "raw,message",
     [
         ('{"terms": ["linux"], "satisfied_by": []}', "must be an object"),
@@ -687,3 +711,135 @@ def test_the_word_databases_alone_is_not_a_requirement() -> None:
 def test_named_web_frameworks_replace_the_kind_beside_them() -> None:
     line = "Experience with web frameworks such as Django, Flask, or FastAPI"
     assert parse_jd(_posting(line)).required_for_rating == ["Django / Flask / FastAPI"]
+
+
+def _combination_posting(intro: str) -> str:
+    return (
+        "Dev\n\nTechnical Requirements\n\n"
+        f"The stack depends on the product. You'll draw on {intro}\n\n"
+        "    Languages and frameworks C# and PHP (ASP.NET Core, Laravel), and Angular.\n"
+        "    Cloud and infrastructure AWS (ECS, SQS), Docker and GitHub Actions pipelines.\n"
+        "    Experience with public APIs is a strong plus for this work.\n"
+        "    Knowing each one of these is not required, comfort with Linux matters more.\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "intro", ["some combination of", "some combination of:", "some mix of the following"]
+)
+def test_some_combination_of_a_stack_is_one_requirement(intro: str) -> None:
+    parsed = parse_jd(_combination_posting(intro))
+
+    lists = [item for item in parsed.required_items if item.startswith("some of: ")]
+    assert len(lists) == 1
+    names = lists[0].removeprefix("some of: ").split(" / ")
+    # skills named in brackets are listed; an asset line and a remark are not part of the list
+    assert {"C#", "PHP", "ASP.NET Core", "Laravel", "AWS", "ECS", "SQS", "Docker"} <= set(names)
+    assert "API" not in names
+    assert "Linux" not in names
+    assert "API" in parsed.nice_to_have
+    assert "Linux" in parsed.required
+
+
+def test_a_bracket_on_a_short_list_line_is_detail_on_the_name() -> None:
+    posting = _posting(
+        "Experience with some of the following:",
+        "  JavaScript (utilizing JSON)",
+        "  C#",
+        "  Docker",
+    ).replace("-   ", "  - ")
+
+    items = parse_jd(posting).required_items
+
+    assert items == ["some of: JavaScript / C# / Docker"]
+
+
+def test_release_management_meets_an_sdlc_requirement_and_not_the_reverse() -> None:
+    releases = _profile("Coordinated release management across environments")
+    lifecycle = _profile("Worked through the whole SDLC")
+
+    assert rate_fit(["SDLC"], [], releases).required[0].status == "match"
+    assert rate_fit(["release management"], [], lifecycle).required[0].status == "gap"
+
+
+@pytest.mark.parametrize(
+    "requirement,bullet",
+    [
+        ("GitHub Actions", "Ran releases through a GitLab CI/CD pipeline"),
+        ("GitHub Actions", "Deployed containers with Docker"),
+        ("GitHub Actions", "Led the DevOps practice"),
+        ("CD with GitHub Actions", "Ran releases through a GitLab CI/CD pipeline"),
+        ("Docker", "Ran releases through a GitLab CI/CD pipeline"),
+        ("Docker", "Wrote GitHub Actions workflows"),
+        ("CI/CD", "Deployed containers with Docker"),
+    ],
+)
+def test_one_delivery_tool_does_not_stand_in_for_another(requirement: str, bullet: str) -> None:
+    result = rate_fit([requirement], [], _profile(bullet))
+
+    assert result.required[0].status == "gap"
+
+
+@pytest.mark.parametrize(
+    "requirement,bullet",
+    [
+        ("CI/CD", "Wrote GitHub Actions workflows"),
+        ("CD with GitHub Actions", "Wrote GitHub Actions workflows"),
+        ("DevOps", "Wrote GitHub Actions workflows"),
+        ("DevOps", "Deployed containers with Docker"),
+        ("DevOps", "Ran releases through a GitLab CI/CD pipeline"),
+    ],
+)
+def test_a_delivery_tool_still_meets_the_broader_requirement(requirement: str, bullet: str) -> None:
+    assert rate_fit([requirement], [], _profile(bullet)).required[0].status == "match"
+
+
+def test_portfolio_github_actions_is_not_claimed_from_a_job_that_used_gitlab() -> None:
+    site = Project(
+        name="A site",
+        url="https://example.com/site",
+        description="GitHub Actions workflows deploy it",
+        skills_evidence=[],
+    )
+    profile = _profile("Ran releases through a GitLab CI/CD pipeline", portfolio_projects=[site])
+
+    assert rate_fit(["GitHub Actions"], [], profile).required[0].status == "portfolio"
+
+
+@pytest.mark.parametrize(
+    "requirement,bullet",
+    [
+        ("C#", "Worked as a software developer on a web API"),
+        ("C#", "Full-stack developer building Java services"),
+        ("ASP.NET Core", "Worked as a software developer in Java"),
+        ("GitHub Copilot", "Practised prompt engineering"),
+        ("prompt engineering", "Used GitHub Copilot daily"),
+        ("Python", "Wrote shell scripting for log rotation"),
+        ("Python", "Built process automation workflows"),
+        ("xUnit", "Wrote unit testing suites with NUnit"),
+        ("MongoDB", "Modelled data in a NoSQL document db"),
+    ],
+)
+def test_a_related_skill_does_not_stand_in_for_the_one_asked(requirement: str, bullet: str) -> None:
+    profile = _profile(bullet, portfolio_projects=[], ats_keywords={})
+
+    assert rate_fit([requirement], [], profile).required[0].status == "gap"
+
+
+@pytest.mark.parametrize(
+    "requirement,bullet",
+    [
+        ("C#", "Built services on .NET"),
+        ("GitHub Copilot", "Paired with Copilot daily"),
+        ("unit testing", "Wrote xUnit suites"),
+        ("scripting", "Wrote Python tooling"),
+        ("Python scripting", "Wrote Python tooling"),
+        ("NoSQL", "Modelled data in MongoDB"),
+        ("MongoDB", "Ran Mongo clusters"),
+        ("professional software development experience", "Wrote C# services"),
+    ],
+)
+def test_a_narrower_or_same_skill_still_meets_the_requirement(
+    requirement: str, bullet: str
+) -> None:
+    assert rate_fit([requirement], [], _profile(bullet)).required[0].status == "match"

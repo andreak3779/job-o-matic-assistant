@@ -18,7 +18,7 @@ status: ok
 **Nice-to-Haves**
 | Skill | Status | Evidence |
 |---|---|---|
-| docker | ✅ | Meridian Benefits Group, production |
+| docker | 🟡 | coursework or self-study |
 | xunit | ✅ | Meridian Benefits Group, production |
 | typescript | 🟡 | coursework or self-study |
 | graphql | 🔴 | no evidence |
