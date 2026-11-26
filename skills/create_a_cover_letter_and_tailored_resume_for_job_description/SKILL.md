@@ -1,11 +1,11 @@
 ---
 name: create-a-cover-letter-and-tailored-resume-for-job-description
-description: "Generates a tailored cover letter and resume for a specific job posting. Use whenever the user provides a job description, job posting, or job listing and wants application documents created. Also triggers when the user says 'apply for this job', 'help me apply', 'write a cover letter for', 'tailor my resume for', or uploads a job posting. **ALWAYS checks for a prior application to this exact posting first, then runs fit assessment; only generates documents if fit is Strong or better.** Resume is loaded automatically from the profile. Job description may be provided as a .md file, pasted text, or URL. Output as DOCX files only, plus a private salary-expectations .md for the posting. Asks per posting whether to also write a separate LinkedIn Top Choice paragraph .md"
+description: "Generates a tailored cover letter and resume for a specific job posting. Use whenever the user provides a job description, job posting, or job listing and wants application documents created. Also triggers when the user says 'apply for this job', 'help me apply', 'write a cover letter for', 'tailor my resume for', or uploads a job posting. **ALWAYS checks for a prior application to this exact posting first, then runs fit assessment; only generates documents if fit is Strong or better.** Resume is loaded automatically from the profile. Job description may be provided as a .md file, pasted text, or URL. Output as DOCX files with a PDF copy of each, plus a private salary-expectations .md for the posting. Asks per posting whether to also write a separate LinkedIn Top Choice paragraph .md"
 ---
 
 # Cover Letter & Tailored Resume Generator
 
-Creates tailored cover letter + ATS-optimized resume as DOCX files, plus a private
+Creates tailored cover letter + ATS-optimized resume as DOCX files with PDF copies, plus a private
 salary-expectations markdown doc for the posting (never attached to the application). On request, also a
 separate LinkedIn Top Choice paragraph markdown doc (never merged into the cover letter).
 Claude writes the tailored content as JSON; `python -m jobomatic render` lays it out.
@@ -216,11 +216,13 @@ Write the tailored content from Step 4 as two JSON files (in the scratchpad, not
 4. Render both against the posting, which files them in its application folder and logs the posting as `drafted` (never applied):
 
 ```bash
-python -m jobomatic render resume <resume.json> --jd <jd_path>
-python -m jobomatic render cover-letter <letter.json> --jd <jd_path>
+python -m jobomatic render resume <resume.json> --jd <jd_path> --pdf --check-pages
+python -m jobomatic render cover-letter <letter.json> --jd <jd_path> --pdf --check-pages
 ```
 
 `render` gates the posting the way `generate-resume` does (fit, duplicate application, pay) before it writes, so after the user says yes to a Stretch or Worth a try rating, pass `--confirm-gaps` (and `--confirm-reapply` / `--confirm-below-minimum` only when the user says so for those). MCP: `render_resume` and `render_cover_letter`, with `confirm_gaps` and the others. Bad content stops with the field that is wrong. Layout is not editable; if a page overflows, cut content. Add `--check-pages` to either `render` command to count the real pages with LibreOffice: it fails (exit 1, file kept) when a resume is over 2 pages or a letter is not exactly 1.
+
+**Every resume and cover letter is delivered as both files:** `--pdf` saves `resume.pdf` and `cover-letter.pdf` beside the DOCX files (MCP: pass `pdf=true`). The DOCX is the editable copy; the PDF is a copy of it, so render again with `--pdf` after any change. If LibreOffice is missing the command fails after writing the DOCX: say so and deliver the DOCX.
 
 **ATS rules:** no tables · no columns · no text boxes · no graphics · standard section headings · no color beyond the section rules · one font throughout · resume ≤ 2 pages · cover letter = 1 page.
 
@@ -322,7 +324,7 @@ Write `top-choice.md` in the same application folder. Skip this step entirely on
 
 No automated DOCX validator is available locally (the sandbox's `/mnt/skills/public/docx/scripts/office/validate.py` doesn't exist in Claude Code). Open each DOCX in the application's folder and visually confirm formatting — page count, section headings, no broken layout — before delivering it. LibreOffice is available (the system `soffice` and the Flatpak both work): read the real page count with `--check-pages` on `render`, or convert each DOCX to PDF by hand with the command in the repo `CLAUDE.md` under page counts — use absolute paths — rather than estimating.
 
-Fix errors before presenting. Naming: the generators write `resume.docx` and `cover-letter.docx` into `outputs/applications/<date>_<company>_<role>/` (the folder name is also the application's id in the log). Confirm the files are there and tell the user their paths: the resume DOCX, the cover letter DOCX, `salary.md`, and `top-choice.md` when requested.
+Fix errors before presenting. Naming: the generators write `resume.docx` and `cover-letter.docx` into `outputs/applications/<date>_<company>_<role>/` (the folder name is also the application's id in the log). Confirm the files are there (each DOCX and its PDF) and tell the user their paths: the resume DOCX, the cover letter DOCX, `salary.md`, and `top-choice.md` when requested.
 
 Inline summary: ATS keywords incorporated · gaps excluded · assumptions made · whether a Top Choice doc was written · the salary doc's target ask and floor (one line).
 ## Writing style

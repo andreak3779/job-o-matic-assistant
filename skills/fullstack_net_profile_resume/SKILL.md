@@ -9,8 +9,8 @@ description: >
   "platform resume", "master resume for job boards", or "create a resume I can
   upload to job sites." Also trigger when the user asks to "refresh my resume"
   without supplying a JD, or says "I want a resume ready to post." Always use this
-  skill — do NOT generate ad hoc. Output: two DOCX files (resume + cover letter
-  template) ready to upload or customize per-application.
+  skill — do NOT generate ad hoc. Output: two DOCX files with PDF copies (resume +
+  cover letter template) ready to upload or customize per-application.
 ---
 
 # Full-Stack .NET Developer — Profile Resume & Cover Letter
@@ -187,13 +187,13 @@ Pull exact employer names and date ranges from the profile output.
 The platform resume and the reusable cover-letter template come straight from the profile; no posting is involved and nothing is logged:
 
 ```bash
-python -m jobomatic generate-profile-resume
-python -m jobomatic generate-profile-cover-letter
+python -m jobomatic generate-profile-resume --pdf
+python -m jobomatic generate-profile-cover-letter --pdf
 ```
 
-They write `resume.docx` and `cover-letter.docx` to the vault's `outputs/templates/`. The resume leads with the profile's headline and keeps the profile's own order of skills and bullets. The cover letter's hook is the first sentence of the summary, WHAT I BRING comes from the differentiators, the highlights are the most recent employers, and `[Company Name]` and `[Role Title]` stay as literal text for the candidate to swap per application.
+They write `resume.docx` and `cover-letter.docx`, each with a PDF copy, to the vault's `outputs/templates/`. The resume leads with the profile's headline and keeps the profile's own order of skills and bullets. The cover letter's hook is the first sentence of the summary, WHAT I BRING comes from the differentiators, the highlights are the most recent employers, and `[Company Name]` and `[Role Title]` stay as literal text for the candidate to swap per application.
 
-To hand-write the content instead (a different hook, other bullets), write it as JSON per `render schema resume` / `render schema cover-letter` and run `python -m jobomatic render resume <file> --out <outputs/templates/resume.docx>` (likewise `cover-letter`). Keep `[Company Name]` and `[Role Title]` literal in the letter.
+To hand-write the content instead (a different hook, other bullets), write it as JSON per `render schema resume` / `render schema cover-letter` and run `python -m jobomatic render resume <file> --out <outputs/templates/resume.docx> --pdf` (likewise `cover-letter`). Keep `[Company Name]` and `[Role Title]` literal in the letter.
 
 **ATS rules (mandatory for job board upload compatibility):**
 - No tables · no columns · no text boxes · no graphics
@@ -210,8 +210,8 @@ No automated DOCX validator is available locally (the sandbox's `/mnt/skills/pub
 Fix any errors before presenting.
 
 **Output filenames:**
-- `resume.docx`
-- `cover-letter.docx`
+- `resume.docx` and `resume.pdf`
+- `cover-letter.docx` and `cover-letter.pdf`
 
 Save both in `outputs/templates/` and tell the user their paths.
 

@@ -10,13 +10,13 @@ description: >
   (which requires a JD) and from fullstack-net-profile-resume (which produces a
   job-board-upload cover letter with [Company Name]/[Role Title] placeholders).
   This skill's letter targets a person/agency directly and asks about their
-  open roles. Output: one DOCX file.
+  open roles. Output: one DOCX file and a PDF copy of it.
 ---
 
 # Cold Outreach Letter to a Recruiter
 
 Creates a short, non-JD-specific cover letter introducing the candidate to a recruiter
-or agency, as a DOCX file.
+or agency, as a DOCX file with a PDF copy.
 
 > **Generated deterministically — don't build it by hand or fill a template.**
 > Run `python -m jobomatic generate-cold-call --recruiter-name "..."
@@ -49,8 +49,11 @@ Run:
 python -m jobomatic generate-cold-call \
   --recruiter-name "[Recruiter Name or omit]" \
   --role-type "[Target Role Type or omit]" \
-  --company "[Agency/Company or omit]"
+  --company "[Agency/Company or omit]" \
+  --pdf
 ```
+
+`--pdf` saves `cold-outreach.pdf` beside the DOCX (MCP: pass `pdf=true`). If the user asks for a resume to send with it, deliver that as DOCX and PDF too.
 
 The script handles contact info, the Re: line, salutation, hook, "Why I'm a
 Fit" bullets (from Key Differentiators/Cert Registry), an optional portfolio
@@ -72,8 +75,8 @@ Code). Open the generated file and visually confirm formatting — page count,
 section headings, no broken layout — before delivering it.
 
 The script writes `cold-outreach.docx` into
-`outputs/outreach/<date>_<recruiter>/` automatically (pass `--out` to override). Confirm the file's path
-and tell the user.
+`outputs/outreach/<date>_<recruiter>/` automatically (pass `--out` to override). Confirm both files' paths
+(DOCX and PDF) and tell the user.
 
 Inline summary: differentiators/portfolio evidence used · any low-confidence
 warning from Step 1 · assumptions made (e.g. recruiter name defaulted to

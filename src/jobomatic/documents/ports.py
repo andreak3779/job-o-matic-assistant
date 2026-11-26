@@ -22,5 +22,11 @@ class PageCounter(Protocol):
     def count(self, path: Path) -> int: ...
 
 
+class PdfExporter(Protocol):
+    """Saves a rendered document as a PDF beside it and returns the PDF's path."""
+
+    def export(self, path: Path) -> Path: ...
+
+
 PartTimeResumeRenderer = DocumentRenderer[PartTimeResume]
 PartTimeCoverLetterRenderer = DocumentRenderer[PartTimeCoverLetter]

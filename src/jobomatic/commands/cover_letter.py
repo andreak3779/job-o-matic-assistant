@@ -12,15 +12,16 @@ from typing import Any
 from jobomatic import bootstrap, paths
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
+    PDF_HELP,
     Confirmations,
     DocumentData,
     add_confirmation_flags,
+    finish_document,
     gate_documents,
     note_logged,
     produce_document,
     require_path,
     say,
-    verify_pages,
 )
 from jobomatic.documents import skim
 from jobomatic.documents.adapters.docx_layout import (
@@ -283,6 +284,7 @@ def generate_cover_letter(
     out_path: Path | None = None,
     record: bool = True,
     check_pages: bool = False,
+    pdf: bool = False,
     notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a tailored cover-letter DOCX plus provenance sidecar from a posting file.
@@ -297,6 +299,7 @@ def generate_cover_letter(
         out_path=out_path,
         record=record,
         check_pages=check_pages,
+        pdf=pdf,
         notes=notes,
     )
 
@@ -310,6 +313,7 @@ def generate_cover_letter_from_text(
     out_path: Path | None = None,
     record: bool = True,
     check_pages: bool = False,
+    pdf: bool = False,
     notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a tailored cover-letter DOCX plus provenance sidecar.
@@ -360,8 +364,7 @@ def generate_cover_letter_from_text(
         evidence_sources=result.evidence_sources(),
         warnings=["low evidence — manually review before sending"] if low_confidence else [],
     )
-    if check_pages:
-        verify_pages("cover-letter", out_path, notes)
+    finish_document("cover-letter", out_path, notes, pdf=pdf, check_pages=check_pages)
     return out_path, sidecar, result
 
 
@@ -372,6 +375,7 @@ def run(
     company: str | None = None,
     out: Path | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
     confirm: Confirmations = Confirmations(),
 ) -> CommandResult[DocumentData]:
     """Gate the posting (fit, duplicate, pay) and then write the tailored cover letter."""
@@ -384,8 +388,10 @@ def run(
             company=company,
             out_path=out,
             check_pages=check_pages,
+            pdf=pdf,
             notes=notes,
         ),
+        pdf=pdf,
     )
 
 
@@ -399,6 +405,7 @@ def generate_profile_cover_letter(
     profile: Any | None = None,
     out_path: Path | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
 ) -> tuple[Path, Path]:
     """A reusable cover-letter template: not tailored, with ``[Company Name]`` and ``[Role Title]``
     left as literal text for the candidate to swap per application. Nothing is logged.
@@ -440,8 +447,7 @@ def generate_profile_cover_letter(
     sidecar = write_sidecar(
         out_path, script="generate_cover_letter.py", profile=profile, inputs=[], fit_rating=None
     )
-    if check_pages:
-        verify_pages("cover-letter", out_path)
+    finish_document("cover-letter", out_path, pdf=pdf, check_pages=check_pages)
     return out_path, sidecar
 
 
@@ -457,6 +463,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Count the real pages with LibreOffice and fail unless it is 1 (slow; needs LibreOffice)",
     )
+    parser.add_argument("--pdf", action="store_true", help=PDF_HELP)
     add_confirmation_flags(parser, "gaps", "reapply", "below_minimum")
     args = parser.parse_args(argv)
 
@@ -473,6 +480,7 @@ def main(argv: list[str] | None = None) -> int:
             company=args.company,
             out=args.out,
             check_pages=args.check_pages,
+            pdf=args.pdf,
             confirm=Confirmations.from_args(args),
         )
     )

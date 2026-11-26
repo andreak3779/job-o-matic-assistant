@@ -7,8 +7,11 @@ from typing import Any
 from jobomatic import corpus, paths, yamlio
 from jobomatic.documents.adapters.docx_part_time import DocxPartTimeCoverLetter, DocxPartTimeResume
 from jobomatic.documents.adapters.docx_tailored import DocxTailoredCoverLetter, DocxTailoredResume
-from jobomatic.documents.adapters.page_count import LibreOfficePageCounter
-from jobomatic.documents.ports import DocumentRenderer, PageCounter
+from jobomatic.documents.adapters.page_count import (
+    LibreOfficePageCounter,
+    LibreOfficePdfExporter,
+)
+from jobomatic.documents.ports import DocumentRenderer, PageCounter, PdfExporter
 from jobomatic.documents.service import DocumentError
 from jobomatic.learning.adapters.yaml_store import (
     FileImportArchive,
@@ -91,6 +94,11 @@ def document_renderer(kind: str) -> DocumentRenderer[Any]:
 def page_counter() -> PageCounter:
     """Measures real page counts with LibreOffice (slow; used only when asked)."""
     return LibreOfficePageCounter()
+
+
+def pdf_exporter() -> PdfExporter:
+    """Saves a document as PDF with LibreOffice (used only when asked)."""
+    return LibreOfficePdfExporter()
 
 
 def retrieval_index() -> SqliteIndex:

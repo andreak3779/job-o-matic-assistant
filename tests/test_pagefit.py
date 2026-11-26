@@ -357,8 +357,10 @@ def test_another_command_can_be_chosen(tmp_path: Path, monkeypatch: pytest.Monke
 def test_a_chosen_tool_that_is_missing_is_an_error_not_a_fallback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    from jobomatic.documents.adapters.page_count import _ConversionFailed
+
     monkeypatch.setenv("JOBOMATIC_LIBREOFFICE", "nothing-here")
-    with pytest.raises(PageCountUnavailable, match="nothing-here"):
+    with pytest.raises(_ConversionFailed, match="nothing-here"):
         _names(tmp_path)
 
 

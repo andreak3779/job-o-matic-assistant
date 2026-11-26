@@ -15,14 +15,15 @@ from docx.shared import Pt
 from jobomatic import bootstrap, paths
 from jobomatic.applications import outputs
 from jobomatic.commands.support import (
+    PDF_HELP,
     Confirmations,
     DocumentData,
     add_confirmation_flags,
+    finish_document,
     gate_documents,
     note_logged,
     produce_document,
     require_path,
-    verify_pages,
 )
 from jobomatic.documents import budget, skim
 from jobomatic.documents.adapters.docx_layout import (
@@ -292,6 +293,7 @@ def generate_resume(
     company: str | None = None,
     out_path: Path | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
     notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a tailored resume DOCX plus provenance sidecar from a posting file.
@@ -305,6 +307,7 @@ def generate_resume(
         company=company,
         out_path=out_path,
         check_pages=check_pages,
+        pdf=pdf,
         notes=notes,
     )
 
@@ -317,6 +320,7 @@ def generate_resume_from_text(
     company: str | None = None,
     out_path: Path | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
     notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a tailored resume DOCX plus provenance sidecar.
@@ -354,8 +358,7 @@ def generate_resume_from_text(
         inputs=[str(source)] if source else [],
         fit_rating=result.rating,
     )
-    if check_pages:
-        verify_pages("resume", out_path, notes)
+    finish_document("resume", out_path, notes, pdf=pdf, check_pages=check_pages)
     return out_path, sidecar, result
 
 
@@ -366,6 +369,7 @@ def run(
     company: str | None = None,
     out: Path | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
     confirm: Confirmations = Confirmations(),
 ) -> CommandResult[DocumentData]:
     """Gate the posting (fit, duplicate, pay) and then write the tailored resume (ADR 0003, 0028)."""
@@ -378,8 +382,10 @@ def run(
             company=company,
             out_path=out,
             check_pages=check_pages,
+            pdf=pdf,
             notes=notes,
         ),
+        pdf=pdf,
     )
 
 
@@ -388,6 +394,7 @@ def generate_profile_resume(
     profile: Any | None = None,
     out_path: Path | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
 ) -> tuple[Path, Path]:
     """The platform-ready resume: no job description, the profile's own order and headline.
 
@@ -403,8 +410,7 @@ def generate_profile_resume(
     sidecar = write_sidecar(
         out_path, script="generate_resume.py", profile=profile, inputs=[], fit_rating=None
     )
-    if check_pages:
-        verify_pages("resume", out_path)
+    finish_document("resume", out_path, pdf=pdf, check_pages=check_pages)
     return out_path, sidecar
 
 
@@ -420,6 +426,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Count the real pages with LibreOffice and fail if over 2 (slow; needs LibreOffice)",
     )
+    parser.add_argument("--pdf", action="store_true", help=PDF_HELP)
     add_confirmation_flags(parser, "gaps", "reapply", "below_minimum")
     args = parser.parse_args(argv)
 
@@ -436,6 +443,7 @@ def main(argv: list[str] | None = None) -> int:
             company=args.company,
             out=args.out,
             check_pages=args.check_pages,
+            pdf=args.pdf,
             confirm=Confirmations.from_args(args),
         )
     )

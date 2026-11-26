@@ -24,17 +24,24 @@ class PageCountUnavailable(DocumentError):
     """The real page count cannot be measured here (no LibreOffice, no ``pdfinfo``)."""
 
 
+class PdfExportUnavailable(DocumentError):
+    """A PDF cannot be made here (no working LibreOffice)."""
+
+
 # Page limits by kind of document: (fewest, most). Only these two have a rule (CLAUDE.md).
 PAGE_LIMITS: dict[str, tuple[int, int]] = {"resume": (1, 2), "cover-letter": (1, 1)}
 
 
-def check_pages(kind: str, path: Path, counter: PageCounter) -> int:
+def check_pages(
+    kind: str, path: Path, counter: PageCounter, *, measured: Path | None = None
+) -> int:
     """Measure ``path`` and refuse it if it breaks its kind's page limit. Returns the page count.
 
-    A kind with no limit is only measured. The file is left where it is either way, so the
-    caller can open it.
+    A kind with no limit is only measured. ``measured`` is the file's PDF, when one was already
+    made, so it is not converted twice. The file is left where it is either way, so the caller can
+    open it.
     """
-    pages = counter.count(path)
+    pages = counter.count(measured or path)
     fewest, most = PAGE_LIMITS.get(kind, (1, 10**6))
     if pages > most or pages < fewest:
         allowed = f"exactly {most}" if fewest == most else f"at most {most}"

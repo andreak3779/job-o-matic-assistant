@@ -46,3 +46,16 @@ error rather than a fallback. A tool on the PATH is not a working one: a distro'
   authority; the estimate only decides what to trim.
 - Trimming is by position and relevance order, not by reading the posting again: a role that matters
   a lot to one posting but sits low in the profile loses bullets like any other old role.
+
+## Addendum: keeping the PDF (2026-11-26)
+
+- `--pdf` on `generate-resume`, `generate-cover-letter`, `generate-cold-call`, the two platform
+  documents and `render` (and `pdf=true` on the matching MCP tools) saves LibreOffice's PDF beside the DOCX (`PdfExporter` port, `LibreOfficePdfExporter` adapter).
+  The DOCX stays the editable file and the PDF is a copy to send. With `--check-pages` the pages
+  are counted from that PDF, so the document is converted once.
+- It is off by default for the same reason as the page check. A failed conversion exits 1, keeps
+  the DOCX and writes no PDF.
+- Writing a DOCX without `--pdf` leaves an older PDF beside it in place and warns that it no longer
+  matches. It is never deleted.
+- The skills that write resumes and cover letters pass it, so each is delivered in both formats.
+
