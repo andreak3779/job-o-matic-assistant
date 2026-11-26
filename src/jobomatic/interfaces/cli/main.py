@@ -104,6 +104,8 @@ def _generate_pluralsight(out_path: Path | None) -> int:
     return cast(int, pluralsight_main(args))
 
 
+_PDF_HELP = "Also save a PDF beside the DOCX with LibreOffice (needs LibreOffice)"
+
 # Map CLI subcommand → underlying script module's full dotted path. These
 # three take the same (jd, optional --company, optional --out) arguments, so
 # they share a dispatcher. generate-cold-call and generate-thank-you are the
@@ -117,7 +119,9 @@ _LETTER_GENERATORS = {
 }
 
 
-def _generate_platform_document(kind: str, out_path: Path | None, check_pages: bool = False) -> int:
+def _generate_platform_document(
+    kind: str, out_path: Path | None, check_pages: bool = False, pdf: bool = False
+) -> int:
     """The resume or cover-letter template for uploading to job boards: no posting, no log."""
     from jobomatic import bootstrap
     from jobomatic.commands.support import print_wrote
@@ -138,7 +142,8 @@ def _generate_platform_document(kind: str, out_path: Path | None, check_pages: b
             generate_profile_cover_letter as generate,
         )
     try:
-        print_wrote(*generate(profile=profile, out_path=out_path, check_pages=check_pages))
+        written = generate(profile=profile, out_path=out_path, check_pages=check_pages, pdf=pdf)
+        print_wrote(*written, *((written[0].with_suffix(".pdf"),) if pdf else ()))
     except DocumentError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -165,6 +170,7 @@ def _generate_letter(
     out_path: Path | None,
     confirmations: dict[str, bool] | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
 ) -> int:
     # Import the script module under its full name. Using a runtime
     # ``importlib.import_module`` here is intentional: the scripts are
@@ -179,6 +185,8 @@ def _generate_letter(
         args.extend(["--out", str(out_path)])
     if check_pages:
         args.append("--check-pages")
+    if pdf:
+        args.append("--pdf")
     # The gate runs inside the command (ADR 0028); the user's confirmations are passed through.
     for name, given in (confirmations or {}).items():
         if given:
@@ -192,6 +200,7 @@ def _generate_cold_call(
     recruiter_name: str | None,
     role_type: str | None,
     out_path: Path | None,
+    pdf: bool = False,
 ) -> int:
     from jobomatic.commands.cold_call import (
         main as cold_call_main,
@@ -206,6 +215,8 @@ def _generate_cold_call(
         args.extend(["--role-type", role_type])
     if out_path is not None:
         args.extend(["--out", str(out_path)])
+    if pdf:
+        args.append("--pdf")
     return cast(int, cold_call_main(args))
 
 
@@ -360,6 +371,7 @@ def _run(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Count the real pages with LibreOffice and fail if over 2 (slow; needs LibreOffice)",
     )
+    resume_parser.add_argument("--pdf", action="store_true", help=_PDF_HELP)
 
     cover_parser = subparsers.add_parser(
         "generate-cover-letter", help="Generate a tailored cover-letter DOCX"
@@ -367,6 +379,7 @@ def _run(argv: list[str] | None = None) -> int:
     cover_parser.add_argument("jd", type=Path, help="Path to job description markdown file")
     cover_parser.add_argument("--company", help="Override company name used in filename")
     cover_parser.add_argument("--out", type=Path, help="Output DOCX path")
+    cover_parser.add_argument("--pdf", action="store_true", help=_PDF_HELP)
     cover_parser.add_argument(
         "--check-pages",
         action="store_true",
@@ -408,6 +421,7 @@ def _run(argv: list[str] | None = None) -> int:
         "--role-type", help='Target role type, e.g. "Senior .NET Developer roles"'
     )
     cold_parser.add_argument("--out", type=Path, help="Output DOCX path")
+    cold_parser.add_argument("--pdf", action="store_true", help=_PDF_HELP)
 
     job_site_parser = subparsers.add_parser(
         "generate-job-site", help="Generate a short job-site cover letter (default: .txt)"
@@ -516,6 +530,7 @@ def _run(argv: list[str] | None = None) -> int:
             help="Count the real pages with LibreOffice and fail if over the limit "
             "(slow; needs LibreOffice)",
         )
+        platform_parser.add_argument("--pdf", action="store_true", help=_PDF_HELP)
 
     dir_parser = subparsers.add_parser(
         "application-dir",
@@ -547,9 +562,9 @@ def _run(argv: list[str] | None = None) -> int:
     if args.command in applications_cli.COMMANDS:
         return applications_cli.run(args)
     if args.command == "generate-profile-resume":
-        return _generate_platform_document("resume", args.out, args.check_pages)
+        return _generate_platform_document("resume", args.out, args.check_pages, args.pdf)
     if args.command == "generate-profile-cover-letter":
-        return _generate_platform_document("cover_letter", args.out, args.check_pages)
+        return _generate_platform_document("cover_letter", args.out, args.check_pages, args.pdf)
     if args.command == "application-dir":
         return _application_dir(args.jd)
     if args.command == render_cli.COMMAND:
@@ -586,6 +601,7 @@ def _run(argv: list[str] | None = None) -> int:
                 "confirm_below_minimum": getattr(args, "confirm_below_minimum", False),
             },
             getattr(args, "check_pages", False),
+            getattr(args, "pdf", False),
         )
     if args.command == "generate-cold-call":
         return _generate_cold_call(
@@ -594,6 +610,7 @@ def _run(argv: list[str] | None = None) -> int:
             getattr(args, "recruiter_name", None),
             getattr(args, "role_type", None),
             getattr(args, "out", None),
+            getattr(args, "pdf", False),
         )
     if args.command == "generate-thank-you":
         return _generate_thank_you(

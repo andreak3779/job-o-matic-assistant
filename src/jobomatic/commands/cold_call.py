@@ -14,7 +14,9 @@ from docx.shared import Pt
 
 from jobomatic import bootstrap, paths
 from jobomatic.commands.support import (
+    PDF_HELP,
     DocumentData,
+    finish_document,
     gate_location,
     produce_document,
     require_path,
@@ -176,6 +178,7 @@ def generate_cold_call_letter(
     recruiter_name: str | None = None,
     role_type: str | None = None,
     out_path: Path | None = None,
+    pdf: bool = False,
     notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a cold-call cover-letter DOCX plus provenance sidecar, from a target file.
@@ -190,6 +193,7 @@ def generate_cold_call_letter(
         recruiter_name=recruiter_name,
         role_type=role_type,
         out_path=out_path,
+        pdf=pdf,
         notes=notes,
     )
 
@@ -203,6 +207,7 @@ def generate_cold_call_letter_from_text(
     recruiter_name: str | None = None,
     role_type: str | None = None,
     out_path: Path | None = None,
+    pdf: bool = False,
     notes: list[Message] | None = None,
 ) -> tuple[Path, Path, FitResult]:
     """Build and write a cold-call cover-letter DOCX plus provenance sidecar.
@@ -284,6 +289,7 @@ def generate_cold_call_letter_from_text(
         if evidence["low_confidence"]
         else [],
     )
+    finish_document("cover-letter", out_path, notes, pdf=pdf)
     return out_path, sidecar, result
 
 
@@ -295,6 +301,7 @@ def run(
     recruiter_name: str | None = None,
     role_type: str | None = None,
     out: Path | None = None,
+    pdf: bool = False,
 ) -> CommandResult[DocumentData]:
     """Write the cold-call letter. Given a posting, a location Pass refuses it (skill fit does
     not: this letter is not an application)."""
@@ -307,8 +314,10 @@ def run(
             recruiter_name=recruiter_name,
             role_type=role_type,
             out_path=out,
+            pdf=pdf,
             notes=notes,
         ),
+        pdf=pdf,
     )
 
 
@@ -332,6 +341,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--role-type", help='Target role type, e.g. "Senior .NET Developer roles"')
     parser.add_argument("--out", type=Path, help="Output DOCX path")
+    parser.add_argument("--pdf", action="store_true", help=PDF_HELP)
     args = parser.parse_args(argv)
 
     if args.jd is not None:
@@ -349,6 +359,7 @@ def main(argv: list[str] | None = None) -> int:
             recruiter_name=args.recruiter_name,
             role_type=args.role_type,
             out=args.out,
+            pdf=args.pdf,
         )
     )
 

@@ -327,6 +327,12 @@ def _checked_out(out: str | None) -> Path | None:
     return Path(_checked_path(out, write=True, label="out")) if out else None
 
 
+def _checked_pdf(out: str | None, pdf: bool) -> None:
+    """With ``pdf``, the PDF is written beside ``out``: that path must be allowed too."""
+    if out and pdf:
+        _checked_path(str(Path(out).with_suffix(".pdf")), write=True, label="the PDF beside out")
+
+
 def _tool_text(
     result: results.CommandResult[Any], render: Callable[[Any], str] | None = None
 ) -> str:
@@ -416,15 +422,19 @@ def _document_tool(
     confirm_gaps: bool = False,
     confirm_reapply: bool = False,
     confirm_below_minimum: bool = False,
+    pdf: bool = False,
 ) -> list[ContentBlock]:
     """Run a gated document command (its gates run inside it) and return its text and files."""
     posting = _posting(jd)
+    _checked_pdf(out, pdf)
     result = command(
         posting.text,
         source=posting.source,
         company=company or None,
         out=_checked_out(out),
         confirm=Confirmations(confirm_gaps, confirm_reapply, confirm_below_minimum),
+        # only the resume and letter commands take it, so it is passed only when asked
+        **({"pdf": True} if pdf else {}),
     )
     return _tool_blocks(result)
 
@@ -440,6 +450,7 @@ def generate_resume(
     confirm_reapply: bool = False,
     confirm_below_minimum: bool = False,
     confirm_gaps: bool = False,
+    pdf: bool = False,
 ) -> list[ContentBlock]:
     """jd: path to a job description markdown file, or the job description
     text itself (e.g. pasted or attached in the chat). company: optional
@@ -453,7 +464,10 @@ def generate_resume(
     60 days (pass confirm_reapply=true only if the user explicitly says to
     proceed anyway), or when the posted pay is below the user's minimum (pass
     confirm_below_minimum=true only after the user says to continue).
-    Generating only logs a *draft*; it never marks the posting as applied."""
+    Generating only logs a *draft*; it never marks the posting as applied.
+
+    pdf: also save a PDF beside the DOCX and attach it (needs LibreOffice on
+    the user's computer). Pass pdf=true unless the user wants only the DOCX."""
     return _document_tool(
         resume_command.run,
         jd,
@@ -462,6 +476,7 @@ def generate_resume(
         confirm_reapply=confirm_reapply,
         confirm_gaps=confirm_gaps,
         confirm_below_minimum=confirm_below_minimum,
+        pdf=pdf,
     )
 
 
@@ -476,6 +491,7 @@ def generate_cover_letter(
     confirm_reapply: bool = False,
     confirm_below_minimum: bool = False,
     confirm_gaps: bool = False,
+    pdf: bool = False,
 ) -> list[ContentBlock]:
     """jd: path to a job description markdown file, or the job description
     text itself (e.g. pasted or attached in the chat). company: optional
@@ -489,7 +505,10 @@ def generate_cover_letter(
     60 days (pass confirm_reapply=true only if the user explicitly says to
     proceed anyway), or when the posted pay is below the user's minimum (pass
     confirm_below_minimum=true only after the user says to continue).
-    Generating only logs a *draft*; it never marks the posting as applied."""
+    Generating only logs a *draft*; it never marks the posting as applied.
+
+    pdf: also save a PDF beside the DOCX and attach it (needs LibreOffice on
+    the user's computer). Pass pdf=true unless the user wants only the DOCX."""
     return _document_tool(
         cover_letter_command.run,
         jd,
@@ -498,6 +517,7 @@ def generate_cover_letter(
         confirm_reapply=confirm_reapply,
         confirm_gaps=confirm_gaps,
         confirm_below_minimum=confirm_below_minimum,
+        pdf=pdf,
     )
 
 
@@ -512,6 +532,7 @@ def generate_application_documents(
     confirm_reapply: bool = False,
     confirm_below_minimum: bool = False,
     confirm_gaps: bool = False,
+    pdf: bool = False,
 ) -> list[ContentBlock]:
     """jd: path to a job description markdown file, or the job description
     text itself (e.g. pasted or attached in the chat). company: optional
@@ -523,7 +544,10 @@ def generate_application_documents(
     documents land in their normal default outputs/ location; use
     generate_resume / generate_cover_letter individually for a custom output
     path. The duplicate-application and below-minimum-pay checks (and their
-    confirm_reapply / confirm_below_minimum overrides) work as on generate_resume."""
+    confirm_reapply / confirm_below_minimum overrides) work as on generate_resume.
+
+    pdf: also save a PDF beside the DOCX and attach it (needs LibreOffice on
+    the user's computer). Pass pdf=true unless the user wants only the DOCX."""
     blocks: list[ContentBlock] = []
     for command in (resume_command.run, cover_letter_command.run):
         blocks.extend(
@@ -535,6 +559,7 @@ def generate_application_documents(
                 confirm_reapply=confirm_reapply,
                 confirm_gaps=confirm_gaps,
                 confirm_below_minimum=confirm_below_minimum,
+                pdf=pdf,
             )
         )
     return blocks
@@ -608,8 +633,10 @@ def _render_tool(
     confirm_gaps: bool,
     confirm_reapply: bool,
     confirm_below_minimum: bool,
+    pdf: bool,
 ) -> list[ContentBlock]:
     posting = _posting(jd)
+    _checked_pdf(out, pdf)
     result = render_command.run(
         kind,
         _content_text(content),
@@ -619,6 +646,7 @@ def _render_tool(
         out=_checked_out(out),
         confirm=Confirmations(confirm_gaps, confirm_reapply, confirm_below_minimum),
         content_name=f"{kind} content",
+        pdf=pdf,
     )
     return _tool_blocks(result)
 
@@ -636,6 +664,7 @@ def render_resume(
     confirm_reapply: bool = False,
     confirm_below_minimum: bool = False,
     confirm_gaps: bool = False,
+    pdf: bool = False,
 ) -> list[ContentBlock]:
     """content: the resume as an object (or JSON text) that follows render_schema("resume"); start
     from render_draft and tailor it to the posting, using only facts that are in the draft.
@@ -644,7 +673,10 @@ def render_resume(
     company: optional filename override. out: optional output DOCX path. Bad content is refused
     with the field that is wrong, and nothing is written. Gated like generate_resume, with the
     same confirmations (set only after the user says so). The layout is fixed: if it runs over
-    two pages, cut content."""
+    two pages, cut content.
+
+    pdf: also save a PDF beside the DOCX and attach it (needs LibreOffice on
+    the user's computer). Pass pdf=true unless the user wants only the DOCX."""
     return _render_tool(
         "resume",
         content,
@@ -654,6 +686,7 @@ def render_resume(
         confirm_gaps=confirm_gaps,
         confirm_reapply=confirm_reapply,
         confirm_below_minimum=confirm_below_minimum,
+        pdf=pdf,
     )
 
 
@@ -670,10 +703,14 @@ def render_cover_letter(
     confirm_reapply: bool = False,
     confirm_below_minimum: bool = False,
     confirm_gaps: bool = False,
+    pdf: bool = False,
 ) -> list[ContentBlock]:
     """content: the letter as an object (or JSON text) that follows render_schema("cover-letter");
     start from render_draft and tailor it, using only facts that are in the draft. It must fit
-    one page: keep each part inside its budget. Other parameters and gates as render_resume."""
+    one page: keep each part inside its budget. Other parameters and gates as render_resume.
+
+    pdf: also save a PDF beside the DOCX and attach it (needs LibreOffice on
+    the user's computer). Pass pdf=true unless the user wants only the DOCX."""
     return _render_tool(
         "cover-letter",
         content,
@@ -683,6 +720,7 @@ def render_cover_letter(
         confirm_gaps=confirm_gaps,
         confirm_reapply=confirm_reapply,
         confirm_below_minimum=confirm_below_minimum,
+        pdf=pdf,
     )
 
 
@@ -693,6 +731,7 @@ def generate_cold_call(
     recruiter_name: str | None = None,
     role_type: str | None = None,
     out: str | None = None,
+    pdf: bool = False,
 ) -> list[ContentBlock]:
     """jd: optional path to a target company description or JD markdown file,
     or that text itself (e.g. pasted or attached in the chat) — cold
@@ -700,9 +739,13 @@ def generate_cold_call(
     recruiter_name/role_type instead. company: optional filename/salutation
     override. recruiter_name: salutation name, e.g. "Jane Doe" (default
     "Hiring Team"). role_type: target role type, e.g. "Senior .NET Developer
-    roles". out: optional output DOCX path."""
+    roles". out: optional output DOCX path.
+
+    pdf: also save a PDF beside the DOCX and attach it (needs LibreOffice on
+    the user's computer). Pass pdf=true unless the user wants only the DOCX."""
 
     posting = _posting(jd) if jd else None
+    _checked_pdf(out, pdf)
     return _tool_blocks(
         cold_call_command.run(
             posting.text if posting else None,
@@ -711,6 +754,7 @@ def generate_cold_call(
             recruiter_name=recruiter_name or None,
             role_type=role_type or None,
             out=_checked_out(out),
+            pdf=pdf,
         )
     )
 

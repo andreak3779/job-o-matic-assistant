@@ -166,6 +166,7 @@ def produce_document(
     make: Callable[[Profile | None, list[Message]], tuple[Path, Path, FitResult | None]],
     gate_with_profile: Callable[[Profile, list[Message]], object] | None = None,
     gate_without_profile: Callable[[list[Message]], None] | None = None,
+    pdf: bool = False,
 ) -> CommandResult[DocumentData]:
     """Run a document command: gate it, make the document, and describe what happened.
 
@@ -185,7 +186,8 @@ def produce_document(
             profile = bootstrap_load_profile()
             gate_with_profile(profile, notes)
         out, sidecar, fit = make(profile, notes)
-        return ok(DocumentData(out, fit), messages=tuple(notes), written=(out, sidecar))
+        extra = (out.with_suffix(".pdf"),) if pdf else ()
+        return ok(DocumentData(out, fit), messages=tuple(notes), written=(out, sidecar, *extra))
 
     with vault_write_lock():
         return guarded(body)
@@ -203,7 +205,41 @@ def print_wrote(*paths: Path) -> None:
         print(f"Wrote {p}")
 
 
-def verify_pages(kind: str, path: Path, notes: list[Message] | None = None) -> int:
+PDF_HELP = "Also save a PDF beside the DOCX with LibreOffice (needs LibreOffice)"
+
+
+def finish_document(
+    kind: str,
+    path: Path,
+    notes: list[Message] | None = None,
+    *,
+    pdf: bool = False,
+    check_pages: bool = False,
+) -> tuple[Path, ...]:
+    """What the user asked for after a DOCX is written: a PDF beside it (``--pdf``) and a count of
+    its real pages (``--check-pages``, read from that PDF when there is one). Returns the extra
+    files made. Without ``--pdf`` an older PDF beside the file is reported, because it no longer
+    matches and must not be sent by mistake."""
+    from jobomatic import bootstrap
+
+    made: tuple[Path, ...] = ()
+    if pdf:
+        made = (bootstrap.pdf_exporter().export(path),)
+    elif (old := path.with_suffix(".pdf")).is_file():
+        say(
+            notes,
+            "warning",
+            f"{old.name} beside it is from an earlier run and does not match this file; "
+            "use --pdf to replace it",
+        )
+    if check_pages:
+        verify_pages(kind, path, notes, measured=made[0] if made else None)
+    return made
+
+
+def verify_pages(
+    kind: str, path: Path, notes: list[Message] | None = None, *, measured: Path | None = None
+) -> int:
     """Measure ``path`` with LibreOffice and refuse it if it breaks the page limit for ``kind``.
 
     Only called when the user asked for ``--check-pages``. Raises ``DocumentError`` (a missing
@@ -212,6 +248,6 @@ def verify_pages(kind: str, path: Path, notes: list[Message] | None = None) -> i
     from jobomatic import bootstrap
     from jobomatic.documents import service
 
-    pages = service.check_pages(kind, path, bootstrap.page_counter())
+    pages = service.check_pages(kind, path, bootstrap.page_counter(), measured=measured)
     say(notes, "info", f"Pages: {pages}")
     return pages

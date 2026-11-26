@@ -15,7 +15,12 @@ from typing import Any
 
 from jobomatic import bootstrap, paths
 from jobomatic.commands import render as render_command
-from jobomatic.commands.support import Confirmations, add_confirmation_flags
+from jobomatic.commands.support import (
+    PDF_HELP,
+    Confirmations,
+    add_confirmation_flags,
+    finish_document,
+)
 from jobomatic.documents import service
 from jobomatic.documents.model import KINDS
 from jobomatic.documents.service import DocumentError
@@ -50,6 +55,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
                 help="Count the real pages with LibreOffice and fail if over the limit "
                 "(slow; needs LibreOffice)",
             )
+        one.add_argument("--pdf", action="store_true", help=PDF_HELP)
         if kind in _TAILORED:
             one.add_argument(
                 "--jd",
@@ -83,6 +89,7 @@ def run(args: argparse.Namespace) -> int:
             args.out,
             getattr(args, "employer", None),
             getattr(args, "check_pages", False),
+            args.pdf,
         )
     except DocumentError as exc:
         print(f"[ERROR] {exc}")
@@ -117,6 +124,7 @@ def _render_tailored(args: argparse.Namespace) -> int:
             source=args.jd,
             out=args.out,
             check_pages=args.check_pages,
+            pdf=args.pdf,
             confirm=Confirmations.from_args(args),
             content_name=args.content.name,
         )
@@ -129,6 +137,7 @@ def _render(
     out: Path | None,
     employer: str | None,
     check_pages: bool = False,
+    pdf: bool = False,
 ) -> int:
     try:
         text = content_path.read_text(encoding="utf-8")
@@ -139,9 +148,8 @@ def _render(
         out = _default_path(kind, content, employer)
     written = service.render_document(content, bootstrap.document_renderer(kind), out)
     print(f"Wrote {written}")
-    if check_pages:
-        pages = service.check_pages(kind, written, bootstrap.page_counter())
-        print(f"Pages: {pages}")
+    for made in finish_document(kind, written, pdf=pdf, check_pages=check_pages):
+        print(f"Wrote {made}")
     return 0
 
 

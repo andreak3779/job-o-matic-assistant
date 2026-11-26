@@ -26,10 +26,10 @@ from jobomatic.commands.support import (
     Confirmations,
     DocumentData,
     bootstrap_load_profile,
+    finish_document,
     gate_documents,
     note_logged,
     vault_write_lock,
-    verify_pages,
 )
 from jobomatic.documents import service
 from jobomatic.documents.model import TailoredCoverLetter, TailoredResume
@@ -129,6 +129,7 @@ def run(
     company: str | None = None,
     out: Path | None = None,
     check_pages: bool = False,
+    pdf: bool = False,
     confirm: Confirmations = Confirmations(),
     content_name: str = "content",
 ) -> CommandResult[DocumentData]:
@@ -180,8 +181,7 @@ def run(
                     fit_rating=fit.rating if fit else None,
                 )
             )
-        if check_pages:
-            verify_pages(kind, written, notes)
+        files += finish_document(kind, written, notes, pdf=pdf, check_pages=check_pages)
         return ok(DocumentData(written, fit), messages=tuple(notes), written=tuple(files))
 
     with vault_write_lock():
