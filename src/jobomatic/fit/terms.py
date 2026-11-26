@@ -497,7 +497,11 @@ _LIST_LINK_RE = re.compile(r"\s*(?:,\s*(?:(?:or|and)\s+)?|/)\s*|\s+(?:or|and)\s+
 # What may sit between two terms of one run: "A/B", "A / B", "A or B", "A, B", "A, B, or C".
 # "and" is not allowed, so "A and B" is two requirements. A run only counts as alternatives
 # when at least one link is a "/" or an "or" (a bare comma list names nothing about choice).
-_RUN_LINK_RE = re.compile(r"\s*/\s*|\s*,\s*(?:or\s+)?|\s+(?:and/)?or\s+", re.IGNORECASE)
+# A vendor's name before the next term does not break the run: "AWS or Microsoft Azure".
+_RUN_LINK_RE = re.compile(
+    r"(?:\s*/\s*|\s*,\s*(?:or\s+)?|\s+(?:and/)?or\s+)(?:(?:amazon|microsoft|google)\s+)?",
+    re.IGNORECASE,
+)
 _CHOICE_LINK_RE = re.compile(r"/|\bor\b", re.IGNORECASE)
 
 

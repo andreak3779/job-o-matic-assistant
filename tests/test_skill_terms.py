@@ -1493,3 +1493,80 @@ def test_database_work_keeps_its_other_words() -> None:
 
 def test_iis_is_read_beside_windows_server() -> None:
     assert {"Windows Server", "IIS"} <= set(extract_skill_terms("Windows Server/IIS hosting"))
+
+
+@pytest.mark.parametrize(
+    "heading",
+    [
+        "As Our New Teammate You Will Have These",
+        "What you will have",
+        "The successful candidate will bring",
+    ],
+)
+def test_a_you_will_have_heading_opens_the_requirements(heading: str) -> None:
+    posting = f"Dev\n\n{heading}\n\n    Experience with C# and Docker\n"
+
+    assert parse_jd(posting).required == ["C#", "Docker"]
+
+
+@pytest.mark.parametrize("heading", ["You will have the opportunity to", "You will have access to"])
+def test_a_you_will_have_offer_does_not_open_the_requirements(heading: str) -> None:
+    posting = f"Dev\n\n{heading}\n\n    Experience with C# and Docker\n"
+
+    assert parse_jd(posting).required == []
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Hybrid, in-office or work from home.",
+        "Remote position",
+        "This is a hybrid, in-office role",
+    ],
+)
+def test_a_work_arrangement_line_is_not_a_requirement(line: str) -> None:
+    parsed = parse_jd(f"Dev\n\n## Requirements\n- C#\n- {line}\n")
+
+    assert parsed.required == ["C#"]
+    assert not parsed.unscored_required
+
+
+@pytest.mark.parametrize(
+    "line", ["Support for remote office networks", "Microsoft Office administration"]
+)
+def test_work_that_mentions_an_office_is_still_a_requirement(line: str) -> None:
+    parsed = parse_jd(_one_line_posting(line))
+
+    assert parsed.required or parsed.unscored_required
+
+
+@pytest.mark.parametrize(
+    "line,required,optional",
+    [
+        (
+            "Understanding of Terraform, or the ability to learn Terraform quickly is required.",
+            [],
+            ["Terraform"],
+        ),
+        ("C#, Angular or the ability to learn React", ["C#", "Angular"], ["React"]),
+        ("Experience with Docker or willing to learn it", [], ["Docker"]),
+        ("Experience with Docker and the ability to learn quickly", ["Docker"], []),
+    ],
+)
+def test_a_skill_that_may_be_learned_is_optional(
+    line: str, required: list[str], optional: list[str]
+) -> None:
+    parsed = parse_jd(_one_line_posting(line))
+
+    assert parsed.required == required
+    assert parsed.nice_to_have == optional
+
+
+@pytest.mark.parametrize(
+    "sentence", ["Exposure to AWS or Microsoft Azure", "Azure or Google Cloud"]
+)
+def test_a_vendor_name_does_not_split_a_choice(sentence: str) -> None:
+    terms = extract_skill_terms(sentence)
+
+    assert len(terms) == 1
+    assert " / " in terms[0]

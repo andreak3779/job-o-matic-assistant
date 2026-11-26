@@ -103,6 +103,9 @@ _REQUIRED_HEADING_RE = re.compile(
     r"desired (?:skills?|qualifications?|experience)|"
     r"qualifications|you have|who you are|"
     r"what you bring|you bring|you should (?:get in touch if|have)|about you|"
+    # "You will have" opens the list; "you will have the opportunity to" does not
+    r"you(?:\s+will|['’]ll)\s+have(?!\s+(?:(?:the|an?)\s+)?(?:opportunity|chance|access|freedom))|"
+    r"successful\s+candidates?\s+(?:will\s+)?(?:have|has|brings?|possess(?:es)?)|"
     r"your (?:skills|background|experience|profile)|ideal candidate|who we.?re looking for|"
     r"^\W*we.?re\s+looking\s+for\W*$)",
     re.IGNORECASE,
@@ -222,6 +225,21 @@ def _trim_edges(text: str) -> str:
     """``text`` without punctuation at either end, keeping the leading dot of ".NET"."""
     text = re.sub(r"^[ ,;:-]+", "", text).rstrip(" ,.;:-")
     return re.sub(r"^\.+(?![A-Za-z0-9])\s*", "", text)
+
+
+def _split_learnable(item: str) -> tuple[str, list[str]] | None:
+    """``(what stays required, the skills made optional)`` for a line that accepts the ability to
+    learn instead, else ``None``. The skills named after "learn" are the optional ones; "learn it"
+    names none, so then every skill before it is."""
+    match = _LEARNABLE_RE.search(item)
+    if not match:
+        return None
+    before = extract_skill_terms(item[: match.start()])
+    if not before:
+        return None
+    optional = extract_skill_terms(item[match.end() :]) or before
+    waived = {term.lower() for term in optional}
+    return ", ".join(t for t in before if t.lower() not in waived), optional
 
 
 def _strip_nice_marker(item: str) -> tuple[str, bool]:
@@ -367,6 +385,24 @@ _BENEFIT_LINE_RE = re.compile(
     r"comprehensive\s+(?:health|medical|dental|benefits)|"
     r"(?:health|medical)(?:\s*,|\s+and|\s*&)\s+(?:dental|vision)|"
     r"(?:flexible|unlimited)\s+(?:paid\s+)?(?:time[\s-]off|pto|vacation))\b",
+    re.IGNORECASE,
+)
+# "Hybrid or remote" under a requirements heading says where the work is done, not what it needs:
+# the whole line is arrangement words.
+_ARRANGEMENT = (
+    r"(?:hybrid|remote|on[\s-]?site|in[\s-](?:the[\s-])?office|work(?:ing)?[\s-]from[\s-]home|wfh)"
+)
+_WORK_ARRANGEMENT_LINE_RE = re.compile(
+    rf"^(?=.*\b{_ARRANGEMENT}\b)(?:(?:{_ARRANGEMENT}|work|position|role|schedule|model|arrangement|"
+    r"environment|setting|flexible|and|or|an?|this|is)(?![A-Za-z])[\s,/&.:()-]*)+$",
+    re.IGNORECASE,
+)
+# "Knowledge of X, or the ability to learn it quickly": X is welcome but not asked for up front.
+_LEARNABLE_RE = re.compile(
+    r",?\s*\bor\s+(?:(?:(?:the|an?)\s+)?(?:(?:demonstrated|proven|strong)\s+)?"
+    r"(?:ability|willingness|capacity|desire|eagerness)"
+    r"(?:\s+(?:and|or)\s+(?:ability|willingness|desire))?|(?:be\s+)?(?:willing|able|eager|keen))"
+    r"\s+to\s+(?:quickly\s+)?(?:learn|pick\s+up)\b",
     re.IGNORECASE,
 )
 # Closing boilerplate of a posting: never a requirement, wherever the section state stands.
@@ -1280,6 +1316,8 @@ def parse_jd(text: str) -> ParsedJD:
                 list_is_marked or is_bullet or is_indented or (flat_item and flat_items_ok)
             )
             raw_item = _LINKEDIN_NAME_SUFFIX_RE.sub("", _BULLET_MARKER_RE.sub("", stripped)).strip()
+            if _WORK_ARRANGEMENT_LINE_RE.match(raw_item):
+                continue
             item = _drop_term_details(_strip_years_prefix(raw_item))
             line_section = section
             if section == "required":
@@ -1310,6 +1348,12 @@ def parse_jd(text: str) -> ParsedJD:
                         _add_unique(nice_items, optional_terms)
                     if not item:  # "Preferably experience with X": the whole line is optional
                         continue
+            if line_section == "required" and (learnable := _split_learnable(item)) is not None:
+                item, optional_terms = learnable
+                _add_unique(nice, optional_terms)
+                _add_unique(nice_items, optional_terms)
+                if not item:
+                    continue
             # A quality, not a tool (ADR 0023): listed, never scored. A line that also names a
             # skill, or an education/years line, takes the ordinary path below instead.
             if (
