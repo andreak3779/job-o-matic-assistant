@@ -1570,3 +1570,45 @@ def test_a_vendor_name_does_not_split_a_choice(sentence: str) -> None:
 
     assert len(terms) == 1
     assert " / " in terms[0]
+
+
+@pytest.mark.parametrize(
+    "line,row",
+    [
+        ("7+ years of hands-on full-stack software development experience.", "full-stack"),
+        ("3+ years of professional full stack software development experience", "full stack"),
+        ("5+ years of C# software engineering experience", "C#"),
+    ],
+)
+def test_a_skill_framed_as_software_development_experience_is_rated_as_the_skill(
+    line: str, row: str
+) -> None:
+    parsed = parse_jd(_one_line_posting(line))
+
+    assert parsed.required_for_rating == [row]
+
+
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "full-stack software",  # "software" on its own is not framing
+        "full-stack software development for mainframes",  # extra words are never dropped
+    ],
+)
+def test_only_the_whole_software_development_pair_is_framing(phrase: str) -> None:
+    assert reduce_to_terms(phrase) is None
+
+
+@pytest.mark.parametrize(
+    "line,row",
+    [
+        ("Experience with React or Zorblat.js.", "React / Zorblat.js"),
+        ("Knowledge of Docker or Zorblat", "Docker / Zorblat"),
+    ],
+)
+def test_a_choice_with_an_unknown_name_still_searches_for_the_known_skill(
+    line: str, row: str
+) -> None:
+    parsed = parse_jd(_one_line_posting(line))
+
+    assert parsed.required_for_rating == [row]

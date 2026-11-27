@@ -941,7 +941,9 @@ def _split_required_or_nice(
     ):
         # "Fullstack or backend development experience" names no known skill, but "or" still
         # offers a choice: one row, met by whichever the profile shows better.
-        pieces = [" / ".join(pieces)]
+        # Each side loses its framing first: in "Experience with React or <unknown name>" the
+        # joined row would otherwise search for "Experience with React" and miss React.
+        pieces = [" / ".join(" ".join(reduce_to_terms(p) or [p]) for p in pieces)]
         is_choice = True
     # "Strong Postgresql skills" asks for Postgresql: search for the term, not the whole phrase.
     reduced: list[str] = []
@@ -952,7 +954,8 @@ def _split_required_or_nice(
     already = {item.lower() for item in items}
     pieces = [piece for piece in reduced if piece.lower() not in already]
     flat.extend(piece for piece in pieces if piece.lower() not in {f.lower() for f in flat})
-    if is_prose_requirement(item) and not is_choice:
+    # A long line that is only one term plus framing is rated as the term, not as a sentence.
+    if is_prose_requirement(item) and not is_choice and not reduce_to_terms(item):
         items.append(item)
     else:
         items.extend(pieces)

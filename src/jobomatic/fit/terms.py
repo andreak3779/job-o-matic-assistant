@@ -1208,6 +1208,11 @@ _FILLER_WORDS = frozenset(
     "command ability with of in using the a an and or to development methodology professional "
     "methodologies practices pipeline pipelines work programming".split()
 )
+# "Full-stack software development experience" frames the term in two words. "software" alone is
+# not filler, so only the pair is dropped, after the term itself has been taken out.
+_FRAMING_PHRASE_RE = re.compile(
+    r"(?<![a-z0-9-])software\s+(?:development|engineering)(?![a-z0-9-])"
+)
 
 
 def reduce_to_terms(phrase: str) -> list[str] | None:
@@ -1226,8 +1231,9 @@ def reduce_to_terms(phrase: str) -> list[str] | None:
     for term in terms:
         for part in term.split(" / "):
             rest = re.sub(re.escape(part.lower()) + r"s?(?![a-z0-9])", " ", rest)
+    rest, framed = _FRAMING_PHRASE_RE.subn(" ", rest)
     words = re.findall(r"[a-z0-9'-]+", rest)
-    if not words or any(w not in _FILLER_WORDS for w in words):
+    if not (words or framed) or any(w not in _FILLER_WORDS for w in words):
         return None
     return terms
 
