@@ -7,16 +7,17 @@ in the original's units: half-points for text and twentieths of a point (twips) 
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import Any
 
-from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.shared import Pt, RGBColor, Twips
 
-from jobomatic.documents.adapters.docx_layout import add_bottom_border
-from jobomatic.documents.humanize import find_ai_tells
+from jobomatic.documents.adapters.docx_layout import (
+    add_bottom_border,
+    new_document,
+    warn_ai_tells,
+)
 from jobomatic.documents.model import PartTimeCoverLetter, PartTimeJob, PartTimeResume, Strength
 
 FONT = "Carlito"
@@ -28,8 +29,8 @@ CONTENT_WIDTH = PAGE_WIDTH - 2 * MARGIN_SIDES
 _BULLET_INDENT = (360, 200)  # left, hanging
 
 
-def _new_document(top_bottom: int) -> Any:
-    doc = Document()
+def _new_document(author: str, kind: str, top_bottom: int) -> Any:
+    doc = new_document(author, kind)
     section = doc.sections[0]
     section.page_width, section.page_height = Twips(PAGE_WIDTH), Twips(PAGE_HEIGHT)
     section.top_margin = section.bottom_margin = Twips(top_bottom)
@@ -61,6 +62,7 @@ def _paragraph(
 def _run(
     p: Any, text: str, size: int, *, bold: bool = False, italic: bool = False, color: str = "000000"
 ) -> None:
+    warn_ai_tells(text)
     run = p.add_run(text)
     run.font.name = FONT
     run.font.size = Pt(size / 2)
@@ -118,22 +120,11 @@ def _job_header(doc: Any, job: PartTimeJob) -> None:
     _run(p, dates, 20, italic=True)
 
 
-def _warn_about_stock_phrasing(*texts: str) -> None:
-    tells = find_ai_tells("\n".join(texts))
-    if tells:
-        print(f"WARNING: AI-sounding wording in document: {', '.join(tells)}", file=sys.stderr)
-
-
 class DocxPartTimeResume:
     """``DocumentRenderer`` for ``PartTimeResume``: one page, no tables or columns."""
 
     def render(self, content: PartTimeResume, out_path: Path) -> Path:
-        _warn_about_stock_phrasing(
-            content.summary,
-            *(s.body for s in content.strengths),
-            *(b for j in content.experience for b in j.bullets),
-        )
-        doc = _new_document(MARGIN_TOP_BOT)
+        doc = _new_document(content.contact.name, "Resume", MARGIN_TOP_BOT)
         _name_and_contact(doc, content.contact, after_contact=60, rule=False)
         availability = _paragraph(doc, center=True)
         _run(availability, "Availability: ", 21, bold=True)
@@ -172,13 +163,7 @@ class DocxPartTimeCoverLetter:
     """``DocumentRenderer`` for ``PartTimeCoverLetter``: a short letter, strictly one page."""
 
     def render(self, content: PartTimeCoverLetter, out_path: Path) -> Path:
-        _warn_about_stock_phrasing(
-            content.hook,
-            content.fit_paragraph,
-            content.closing,
-            *(s.body for s in content.strengths),
-        )
-        doc = _new_document(MARGIN_TOP_BOT * 3 // 2)
+        doc = _new_document(content.contact.name, "Cover Letter", MARGIN_TOP_BOT * 3 // 2)
         _name_and_contact(doc, content.contact, after_contact=240, rule=True)
 
         def para(text: str, after: int = 140) -> None:

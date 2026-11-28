@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from docx import Document
 from docx.shared import Pt
 
 from jobomatic import bootstrap
@@ -26,6 +25,7 @@ from jobomatic.documents.adapters.docx_layout import (
     add_paragraph,
     letter_footer,
     letter_header,
+    new_document,
     section_heading,
 )
 from jobomatic.fit.engine import FitResult, rate_parsed_jd
@@ -222,7 +222,7 @@ def generate_thank_you_letter_from_text(
         if interviewer_names
         else "Dear {company} Hiring Team,"
     )
-    doc = Document()
+    doc = new_document(profile.identity.name, "Thank-You Letter")
     letter_header(
         doc,
         profile.identity,

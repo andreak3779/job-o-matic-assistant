@@ -10,7 +10,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from docx import Document
 from docx.enum.text import WD_TAB_ALIGNMENT
 from docx.shared import Inches, Pt
 
@@ -27,8 +26,10 @@ from jobomatic.documents.adapters.docx_layout import (
     bullet_label_para,
     centered_contact_block,
     long_date,
+    new_document,
     section_heading,
     set_margins,
+    warn_ai_tells,
 )
 from jobomatic.documents.model import ResumeContact, TailoredCoverLetter, TailoredResume
 
@@ -113,7 +114,7 @@ class DocxTailoredResume:
     """``DocumentRenderer`` for ``TailoredResume``."""
 
     def render(self, content: TailoredResume, out_path: Path) -> Path:
-        doc = Document()
+        doc = new_document(content.contact.name, "Resume")
         apply_base_font(doc)
         set_margins(doc.sections[0])
         _add_page2_header(doc, content.contact)
@@ -144,6 +145,7 @@ class DocxTailoredResume:
                 size=RESUME_BODY_SIZE,
                 space_before=Pt(1.75) if index else Pt(0),
             )
+            warn_ai_tells(skill_line.skills)
             run = p.add_run(skill_line.skills)
             run.font.name = FONT_NAME
             run.font.size = RESUME_BODY_SIZE
@@ -208,7 +210,7 @@ class DocxTailoredCoverLetter:
         return out_path
 
     def build(self, content: TailoredCoverLetter) -> Any:
-        doc = Document()
+        doc = new_document(content.contact.name, "Cover Letter")
         apply_base_font(doc)
         set_margins(doc.sections[0])
         centered_contact_block(doc, content.contact, tagline=content.tagline, space_after=Pt(0))

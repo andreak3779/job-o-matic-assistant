@@ -11,7 +11,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from docx import Document
 from docx.shared import Pt
 
 from jobomatic import bootstrap, paths
@@ -31,7 +30,7 @@ from jobomatic.documents.adapters.docx_advanced import (
     star_card,
     two_column_table,
 )
-from jobomatic.documents.adapters.docx_layout import add_paragraph, section_heading
+from jobomatic.documents.adapters.docx_layout import add_paragraph, new_document, section_heading
 from jobomatic.fit.engine import FitResult, find_gap_coaching_entry, rate_parsed_jd
 from jobomatic.fit.gap_coaching import GapCoachingEntry, parse_gap_coaching
 from jobomatic.fit.parser import parse_jd
@@ -378,7 +377,7 @@ def generate_interview_prep_from_text(
     stage_label = _STAGE_LABELS[stage]
     today = date.today().strftime("%B %d, %Y")
 
-    doc = Document()
+    doc = new_document(profile.identity.name, "Interview Prep")
     banner(
         doc,
         title=parsed.title,

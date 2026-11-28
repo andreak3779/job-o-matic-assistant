@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -62,6 +62,30 @@ RESUME_BODY_SIZE = Pt(_STYLE["resume_body_size_pt"])
 RESUME_TITLE_SIZE = Pt(_STYLE["resume_title_size_pt"])
 PAGE2_HEADER_SIZE = Pt(_STYLE["page2_header_size_pt"])
 HEADER_DISTANCE = Inches(_STYLE["header_distance_in"])
+
+
+def new_document(author: str, kind: str) -> Any:
+    """A blank document whose file properties name the candidate and today.
+
+    python-docx's own template says "python-docx" wrote it in 2013, and LibreOffice copies the
+    author and title into the PDF, so every generator starts here instead of at ``Document()``.
+    """
+    doc = Document()
+    now = datetime.now(UTC).replace(microsecond=0)
+    properties = doc.core_properties
+    properties.author = properties.last_modified_by = author
+    properties.title = " - ".join(part for part in (author, kind) if part)
+    properties.comments = ""
+    properties.created = properties.modified = now
+    properties.revision = 1
+    return doc
+
+
+def warn_ai_tells(text: str) -> None:
+    """Warn on stderr when ``text`` contains stock AI phrasing (see ``humanize``)."""
+    tells = find_ai_tells(text)
+    if tells:
+        print(f"WARNING: AI-sounding wording in document: {', '.join(tells)}", file=sys.stderr)
 
 
 def set_margins(section: Any) -> None:
@@ -159,9 +183,7 @@ def add_paragraph(
 
     Warns on stderr when the text contains stock AI phrasing (see ``humanize``).
     """
-    tells = find_ai_tells(text)
-    if tells:
-        print(f"WARNING: AI-sounding wording in document: {', '.join(tells)}", file=sys.stderr)
+    warn_ai_tells(text)
     p = doc.add_paragraph()
     p.alignment = align
     p.paragraph_format.space_before = space_before
@@ -344,7 +366,9 @@ def bullet_label_para(
 
     Used by the cover-letter and cold-call "what I bring" / "why I'm a fit"
     sections. The label is bold; the body is regular weight.
+    Warns on stderr when the label or body contains stock AI phrasing (see ``humanize``).
     """
+    warn_ai_tells(f"{label}: {body}")
     p = doc.add_paragraph()
     p.paragraph_format.left_indent = indent
     p.paragraph_format.first_line_indent = hanging
