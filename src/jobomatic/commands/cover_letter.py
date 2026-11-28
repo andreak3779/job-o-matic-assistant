@@ -437,9 +437,9 @@ def generate_profile_cover_letter(
         "bring": bring,
         "highlights": highlights,
         "closing": (
-            "I'm looking for roles where I can contribute from day one. "
-            f"I would welcome the chance to speak with {PLACEHOLDER_COMPANY} about how my "
-            f"background fits {PLACEHOLDER_ROLE}."
+            "I'm looking for a role where this experience is useful. "
+            f"Could we talk this week about how my background fits {PLACEHOLDER_ROLE} "
+            f"at {PLACEHOLDER_COMPANY}?"
         ),
     }
     letter = _letter_content(profile, PLACEHOLDER_ROLE, PLACEHOLDER_COMPANY, evidence)

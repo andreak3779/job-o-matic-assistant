@@ -9,7 +9,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from docx import Document
 from docx.shared import Pt
 
 from jobomatic import bootstrap, paths
@@ -30,6 +29,7 @@ from jobomatic.documents.adapters.docx_layout import (
     clean_stack,
     letter_footer,
     letter_header,
+    new_document,
     section_heading,
     split_label_body,
 )
@@ -241,7 +241,7 @@ def generate_cold_call_letter_from_text(
         )
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    doc = Document()
+    doc = new_document(profile.identity.name, "Letter")
     letter_header(
         doc,
         profile.identity,

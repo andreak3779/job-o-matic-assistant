@@ -17,4 +17,4 @@ Loaded by every skill that produces text a hiring manager or recruiter will read
 
 excited to / thrilled / eager to / passionate about · I am writing to · I would welcome the opportunity · don't hesitate to · proven track record · results-driven · detail-oriented · team player · dynamic · leverage · spearhead · utilize · seamless · robust · cutting-edge · holistic · synergy · "scale that impact" · "exactly where my background fits"
 
-`src/jobomatic/documents/humanize.py` (`find_ai_tells`) lints for these; `add_paragraph` prints a stderr warning when a paragraph contains one. Fix the copy, don't ignore the warning.
+`src/jobomatic/documents/humanize.py` (`find_ai_tells`) lints for these; the document generators print a stderr warning when a paragraph, bullet or skill line contains one. Fix the copy, don't ignore the warning.

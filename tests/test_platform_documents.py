@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from jobomatic import applications, paths
+from jobomatic.documents.humanize import find_ai_tells
 from jobomatic.interfaces.cli.main import main
 from scripts import golden_outputs
 
@@ -43,6 +44,13 @@ def test_cover_letter_template_keeps_the_placeholders_as_literal_text() -> None:
     assert "Dear " not in text  # the candidate's template goes straight from "Re:" to the hook
     assert "SARAH ASHFORD" in text
     assert applications.load_applications() == []
+
+
+def test_cover_letter_template_wording_passes_its_own_phrase_check() -> None:
+    assert main(["generate-profile-cover-letter"]) == 0
+    text = _text(paths.output_dir("templates") / "cover-letter.docx")
+    closing = next(line for line in text.splitlines() if "[Role Title] at [Company Name]" in line)
+    assert find_ai_tells(closing) == []
 
 
 def test_output_path_can_be_chosen(tmp_path: Path) -> None:

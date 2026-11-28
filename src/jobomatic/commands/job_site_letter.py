@@ -13,7 +13,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from docx import Document
 from docx.shared import Pt
 
 from jobomatic import bootstrap
@@ -33,6 +32,7 @@ from jobomatic.documents.adapters.docx_layout import (
     clean_stack,
     letter_footer,
     letter_header,
+    new_document,
 )
 from jobomatic.fit.engine import FitResult, humanize_evidence, rate_parsed_jd
 from jobomatic.fit.parser import parse_jd
@@ -113,7 +113,7 @@ def _build_docx(
     header; subsequent paragraphs get extra ``space_before`` so the DOCX
     visually matches the ``\\n\\n`` separation of the .txt version.
     """
-    doc = Document()
+    doc = new_document(profile.identity.name, "Cover Letter")
     letter_header(
         doc,
         profile.identity,

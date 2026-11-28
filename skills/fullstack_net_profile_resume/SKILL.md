@@ -174,11 +174,8 @@ Pull exact employer names and date ranges from the profile output.
 
 ### Closing (2 sentences)
 
-> "I'm actively seeking remote .NET Developer and cloud-focused roles across
-> Canada where I can contribute deep full-stack expertise from day one.
-> I would welcome the opportunity to speak with [Company Name] about how my
-> background aligns with [Role Title] — please feel free to reach out at your
-> convenience."
+> "I'm looking for a role where this experience is useful. Could we talk this
+> week about how my background fits [Role Title] at [Company Name]?"
 
 ---
 
